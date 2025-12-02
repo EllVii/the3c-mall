@@ -1,14 +1,18 @@
 /* src/styles/MealPlannerPage.css */
 
-/* PAGE WRAPPER */
+/* ========= LAYOUT ========= */
+
 .mp-page {
-  padding: 4rem 1.5rem 3rem;
+  padding: 4rem 1.5rem 3.5rem;
 }
 
-/* HEADER */
 .mp-header {
+  max-width: 1120px;
+  margin: 0 auto 2.4rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 1.8rem;
   align-items: flex-start;
-  margin-bottom: 2.2rem;
 }
 
 .mp-kicker {
@@ -20,440 +24,577 @@
 }
 
 .mp-title {
-  font-size: clamp(1.9rem, 2.4vw, 2.4rem);
-  line-height: 1.15;
-  margin-bottom: 0.6rem;
+  font-size: clamp(2rem, 2.6vw, 2.6rem);
+  line-height: 1.12;
   color: #f7f7fb;
+  margin-bottom: 0.6rem;
 }
 
 .mp-subtitle {
-  max-width: 42rem;
+  max-width: 40rem;
+  font-size: 0.94rem;
+  line-height: 1.7;
+  color: #c4c9de;
 }
 
-/* GRID LAYOUT */
+.mp-meta-pill {
+  align-self: flex-start;
+  padding: 0.6rem 1rem;
+  border-radius: 999px;
+  border: 1px solid rgba(126, 224, 255, 0.7);
+  background: radial-gradient(
+      circle at top left,
+      rgba(126, 224, 255, 0.14),
+      transparent 60%
+    ),
+    rgba(5, 9, 18, 0.96);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: #dbe6ff;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.mp-meta-pill strong {
+  font-size: 0.82rem;
+}
+
+/* GRID */
+
 .mp-grid {
   max-width: 1120px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1.4fr) minmax(0, 1.25fr);
-  gap: 1.8rem;
-  align-items: stretch;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.1fr);
+  gap: 1.9rem;
+  align-items: flex-start;
 }
 
-@media (max-width: 1040px) {
-  .mp-grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
+/* ========= CARD SHELLS ========= */
 
-/* CARDS */
 .mp-card {
-  border-radius: 24px;
-  padding: 1.6rem 1.5rem 1.4rem;
   background: radial-gradient(
       circle at top left,
-      rgba(126, 224, 255, 0.16),
+      rgba(126, 224, 255, 0.18),
       rgba(4, 7, 20, 0.98)
     );
-  border: 1px solid rgba(95, 114, 163, 0.7);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85);
+  border-radius: 24px;
+  padding: 1.7rem 1.6rem 1.5rem;
+  box-shadow: 0 22px 55px rgba(0, 0, 0, 0.9);
+  border: 1px solid rgba(95, 114, 163, 0.78);
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
   display: flex;
   flex-direction: column;
-  gap: 0.85rem;
+  gap: 1.1rem;
+}
+
+.mp-card-left {
   position: relative;
 }
 
-.mp-card-setup {
-  gap: 1rem;
+.mp-card-right {
+  position: relative;
 }
 
-.mp-card-recipes {
-  gap: 0.9rem;
+/* STEP LABELS & TITLES */
+
+.mp-step-label {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.18rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid rgba(245, 197, 106, 0.85);
+  color: #fce6b0;
+  font-size: 0.7rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  margin-bottom: 0.2rem;
+  background: rgba(4, 7, 20, 0.96);
 }
 
-.mp-card-summary {
-  gap: 0.9rem;
+.mp-step-label-sub {
+  border-color: rgba(126, 224, 255, 0.85);
+  color: #d7e9ff;
 }
 
-/* TITLES */
-.meal-card-title {
+.mp-section-title {
   font-size: 1rem;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: #f9fafc;
 }
 
-.meal-card-subtitle {
-  font-size: 0.86rem;
-  line-height: 1.6;
-  color: #c2c7de;
+.mp-section-subtitle {
+  font-size: 0.88rem;
+  line-height: 1.7;
+  color: #c3c9df;
 }
 
-/* FIELDS */
-.mp-field-row {
-  display: flex;
-  gap: 0.8rem;
-  flex-wrap: wrap;
+.mp-section-title-sm {
+  font-size: 0.92rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #f5f7ff;
 }
+
+.mp-section-subtitle-sm {
+  font-size: 0.82rem;
+  line-height: 1.6;
+  color: #b7bed8;
+}
+
+/* ========= FIELDS & INPUTS ========= */
 
 .mp-field {
-  flex: 1;
-  min-width: 120px;
+  margin-top: 0.5rem;
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
 }
 
-.mp-field label {
+.mp-field-inline {
+  max-width: 220px;
+}
+
+.mp-field-label {
   font-size: 0.76rem;
-  text-transform: uppercase;
   letter-spacing: 0.16em;
+  text-transform: uppercase;
   color: #a9b0c7;
 }
 
 .mp-field input,
 .mp-field textarea {
-  border-radius: 999px;
-  border: 1px solid rgba(122, 145, 194, 0.95);
-  background: radial-gradient(
-      circle at top left,
-      rgba(18, 62, 110, 0.5),
-      rgba(5, 9, 18, 0.98)
-    );
-  padding: 0.52rem 0.85rem;
-  font-size: 0.82rem;
-  color: #e1e7ff;
+  border-radius: 14px;
+  border: 1px solid rgba(84, 104, 150, 0.9);
+  background: rgba(4, 7, 16, 0.96);
+  color: #e8eeff;
+  padding: 0.6rem 0.75rem;
+  font-size: 0.86rem;
   outline: none;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+}
+
+.mp-field input:focus,
+.mp-field textarea:focus {
+  border-color: rgba(126, 224, 255, 0.9);
+  box-shadow: 0 0 0 1px rgba(126, 224, 255, 0.6);
 }
 
 .mp-field textarea {
-  border-radius: 18px;
   resize: vertical;
-  min-height: 60px;
 }
 
-/* SUMMARY BLURB */
-.mp-summary-block {
-  margin-top: 0.5rem;
-  padding: 0.85rem 0.9rem;
-  border-radius: 18px;
-  background: radial-gradient(
-      circle at top left,
-      rgba(245, 197, 106, 0.16),
-      transparent 65%
-    ),
-    rgba(5, 9, 18, 0.98);
-  border: 1px solid rgba(98, 121, 167, 0.95);
-  font-size: 0.82rem;
-  color: #cfd5ea;
+.mp-grid-two {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
 }
 
-.mp-hint {
-  margin-top: 0.35rem;
+/* Helper text */
+
+.mp-helper-text {
   font-size: 0.78rem;
-  color: #9aa4c9;
-}
-
-.mp-hint-small {
-  font-size: 0.76rem;
-}
-
-/* TABLE */
-.mp-table {
-  width: 100%;
-  border-collapse: collapse;
+  color: #9ba4c9;
   margin-top: 0.2rem;
-  font-size: 0.8rem;
 }
 
-.mp-table th,
-.mp-table td {
-  padding: 0.4rem 0.35rem;
-  text-align: left;
-}
+/* ========= RECIPE DECK ========= */
 
-.mp-table thead th {
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: #aeb5d1;
-  border-bottom: 1px solid rgba(84, 104, 156, 0.9);
-}
-
-.mp-table tbody tr + tr td {
-  border-top: 1px solid rgba(35, 48, 80, 0.8);
-}
-
-.mp-type {
-  font-weight: 600;
-  color: #f5f7ff;
-}
-
-/* TOTAL ROW */
-.mp-total-row {
+.mp-deck {
   display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  font-size: 0.82rem;
-  color: #c9cee4;
-  margin-top: 0.8rem;
+  flex-direction: column;
+  gap: 0.9rem;
 }
 
-@media (max-width: 600px) {
-  .mp-total-row {
-    flex-direction: column;
-    align-items: flex-start;
-  }
+.mp-deck-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
 }
 
-/* EMPTY */
-.mp-empty-summary {
-  margin-top: 0.6rem;
-  padding: 0.9rem 0.95rem;
-  border-radius: 18px;
-  background: rgba(5, 9, 18, 0.98);
-  border: 1px dashed rgba(98, 121, 167, 0.9);
-  font-size: 0.8rem;
-  color: #aeb5d1;
-}
+/* Rolodex container */
 
-/* SEND BUTTON */
-.mp-send-btn {
-  margin-top: 1rem;
-  width: 100%;
-  justify-content: center;
-  border-radius: 999px;
-  background: linear-gradient(135deg, #f7d57c, #f5c56a, #ffe7ad);
-  color: #111;
-  box-shadow: 0 22px 55px rgba(0, 0, 0, 0.9);
-  position: relative;
-  overflow: hidden;
-  font-size: 0.9rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
-.mp-send-btn::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-image: radial-gradient(
-      circle,
-      rgba(255, 255, 255, 0.7) 1px,
-      transparent 1px
-    ),
-    radial-gradient(circle, rgba(255, 255, 255, 0.5) 1px, transparent 1px),
-    radial-gradient(circle, rgba(255, 255, 255, 0.3) 1px, transparent 1px);
-  background-size: 4px 4px, 7px 7px, 10px 10px;
-  background-position: 0 0, 12px 8px, 5px 14px;
-  opacity: 0.32;
-  mix-blend-mode: screen;
-  pointer-events: none;
-  animation: mpGoldTwinkle 4s linear infinite;
-}
-
-.mp-send-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 28px 70px rgba(0, 0, 0, 1);
-}
-
-@keyframes mpGoldTwinkle {
-  0% {
-    opacity: 0.2;
-  }
-  40% {
-    opacity: 0.35;
-  }
-  70% {
-    opacity: 0.25;
-  }
-  100% {
-    opacity: 0.2;
-  }
-}
-
-.mp-fineprint {
-  margin-top: 0.6rem;
-  font-size: 0.76rem;
-  color: #9fa6c4;
-}
-
-/* DECK / ROLODEX */
-.mp-deck-wrapper {
+.mp-rolodex {
   margin-top: 0.4rem;
 }
 
-.mp-deck-label {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  font-size: 0.78rem;
-  color: #cfd5ea;
-  margin-bottom: 0.35rem;
-}
-
-.mp-deck-label span:first-child {
-  text-transform: uppercase;
-  letter-spacing: 0.16em;
-  font-size: 0.74rem;
-  color: #a9b0c7;
-}
-
-.mp-deck {
+.mp-rolodex-stack {
   position: relative;
-  min-height: 210px;
+  height: 260px;
 }
 
-/* Back card — gives stacked feel */
-.mp-deck-card-back {
-  position: absolute;
-  inset: 0.4rem 0.5rem 0 0.5rem;
-  border-radius: 22px;
-  background: rgba(5, 9, 18, 0.98);
-  border: 1px solid rgba(79, 97, 142, 0.8);
-  transform: translateY(6px) rotate(-1deg);
-  opacity: 0.7;
-}
-
-/* Front card */
-.mp-deck-card {
-  position: relative;
-  border-radius: 22px;
-  overflow: hidden;
-  background: rgba(5, 9, 18, 0.98);
-  border: 1px solid rgba(122, 145, 194, 0.95);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85);
-}
-
-.mp-deck-card-front {
-  position: relative;
-  z-index: 2;
-}
-
-/* Image area */
-.mp-deck-image-wrap {
-  position: relative;
-  height: 135px;
-  overflow: hidden;
-}
-
-.mp-deck-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transform: scale(1.05);
-}
-
-.mp-deck-image-overlay {
+.mp-rolodex-card {
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    to top,
-    rgba(0, 0, 0, 0.75) 0%,
-    rgba(0, 0, 0, 0.2) 45%,
-    transparent 100%
-  );
+  border-radius: 20px;
+  border: 1px solid rgba(82, 104, 155, 0.98);
+  background: radial-gradient(
+      circle at top left,
+      rgba(245, 197, 106, 0.14),
+      rgba(4, 7, 20, 0.98)
+    );
+  box-shadow: 0 22px 50px rgba(0, 0, 0, 0.9);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
-.mp-deck-title {
-  position: absolute;
-  bottom: 0.5rem;
-  left: 0.9rem;
-  right: 0.9rem;
-  font-size: 0.88rem;
-  font-weight: 700;
-  color: #ffd88a;
-  text-shadow: 0 0 12px rgba(0, 0, 0, 0.95);
+/* Back “ghost” card to sell deck illusion */
+.mp-rolodex-card-back {
+  transform: translateY(10px) scale(0.96);
+  opacity: 0.5;
+  filter: blur(0.3px);
 }
 
-/* Card body */
-.mp-deck-body {
-  padding: 0.7rem 0.9rem 0.85rem;
-  font-size: 0.82rem;
-  color: #cfd5ea;
+/* Front active card */
+.mp-rolodex-card-front {
+  transform-origin: center bottom;
+  animation: mpCardRise 280ms ease-out;
 }
 
-.mp-deck-meta {
+@keyframes mpCardRise {
+  from {
+    transform: translateY(16px) rotateX(6deg);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) rotateX(0deg);
+    opacity: 1;
+  }
+}
+
+/* Image shell */
+.mp-rolodex-image-shell {
+  height: 46%;
+  background: radial-gradient(
+      circle at top,
+      rgba(126, 224, 255, 0.35),
+      transparent 65%
+    ),
+    rgba(3, 7, 16, 0.98);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mp-rolodex-image-placeholder {
+  width: 86%;
+  height: 78%;
+  border-radius: 18px;
+  border: 1px dashed rgba(140, 160, 205, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem;
+  text-align: center;
+}
+
+.mp-rolodex-image-label {
+  font-size: 0.78rem;
+  color: #d8e5ff;
+}
+
+/* Card content */
+.mp-rolodex-content {
+  flex: 1;
+  padding: 0.65rem 0.9rem 0.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.mp-rolodex-title {
+  font-size: 0.98rem;
+  font-weight: 600;
+  color: #f9fafc;
+}
+
+.mp-rolodex-tags {
   display: flex;
   flex-wrap: wrap;
   gap: 0.35rem;
-  margin-top: 0.55rem;
-  font-size: 0.75rem;
 }
 
-.mp-deck-meta span {
-  padding: 0.2rem 0.55rem;
+.mp-tag {
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
   border-radius: 999px;
-  border: 1px solid rgba(126, 224, 255, 0.9);
+  padding: 0.2rem 0.6rem;
+  border: 1px solid rgba(130, 152, 208, 0.9);
+  color: #ccd4f5;
+}
+
+.mp-tag-focus {
+  border-color: rgba(245, 197, 106, 0.95);
+  color: #fce6b0;
+}
+
+.mp-rolodex-blurb {
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: #c2c8df;
+}
+
+/* Footer nav */
+.mp-rolodex-footer {
+  padding: 0.55rem 0.8rem 0.6rem;
+  border-top: 1px solid rgba(85, 107, 160, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.mp-rolodex-nav {
+  border-radius: 999px;
+  border: 1px solid rgba(126, 224, 255, 0.8);
+  background: rgba(5, 9, 18, 0.95);
+  color: #d8e5ff;
+  font-size: 0.8rem;
+  padding: 0.4rem 0.85rem;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.mp-rolodex-nav:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.78);
+  border-color: rgba(126, 224, 255, 0.98);
+}
+
+.mp-rolodex-counter {
+  flex: 1;
+  text-align: center;
+  font-size: 0.76rem;
+  color: #cfd5f4;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.mp-rolodex-hint {
+  font-size: 0.68rem;
+  color: #98a3cc;
+}
+
+.mp-rolodex-empty {
+  padding: 1rem;
+  font-size: 0.8rem;
+  color: #c9d0ee;
+}
+
+/* ========= SPICE ========= */
+
+.mp-spice {
+  margin-top: 1.1rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid rgba(80, 98, 146, 0.9);
+}
+
+/* ========= BLUEPRINT & LEFTOVERS ========= */
+
+.mp-blueprint {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.mp-leftovers {
+  margin-top: 0.3rem;
+}
+
+/* ========= FASTING ========= */
+
+.mp-fasting {
+  margin-top: 1.2rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(75, 92, 138, 0.9);
+}
+
+/* ========= SUMMARY PANEL ========= */
+
+.mp-summary-panel {
+  margin-top: 1.2rem;
+  padding: 1rem 0.9rem 0.9rem;
+  border-radius: 18px;
+  border: 1px solid rgba(245, 197, 106, 0.8);
   background: radial-gradient(
       circle at top left,
-      rgba(18, 62, 110, 0.9),
-      rgba(5, 9, 18, 0.98)
-    );
+      rgba(245, 197, 106, 0.18),
+      transparent 60%
+    ),
+    rgba(4, 7, 18, 0.97);
 }
 
-/* Empty state */
-.mp-deck-empty {
-  padding: 1.1rem 1rem;
+.mp-summary-title {
+  font-size: 0.86rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #fce6b0;
+  margin-bottom: 0.35rem;
+}
+
+.mp-summary-text {
+  font-size: 0.82rem;
+  color: #dadff4;
+  margin-bottom: 0.6rem;
+}
+
+.mp-summary-breakdown {
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
-  justify-content: center;
-  align-items: flex-start;
+  margin-bottom: 0.6rem;
 }
 
-/* Deck controls */
-.mp-deck-controls {
-  margin-top: 0.6rem;
+.mp-summary-row {
   display: flex;
   justify-content: space-between;
-  gap: 0.6rem;
+  font-size: 0.8rem;
+  color: #d3daf3;
 }
 
-.mp-deck-btn {
-  flex: 1;
-  border-radius: 999px;
-  border: 1px solid rgba(126, 224, 255, 0.7);
-  background: radial-gradient(
-    circle at top left,
-    rgba(18, 62, 110, 0.9),
-    rgba(5, 9, 18, 0.98)
-  );
-  padding: 0.45rem 0.75rem;
-  font-size: 0.78rem;
-  letter-spacing: 0.1em;
+.mp-summary-label {
   text-transform: uppercase;
-  color: #e1ecff;
-  cursor: pointer;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.75);
-  transition:
-    transform 0.14s ease,
-    box-shadow 0.16s ease,
-    background 0.16s ease,
-    color 0.16s ease;
+  letter-spacing: 0.1em;
+  font-size: 0.72rem;
+  color: #aeb5d4;
 }
 
-.mp-deck-btn:hover:not(:disabled) {
+.mp-summary-value {
+  font-size: 0.8rem;
+  color: #f5f7ff;
+}
+
+.mp-summary-sub {
+  font-size: 0.76rem;
+  color: #c3caec;
+}
+
+.mp-summary-footer {
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(112, 131, 184, 0.95);
+}
+
+/* ========= ACTIONS ========= */
+
+.mp-actions {
+  margin-top: 1.1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(78, 96, 143, 0.9);
+}
+
+.mp-actions-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 0.45rem;
+}
+
+/* Gold primary button */
+.mp-btn-gold {
+  position: relative;
+  overflow: hidden;
+  padding-inline: 1.6rem;
+  background: linear-gradient(135deg, #f7d57c, #f5c56a, #ffe7ad);
+  color: #111111;
+  border-radius: 999px;
+  border: none;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.85);
+  font-size: 0.86rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.mp-btn-gold:hover {
   transform: translateY(-1px);
-  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.9);
+  box-shadow: 0 26px 62px rgba(0, 0, 0, 0.95);
 }
 
-.mp-deck-btn:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-  box-shadow: none;
+.mp-btn-gold::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -180%;
+  width: 150%;
+  height: 100%;
+  background: linear-gradient(
+    120deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.55) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  transform: skewX(-25deg);
+  opacity: 0;
+  pointer-events: none;
 }
 
-/* RESPONSIVE */
-@media (max-width: 900px) {
-  .mp-page {
-    padding-top: 3.2rem;
+.mp-btn-gold:hover::after {
+  animation: mpGoldSweep 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes mpGoldSweep {
+  0% {
+    left: -180%;
+    opacity: 0.18;
+  }
+  35% {
+    opacity: 0.9;
+  }
+  100% {
+    left: 180%;
+    opacity: 0;
+  }
+}
+
+/* Outline button */
+.mp-btn-outline {
+  border-radius: 999px;
+  border: 1px solid rgba(126, 224, 255, 0.9);
+  background: rgba(5, 9, 20, 0.96);
+  color: #dbe6ff;
+  font-size: 0.8rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding-inline: 1.4rem;
+}
+
+.mp-btn-outline:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 16px 38px rgba(0, 0, 0, 0.8);
+}
+
+/* ========= RESPONSIVE ========= */
+
+@media (max-width: 960px) {
+  .mp-grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .mp-card {
-    padding: 1.4rem 1.3rem 1.3rem;
+    padding: 1.5rem 1.4rem 1.4rem;
+  }
+}
+
+@media (max-width: 720px) {
+  .mp-header {
+    flex-direction: column;
+  }
+
+  .mp-meta-pill {
+    align-self: stretch;
+  }
+
+  .mp-rolodex-stack {
+    height: 280px;
+  }
+
+  .mp-grid-two {
+    grid-template-columns: minmax(0, 1fr);
   }
 }

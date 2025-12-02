@@ -1,0 +1,313 @@
+/* src/styles/LandingPage.css */
+
+/* =============== LANDING / MARKETING LAYOUT =============== */
+
+/* Page shell */
+.lp-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  background: radial-gradient(circle at top left, #151821 0, #05060a 45%, #020308 100%);
+  color: #f7f7fb;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+    "Inter", sans-serif;
+}
+
+/* HERO: text + right column */
+
+.lp-hero {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 4rem 1.5rem 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 3rem;
+}
+
+.lp-hero-left,
+.lp-hero-right {
+  flex: 1 1 0;
+}
+
+/* Left side (copy) */
+
+.lp-kicker {
+  font-size: 0.85rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #a9b0c7;
+  margin-bottom: 0.75rem;
+}
+
+.lp-hero-left h1 {
+  font-size: clamp(2.2rem, 3vw, 3rem);
+  line-height: 1.08;
+  margin-bottom: 1rem;
+}
+
+.lp-hero-copy {
+  font-size: 0.98rem;
+  line-height: 1.6;
+  color: #c2c7dd;
+  max-width: 34rem;
+  margin-bottom: 1.75rem;
+}
+
+.hero-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.9rem;
+}
+
+/* Marketing buttons override (same look as before) */
+.btn-primary,
+.btn-outline {
+  padding: 0.8rem 1.6rem;
+  border-radius: 999px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.16s ease, box-shadow 0.16s ease,
+    background 0.16s ease, border-color 0.16s ease, color 0.16s ease;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #45c0ff, #00e0b8);
+  color: #020308;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.45);
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 22px 55px rgba(0, 0, 0, 0.6);
+}
+
+.btn-outline {
+  border: 1px solid rgba(176, 188, 221, 0.6);
+  color: #e1e5f6;
+  background: transparent;
+}
+
+.btn-outline:hover {
+  border-color: #7ee0ff;
+  background: rgba(15, 20, 33, 0.65);
+}
+
+/* Right side: videos + concierge */
+
+.lp-hero-right {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.75rem;
+}
+
+/* VIDEO STACK */
+
+.lp-video-stack {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 1.25rem;
+}
+
+.lp-video-card {
+  background: radial-gradient(circle at top left, rgba(255, 255, 255, 0.08), rgba(8, 10, 20, 0.9));
+  border-radius: 20px;
+  padding: 0.65rem;
+  box-shadow: 0 22px 55px rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.lp-video-card-main {
+  flex: 0 0 25%;
+  max-width: 260px;
+}
+
+.lp-video-row .lp-video-card {
+  flex: 0 0 100%;
+  max-width: 210px;
+}
+
+.lp-video-row {
+  display: flex;
+  flex-direction: row;
+  gap: 1.1rem;
+}
+
+.lp-video-frame {
+  border-radius: 16px;
+  overflow: hidden;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #020308;
+}
+
+.lp-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+}
+
+.lp-video-card figcaption {
+  font-size: 0.8rem;
+  color: #c5cbdf;
+  text-align: center;
+  max-width: 15rem;
+}
+
+/* Concierge wrapper under videos */
+.lp-concierge-wrapper {
+  width: 100%;
+  max-width: 360px;
+}
+
+/* Precision note */
+.lp-precision-note {
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: #9ca3c0;
+  text-align: center;
+  max-width: 19rem;
+}
+
+/* STATS ROW */
+
+.lp-stats {
+  max-width: 1200px;
+  margin: 1.5rem auto 3rem;
+  padding: 0 1.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  justify-content: flex-start;
+}
+
+.lp-stat-pill {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+  padding: 0.7rem 1rem;
+  border-radius: 999px;
+  background: rgba(14, 18, 30, 0.96);
+  border: 1px solid rgba(120, 136, 176, 0.7);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+}
+
+.lp-stat-number {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #f5f7ff;
+}
+
+.lp-stat-label {
+  font-size: 0.74rem;
+  color: #a9b0c7;
+}
+
+/* Concierge pane (Landing uses this a lot) */
+.concierge-pane {
+  border-radius: 1.4rem;
+  border: 1px solid rgba(82, 105, 135, 0.8);
+  background: radial-gradient(circle at top, rgba(55, 185, 255, 0.25), transparent 55%),
+    radial-gradient(circle at bottom, rgba(22, 255, 137, 0.18), transparent 60%),
+    rgba(4, 9, 18, 0.88);
+  padding: 1.4rem 1.4rem 1.1rem;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.65);
+}
+
+.concierge-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: #a7b4cb;
+  margin-bottom: 0.4rem;
+}
+
+.concierge-question {
+  font-size: 0.9rem;
+  color: #e2e9f5;
+}
+
+.concierge-tone-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border-radius: 999px;
+  padding: 0.3rem 0.7rem;
+  background: rgba(8, 18, 28, 0.9);
+  border: 1px solid rgba(140, 245, 199, 0.45);
+  font-size: 0.72rem;
+  color: #cde6ff;
+  margin-top: 0.8rem;
+}
+
+/* LANDING RESPONSIVE */
+
+@media (max-width: 900px) {
+  .lp-hero {
+    flex-direction: column;
+    align-items: flex-start;
+    padding-top: 3rem;
+  }
+
+  .lp-hero-right {
+    width: 100%;
+    align-items: center;
+  }
+
+  .lp-video-stack {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .lp-video-card-main,
+  .lp-video-row .lp-video-card {
+    max-width: 280px;
+    flex: 0 0 auto;
+  }
+
+  .lp-video-row {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .lp-stats {
+    justify-content: center;
+  }
+
+  .lp-stat-pill {
+    align-items: center;
+  }
+}
+
+@media (max-width: 600px) {
+  .lp-hero {
+    padding: 2.5rem 1.1rem 1.8rem;
+  }
+
+  .lp-hero-left h1 {
+    font-size: 1.9rem;
+  }
+
+  .hero-buttons {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
