@@ -1,0 +1,254 @@
+/* src/styles/Cancel.css */
+
+/* ========== CANCELLATION PAGE ========== */
+
+.cancel-page {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 4rem 1.5rem 3.5rem;
+  text-align: center;
+}
+
+.cancel-title {
+  font-size: clamp(2rem, 2.6vw, 2.5rem);
+  line-height: 1.12;
+  color: #f5f7fa;
+  margin-bottom: 0.6rem;
+  font-weight: 700;
+}
+
+.cancel-subtitle {
+  font-size: 0.96rem;
+  color: #aeb5d1;
+  max-width: 34rem;
+  margin: 0.5rem auto 2.3rem;
+  line-height: 1.7;
+}
+
+.cancel-card {
+  position: relative;
+  border-radius: 26px;
+  padding: 2.4rem 1.9rem 2.1rem;
+  margin: 0 auto;
+  max-width: 700px;
+
+  background:
+    radial-gradient(circle at top left, rgba(126, 224, 255, 0.18), transparent 55%),
+    radial-gradient(circle at bottom right, rgba(245, 197, 106, 0.16), transparent 55%),
+    rgba(7, 10, 20, 0.96);
+
+  border: 1px solid rgba(110, 132, 184, 0.7);
+  box-shadow: 0 28px 72px rgba(0, 0, 0, 0.88);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+/* soft halo */
+.cancel-card::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(126, 224, 255, 0.25), transparent 45%, rgba(245, 197, 106, 0.25));
+  opacity: 0.08;
+  pointer-events: none;
+}
+
+.cancel-keep-title {
+  font-size: 1.2rem;
+  color: #e3e8f8;
+  margin-bottom: 0.6rem;
+  font-weight: 600;
+}
+
+.cancel-keep-subtitle {
+  font-size: 0.9rem;
+  color: #b9c1df;
+  max-width: 30rem;
+  margin: 0 auto 1.4rem;
+  line-height: 1.6;
+}
+
+/* list of reasons to stay */
+.cancel-list {
+  text-align: left;
+  max-width: 430px;
+  margin: 0 auto 2rem;
+  padding: 0;
+  list-style: none;
+}
+
+.cancel-list li {
+  padding-left: 1.2rem;
+  margin-bottom: 0.55rem;
+  font-size: 0.86rem;
+  color: #cfd5e6;
+  position: relative;
+}
+
+.cancel-list li::before {
+  content: "•";
+  position: absolute;
+  left: 0.2rem;
+  top: 0.02rem;
+  color: #7ee0ff;
+}
+
+/* PRIMARY BUTTON – downgrade, gold shimmer */
+.cancel-btn-downgrade {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  padding: 0.88rem 1.4rem;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+
+  font-size: 0.92rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+
+  background: linear-gradient(135deg, #f7d57c, #f5c56a, #ffe7ad);
+  color: #15151a;
+
+  box-shadow: 0 22px 55px rgba(0, 0, 0, 0.9);
+  margin-bottom: 1rem;
+
+  transition:
+    transform 0.16s ease,
+    box-shadow 0.18s ease,
+    filter 0.16s ease;
+
+  animation: cancelGoldBreath 6s ease-in-out infinite;
+}
+
+@keyframes cancelGoldBreath {
+  0%   { box-shadow: 0 22px 55px rgba(245, 197, 106, 0.16); }
+  50%  { box-shadow: 0 22px 65px rgba(245, 197, 106, 0.3); }
+  100% { box-shadow: 0 22px 55px rgba(245, 197, 106, 0.16); }
+}
+
+/* shimmer sweep layer */
+.cancel-btn-downgrade::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -150%;
+  width: 140%;
+  height: 100%;
+  background: linear-gradient(
+    120deg,
+    rgba(255,255,255,0) 0%,
+    rgba(255,255,255,0.55) 50%,
+    rgba(255,255,255,0) 100%
+  );
+  transform: skewX(-25deg);
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* diamond micro-sparkle layer */
+.cancel-btn-downgrade::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle, rgba(255,255,255,0.9) 1px, transparent 1px),
+    radial-gradient(circle, rgba(255,255,255,0.5) 1px, transparent 1px),
+    radial-gradient(circle, rgba(255,255,255,0.3) 1px, transparent 1px);
+  background-size: 4px 4px, 7px 7px, 10px 10px;
+  background-position: 0 0, 11px 7px, 4px 13px;
+  opacity: 0.25;
+  mix-blend-mode: screen;
+  pointer-events: none;
+  animation: cancelDiamondTwinkle 4.5s linear infinite;
+}
+
+@keyframes cancelDiamondTwinkle {
+  0%   { opacity: 0.2; }
+  30%  { opacity: 0.33; }
+  60%  { opacity: 0.24; }
+  100% { opacity: 0.2; }
+}
+
+/* hover shimmer trigger */
+.cancel-btn-downgrade:hover::after {
+  animation: cancelGoldShimmer 1.1s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  opacity: 1;
+}
+
+@keyframes cancelGoldShimmer {
+  0%   { left: -150%; }
+  100% { left: 150%; }
+}
+
+/* hover + active lift/press */
+.cancel-btn-downgrade:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.05);
+}
+
+.cancel-btn-downgrade:active {
+  transform: translateY(1px) scale(0.985);
+  filter: brightness(0.95);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.85);
+}
+
+/* SECONDARY BUTTON – light gray cancel */
+.cancel-btn-light {
+  width: 100%;
+  padding: 0.8rem 1.4rem;
+  border-radius: 999px;
+  margin-top: 0.35rem;
+
+  background: #f1f3f7;
+  color: #7f8696;
+  border: 1px solid #dde0e8;
+
+  font-size: 0.88rem;
+  font-weight: 500;
+  cursor: pointer;
+
+  box-shadow: none;
+  transition:
+    background 0.12s ease,
+    color 0.12s ease,
+    border-color 0.12s ease;
+}
+
+.cancel-btn-light:hover {
+  background: #eceff4;
+  color: #747b8c;
+}
+
+/* text under buttons */
+.cancel-footnote {
+  margin-top: 1.4rem;
+  font-size: 0.8rem;
+  color: #aeb5d1;
+}
+
+/* page fine print */
+.cancel-fineprint {
+  margin-top: 2.2rem;
+  font-size: 0.78rem;
+  color: #9097b4;
+  max-width: 32rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* responsive */
+@media (max-width: 768px) {
+  .cancel-page {
+    padding-top: 3rem;
+  }
+
+  .cancel-card {
+    padding: 2rem 1.4rem 1.8rem;
+  }
+
+  .cancel-list {
+    max-width: 100%;
+  }
+}

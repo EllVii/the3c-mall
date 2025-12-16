@@ -1,0 +1,33 @@
+.dash-header{
+  display:flex;
+  justify-content:space-between;
+  gap:1.25rem;
+  align-items:flex-start;
+  margin-bottom: 1.25rem;
+}
+
+.dash-card{
+  cursor:pointer;
+  transition: transform .18s ease, filter .18s ease, border-color .18s ease;
+}
+.dash-card:hover{
+  transform: translateY(-2px);
+  filter: brightness(1.03);
+  border-color: rgba(126,224,255,.35);
+}
+.dash-card h3{
+  margin: 0.25rem 0 0.4rem;
+  letter-spacing:.02em;
+}
+.dash-card p{
+  color: var(--muted);
+  margin: 0 0 0.9rem;
+  line-height: 1.35;
+}
+.dash-card-actions{
+  display:flex;
+  justify-content:flex-end;
+}
+@media (max-width: 860px){
+  .dash-header{ flex-direction:column; }
+}

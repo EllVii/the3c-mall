@@ -1,0 +1,105 @@
+.mp-page {
+  padding: 2rem 1.25rem 3rem;
+  max-width: 1180px;
+  margin: 0 auto;
+  color: #f4f6ff;
+}
+
+.mp-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+
+.mp-kicker {
+  font-size: 0.75rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #7ee0ff;
+}
+
+.mp-title {
+  font-size: 2rem;
+  margin: 0.3rem 0;
+}
+
+.mp-accent {
+  color: #f6dc8a;
+}
+
+.mp-subtitle {
+  color: #a9b4d2;
+  max-width: 760px;
+}
+
+.mp-meta {
+  border-radius: 999px;
+  padding: 0.6rem 1.1rem;
+  border: 1px solid rgba(126,224,255,0.6);
+  background: rgba(5,9,18,0.95);
+  font-size: 0.8rem;
+}
+
+.mp-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin: 1rem 0;
+}
+
+.mp-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.mp-span {
+  grid-column: 1 / -1;
+}
+
+.mp-card {
+  border-radius: 1.4rem;
+  padding: 1rem;
+  border: 1px solid rgba(63,82,110,0.9);
+  background: rgba(5,9,18,0.97);
+  box-shadow: 0 18px 40px rgba(0,0,0,0.9);
+}
+
+.mp-label {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.82rem;
+  color: #c7d1f2;
+  gap: 0.25rem;
+  margin-bottom: 0.6rem;
+}
+
+.mp-input {
+  border-radius: 0.75rem;
+  border: 1px solid rgba(126,224,255,0.6);
+  background: rgba(4,8,18,0.96);
+  padding: 0.45rem 0.6rem;
+  color: #e4ebff;
+}
+
+.mp-textarea {
+  width: 100%;
+  min-height: 120px;
+  resize: vertical;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(126,224,255,0.6);
+  background: rgba(4,8,18,0.96);
+  color: #e4ebff;
+  padding: 0.5rem;
+}
+
+.mp-save-row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.mp-saved {
+  font-size: 0.8rem;
+  color: #f6dc8a;
+}

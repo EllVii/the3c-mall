@@ -1,0 +1,191 @@
+/* src/styles/TrainerDashboardPage.css */
+.pt-page {
+  padding: 2rem 1.5rem 3rem;
+  color: #f4f6ff;
+}
+
+.pt-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.pt-kicker {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: #7ee0ff;
+  margin-bottom: 0.25rem;
+}
+
+.pt-title {
+  font-size: 1.7rem;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.45rem;
+}
+
+.pt-subtitle {
+  color: #a9b4d2;
+  font-size: 0.9rem;
+  max-width: 640px;
+}
+
+.pt-pill {
+  align-self: flex-start;
+  border-radius: 999px;
+  border: 1px solid rgba(246, 220, 138, 0.55);
+  background: rgba(5, 9, 18, 0.96);
+  padding: 0.55rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.pt-pill span {
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: #7b88a5;
+  font-size: 0.7rem;
+}
+
+.pt-pill strong {
+  font-weight: 700;
+  color: #f6dc8a;
+}
+
+.pt-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  gap: 1.2rem;
+}
+
+.pt-card {
+  border-radius: 1.4rem;
+  border: 1px solid rgba(63, 82, 110, 0.9);
+  background: radial-gradient(circle at top left, rgba(126, 224, 255, 0.16), transparent 55%),
+    rgba(5, 9, 18, 0.97);
+  padding: 1.1rem 1.1rem 1rem;
+  box-shadow: 0 18px 46px rgba(0, 0, 0, 0.9);
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.pt-card-tag {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: #8cf5c7;
+}
+
+.pt-client-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.pt-client {
+  text-align: left;
+  cursor: pointer;
+  border-radius: 1rem;
+  border: 1px solid rgba(126, 224, 255, 0.25);
+  background: rgba(4, 8, 18, 0.72);
+  padding: 0.75rem 0.8rem;
+  color: #f4f6ff;
+}
+
+.pt-client.active {
+  border-color: rgba(246, 220, 138, 0.65);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.7);
+}
+
+.pt-client-name {
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.pt-client-meta {
+  margin-top: 0.25rem;
+  display: flex;
+  gap: 0.6rem;
+  color: #a9b4d2;
+  font-size: 0.85rem;
+}
+
+.pt-snapshot {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+.pt-snap-block {
+  border-radius: 1rem;
+  border: 1px solid rgba(126, 224, 255, 0.25);
+  background: rgba(4, 8, 18, 0.72);
+  padding: 0.75rem 0.8rem;
+}
+
+.pt-snap-label {
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: #7b88a5;
+  font-size: 0.7rem;
+  margin-bottom: 0.25rem;
+}
+
+.pt-snap-value {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #f6dc8a;
+}
+
+.pt-actions {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.pt-btn {
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  padding: 0.55rem 1.1rem;
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  background: linear-gradient(135deg, #7ee0ff, #f6dc8a);
+  color: #101010;
+}
+
+.pt-btn-outline {
+  background: transparent;
+  border: 1px solid rgba(126, 224, 255, 0.6);
+  color: #e4ebff;
+}
+
+.pt-permissions {
+  border-radius: 1rem;
+  border: 1px dashed rgba(126, 224, 255, 0.45);
+  padding: 0.85rem 0.85rem;
+  color: #cfd7f5;
+}
+
+.pt-perm-title {
+  font-weight: 800;
+  margin-bottom: 0.35rem;
+}
+
+.pt-permissions ul {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: #cfd7f5;
+}
+
+@media (max-width: 920px) {
+  .pt-grid {
+    grid-template-columns: 1fr;
+  }
+}

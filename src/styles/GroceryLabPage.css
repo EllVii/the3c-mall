@@ -1,0 +1,302 @@
+/* src/styles/GroceryLabPage.css */
+.gl-page {
+  padding: 1.5rem 1.25rem 3rem;
+  color: var(--text);
+}
+
+.gl-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1.25rem;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.gl-wizard {
+  margin-top: 0.8rem;
+}
+
+.gl-card {
+  border-radius: 1.4rem;
+  border: 1px solid rgba(63, 82, 110, 0.9);
+  background: var(--bg-graphic), rgba(5, 9, 18, 0.97);
+  padding: 1.15rem 1.15rem 1.05rem;
+  box-shadow: 0 18px 46px rgba(0, 0, 0, 0.9);
+}
+
+.gl-card-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+  margin-bottom: 0.9rem;
+}
+
+.gl-title {
+  font-size: 1.3rem;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  margin-bottom: 0.25rem;
+  color: var(--gold);
+}
+
+.gl-subtitle {
+  color: var(--muted);
+  font-size: 0.92rem;
+  max-width: 760px;
+}
+
+.gl-step {
+  font-size: 0.82rem;
+  color: var(--muted2);
+  border: 1px solid rgba(126, 224, 255, 0.22);
+  background: rgba(4, 8, 18, 0.35);
+  border-radius: 999px;
+  padding: 0.45rem 0.75rem;
+  white-space: nowrap;
+}
+
+.gl-body {
+  margin-top: 0.4rem;
+}
+
+.gl-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.gl-row {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.gl-hint {
+  margin-top: 0.25rem;
+  color: var(--muted2);
+  font-size: 0.85rem;
+  line-height: 1.35;
+  border-left: 2px solid rgba(246, 220, 138, 0.35);
+  padding-left: 0.75rem;
+}
+
+.gl-mini {
+  color: var(--muted2);
+  font-size: 0.85rem;
+  line-height: 1.35;
+}
+
+.gl-done {
+  padding: 0.85rem 0.9rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(140, 245, 199, 0.25);
+  background: rgba(12, 24, 18, 0.35);
+  color: #c8ffe8;
+  font-weight: 800;
+}
+
+/* Footer Prev/Next pinned (calms users; they never feel trapped) */
+.gl-footer {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 0.75rem;
+  align-items: center;
+  margin-top: 1rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid rgba(126, 224, 255, 0.12);
+}
+
+.gl-footer-mid {
+  display: flex;
+  justify-content: center;
+}
+
+.gl-link {
+  color: var(--blue);
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  user-select: none;
+  padding: 0.35rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid rgba(126, 224, 255, 0.18);
+  background: rgba(4, 8, 18, 0.2);
+}
+.gl-link:hover {
+  filter: brightness(1.06);
+}
+
+/* Sliding animation */
+.gl-slide {
+  will-change: transform, opacity;
+  animation-duration: 240ms;
+  animation-timing-function: ease;
+}
+
+.gl-next {
+  animation-name: glNext;
+}
+.gl-prev {
+  animation-name: glPrev;
+}
+
+@keyframes glNext {
+  from {
+    opacity: 0.2;
+    transform: translateX(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0px);
+  }
+}
+@keyframes glPrev {
+  from {
+    opacity: 0.2;
+    transform: translateX(-18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0px);
+  }
+}
+
+/* Store chips */
+.gl-store-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.gl-chip {
+  border-radius: 999px;
+  padding: 0.6rem 0.85rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+  cursor: pointer;
+  border: 1px solid rgba(126, 224, 255, 0.28);
+  background: rgba(4, 8, 18, 0.55);
+  color: var(--blue);
+  transition: filter 0.18s ease, transform 0.18s ease;
+}
+.gl-chip:active {
+  transform: scale(0.98);
+}
+.gl-chip.is-off {
+  color: rgba(255, 180, 180, 0.95);
+  border-color: rgba(255, 180, 180, 0.22);
+  background: rgba(18, 6, 8, 0.28);
+}
+.gl-chip:hover {
+  filter: brightness(1.05);
+}
+
+/* Delivery box */
+.gl-delivery-box {
+  margin-top: 0.6rem;
+  border-radius: 1.1rem;
+  border: 1px solid rgba(246, 220, 138, 0.22);
+  background: rgba(20, 14, 5, 0.32);
+  padding: 0.85rem 0.9rem;
+}
+.gl-delivery-title {
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--blue);
+  margin-bottom: 0.35rem;
+}
+
+/* Results */
+.gl-results {
+  margin-top: 1rem;
+}
+
+.gl-results-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.9fr);
+  gap: 1rem;
+}
+
+.gl-results-title {
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--blue);
+  margin-bottom: 0.35rem;
+}
+
+.gl-rank {
+  margin-top: 0.55rem;
+}
+.gl-rank-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid rgba(126, 224, 255, 0.1);
+}
+.gl-rank-row strong {
+  color: var(--gold);
+}
+
+/* Compare table */
+.gl-table-wrap {
+  overflow-x: auto;
+  margin-top: 0.75rem;
+}
+
+.gl-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 720px;
+}
+.gl-table th,
+.gl-table td {
+  padding: 0.55rem;
+  text-align: left;
+}
+.gl-table thead th {
+  color: var(--muted2);
+  border-bottom: 1px solid rgba(126, 224, 255, 0.14);
+}
+.gl-table tbody tr {
+  border-top: 1px solid rgba(126, 224, 255, 0.1);
+}
+.gl-td-strong {
+  font-weight: 900;
+}
+.gl-td-gold {
+  color: var(--gold);
+  font-weight: 900;
+}
+
+/* Store request */
+.gl-request {
+  display: flex;
+  gap: 0.6rem;
+  margin-top: 0.75rem;
+  flex-wrap: wrap;
+}
+.gl-request .input {
+  flex: 1 1 320px;
+}
+
+@media (max-width: 920px) {
+  .gl-header {
+    flex-direction: column;
+  }
+  .gl-results-grid {
+    grid-template-columns: 1fr;
+  }
+  .gl-footer {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+  .gl-footer-mid {
+    justify-content: flex-start;
+  }
+}
