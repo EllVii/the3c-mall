@@ -34,6 +34,7 @@ function readJSON(key, fallback) {
     return fallback;
   }
 }
+
 function writeJSON(key, value) {
   try {
     localStorage.setItem(key, JSON.stringify(value));
@@ -41,9 +42,11 @@ function writeJSON(key, value) {
     // ignore
   }
 }
+
 function clamp(n, a, b) {
   return Math.max(a, Math.min(b, n));
 }
+
 function pickRandom(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
@@ -51,21 +54,20 @@ function pickRandom(arr) {
 export default function GroceryLabPage() {
   const nav = useNavigate();
 
-  // Wizard steps:
-  // 0 = welcome + recommended default
-  // 1 = lane (single vs multi)
-  // 2 = fulfillment (in-store/pickup/delivery)
-  // 3 = stores include/exclude + request store
-  // 4 = results (split cart)
+  // steps:
+  // 0 welcome
+  // 1 lane
+  // 2 fulfillment (+ deliveryPlan)
+  // 3 stores + request
+  // 4 results
   const [step, setStep] = useState(0);
 
   const [lane, setLane] = useState("auto-multi"); // auto-multi | single-store
   const [fulfillment, setFulfillment] = useState("in-store"); // in-store | pickup | delivery
-  const [deliveryPlan, setDeliveryPlan] = useState("credit"); // credit | self (only if delivery)
+  const [deliveryPlan, setDeliveryPlan] = useState("credit"); // credit | self
   const [blockedStores, setBlockedStores] = useState([]);
   const [requestStore, setRequestStore] = useState("");
 
-  // “Today’s planned” / roll-of-dice
   const [dicePick, setDicePick] = useState(null);
 
   // Load persisted
@@ -129,13 +131,13 @@ export default function GroceryLabPage() {
     return { perItem, grouped, total };
   }, [activeStores, items]);
 
-  // Split cart sections
   const todaysPlan = useMemo(() => {
     if (lane === "single-store") {
+      const total = singleStoreRanking[0]?.total ?? 0;
       return {
         type: "single",
         store: bestSingle,
-        total: singleStoreRanking[0]?.total ?? 0,
+        total,
         items: items.map((it) => ({
           ...it,
           chosenStore: bestSingle,
@@ -168,13 +170,13 @@ export default function GroceryLabPage() {
   }
 
   function recommendedDefault() {
-    // Your best “one tap finishes wizard” default
     setLane("auto-multi");
     setFulfillment("in-store");
     setDeliveryPlan("credit");
     setBlockedStores([]);
     setRequestStore("");
-    setStep(4); // jump right to results
+    setDicePick(null);
+    setStep(4);
   }
 
   function next() {
@@ -184,20 +186,18 @@ export default function GroceryLabPage() {
     setStep((s) => clamp(s - 1, 0, 4));
   }
 
-  // Auto-advance (but NO blank cards)
+  // Auto-advance picks (NO blank card)
   function pickLane(v) {
     setLane(v);
-    // advance to fulfillment
     setStep(2);
   }
+
   function pickFulfillment(v) {
     setFulfillment(v);
-    // if delivery, keep deliveryPlan selection on same step (results later)
     setStep(3);
   }
 
   function rollDice() {
-    // “Today’s planned” random: pick a random lane + fulfillment combo
     const lanePick = pickRandom(["auto-multi", "single-store"]);
     const fulfillPick = pickRandom(["in-store", "pickup", "delivery"]);
     const planPick = fulfillPick === "delivery" ? pickRandom(["credit", "self"]) : "credit";
@@ -208,15 +208,13 @@ export default function GroceryLabPage() {
       deliveryPlan: planPick,
       why:
         fulfillPick === "delivery"
-          ? "Convenience day. Let the app route stores and you choose how delivery fees are handled."
+          ? "Convenience day. Let the app route the cart and keep it simple."
           : fulfillPick === "pickup"
-            ? "Fast day. Pickup keeps it efficient."
-            : "Control day. Shop in-store and still let the app do the math.",
+          ? "Fast day. Pickup keeps it efficient."
+          : "Control day. In-store with the app doing the math.",
     };
 
     setDicePick(suggestion);
-
-    // Apply it (one tap)
     setLane(suggestion.lane);
     setFulfillment(suggestion.fulfillment);
     setDeliveryPlan(suggestion.deliveryPlan);
@@ -233,41 +231,41 @@ export default function GroceryLabPage() {
 
   return (
     <section className="page gl-shell">
+      {/* Keep header CLEAN: no buttons row */}
       <header className="gl-top">
         <div>
           <p className="kicker">LAB · GROCERY</p>
           <h1 className="h1">Grocery Lab</h1>
           <p className="sub">
-            Thoughtless by design: you answer a few quick questions — 3C chooses the cart strategy.
+            Answer a few quick prompts — 3C builds the shopping strategy and saves it to your device.
           </p>
-
-          <div className="nav-row">
-            <button className="btn btn-secondary" onClick={() => nav("/app")}>Dashboard</button>
-            <button className="btn btn-secondary" onClick={() => nav("/app/meal-plans")}>Meal Plans</button>
-            <button className="btn btn-ghost" onClick={startOver}>Start Over</button>
-          </div>
         </div>
 
         <div className="pill gl-pill">
           <span>Strategy</span>
-          <strong>{lane === "auto-multi" ? "Multi-store" : "Single-store"} · {fulfillLabel}</strong>
+          <strong>
+            {lane === "auto-multi" ? "Multi-store" : "Single-store"} · {fulfillLabel}
+          </strong>
         </div>
       </header>
 
-      {/* Wizard Card (single card, sliding inside) */}
+      {/* Wizard Card */}
       <div className="card glass gl-wizard">
         <div className="gl-wiz-head">
           <div className="gl-dots">
-            <span className={"gl-dot " + (step === 0 ? "on" : "")} />
-            <span className={"gl-dot " + (step === 1 ? "on" : "")} />
-            <span className={"gl-dot " + (step === 2 ? "on" : "")} />
-            <span className={"gl-dot " + (step === 3 ? "on" : "")} />
-            <span className={"gl-dot " + (step === 4 ? "on" : "")} />
+            {[0, 1, 2, 3, 4].map((n) => (
+              <span key={n} className={"gl-dot " + (step === n ? "on" : "")} />
+            ))}
           </div>
 
-          <button className="btn btn-primary" onClick={recommendedDefault}>
-            Recommended Default
-          </button>
+          <div className="nav-row" style={{ gap: ".5rem", margin: 0 }}>
+            <button className="btn btn-secondary" onClick={startOver}>
+              Start Over
+            </button>
+            <button className="btn btn-primary" onClick={recommendedDefault}>
+              Recommended Default
+            </button>
+          </div>
         </div>
 
         <div className="gl-stage glass-inner">
@@ -276,19 +274,20 @@ export default function GroceryLabPage() {
             <div className="gl-panel">
               <div className="gl-tag">STEP 0</div>
               <h2 className="gl-h2">Welcome</h2>
-              <p className="small">
-                3C will do the work. You’re just telling us how you want to shop today.
-              </p>
+              <p className="small">Pick the vibe today — fast, simple, and no confusion.</p>
 
               <div className="grid">
                 <div className="card glass-inner" style={{ padding: "1rem" }}>
                   <div className="gl-mini-title">Today’s Planned</div>
                   <p className="small" style={{ marginTop: ".35rem" }}>
-                    Want a quick recommendation? Roll it — apply in one tap.
+                    Quick recommendation. Applies in one tap.
                   </p>
                   <div className="nav-row">
-                    <button className="btn btn-primary" onClick={rollDice}>Roll the Dice</button>
+                    <button className="btn btn-primary" onClick={rollDice}>
+                      Roll the Dice
+                    </button>
                   </div>
+
                   {dicePick && (
                     <div className="small" style={{ marginTop: ".75rem" }}>
                       Suggestion:{" "}
@@ -306,25 +305,31 @@ export default function GroceryLabPage() {
                 <div className="card glass-inner" style={{ padding: "1rem" }}>
                   <div className="gl-mini-title">Manual (still easy)</div>
                   <p className="small" style={{ marginTop: ".35rem" }}>
-                    If you prefer control, go step-by-step.
+                    Step-by-step control.
                   </p>
                   <div className="nav-row">
-                    <button className="btn btn-secondary" onClick={() => setStep(1)}>Start Wizard</button>
+                    <button className="btn btn-secondary" onClick={() => setStep(1)}>
+                      Start Wizard
+                    </button>
                   </div>
                 </div>
               </div>
 
               <div className="gl-nav">
-                <button className="btn btn-secondary" disabled>Previous</button>
-                <button className="btn btn-primary" onClick={() => setStep(1)}>Next</button>
+                <button className="btn btn-secondary" disabled>
+                  Previous
+                </button>
+                <button className="btn btn-primary" onClick={() => setStep(1)}>
+                  Next
+                </button>
               </div>
             </div>
 
-            {/* STEP 1: Lane first (your newest logic) */}
+            {/* STEP 1 */}
             <div className="gl-panel">
               <div className="gl-tag">STEP 1</div>
               <h2 className="gl-h2">How would you like to shop today?</h2>
-              <p className="small">One store, or let 3C optimize the best overall cart.</p>
+              <p className="small">One store, or let 3C optimize across stores.</p>
 
               <div className="gl-choice-grid">
                 <button
@@ -332,7 +337,7 @@ export default function GroceryLabPage() {
                   onClick={() => pickLane("auto-multi")}
                 >
                   <div className="gl-choice-title">Multiple stores</div>
-                  <div className="gl-choice-desc">3C splits items automatically for best overall value.</div>
+                  <div className="gl-choice-desc">3C splits items automatically for best value.</div>
                 </button>
 
                 <button
@@ -340,27 +345,31 @@ export default function GroceryLabPage() {
                   onClick={() => pickLane("single-store")}
                 >
                   <div className="gl-choice-title">One single store</div>
-                  <div className="gl-choice-desc">3C picks the one store with the lowest total.</div>
+                  <div className="gl-choice-desc">3C picks the lowest total store.</div>
                 </button>
               </div>
 
               <div className="gl-nav">
-                <button className="btn btn-secondary" onClick={prev}>Previous</button>
-                <button className="btn btn-primary" onClick={next}>Next</button>
+                <button className="btn btn-secondary" onClick={prev}>
+                  Previous
+                </button>
+                <button className="btn btn-primary" onClick={next}>
+                  Next
+                </button>
               </div>
             </div>
 
-            {/* STEP 2: Fulfillment */}
+            {/* STEP 2 */}
             <div className="gl-panel">
               <div className="gl-tag">STEP 2</div>
               <h2 className="gl-h2">How do you want to get groceries?</h2>
-              <p className="small">Delivery is optional. You’re never forced into it.</p>
+              <p className="small">Delivery is optional — you’re never forced into it.</p>
 
               <div className="gl-choice-grid">
                 {[
                   { id: "in-store", title: "In-Store", desc: "You shop. 3C does the math." },
-                  { id: "pickup", title: "Pickup", desc: "Order pickup with the same strategy." },
-                  { id: "delivery", title: "Delivery", desc: "Choose credit plan or pay yourself." },
+                  { id: "pickup", title: "Pickup", desc: "Same strategy with pickup." },
+                  { id: "delivery", title: "Delivery", desc: "Choose credit plan or self-pay." },
                 ].map((x) => (
                   <button
                     key={x.id}
@@ -373,12 +382,11 @@ export default function GroceryLabPage() {
                 ))}
               </div>
 
-              {/* Delivery plan stays on THIS SAME STEP (no blank card) */}
               {fulfillment === "delivery" && (
                 <div className="card glass-inner" style={{ marginTop: "1rem", padding: "1rem" }}>
                   <div className="gl-mini-title">Delivery Options</div>
                   <p className="small" style={{ marginTop: ".35rem" }}>
-                    Pick how fees are handled (Alpha demo).
+                    Alpha demo: choose how delivery fees are handled.
                   </p>
 
                   <div className="nav-row">
@@ -388,7 +396,6 @@ export default function GroceryLabPage() {
                     >
                       3C Delivery Credit
                     </button>
-
                     <button
                       className={"btn " + (deliveryPlan === "self" ? "btn-primary" : "btn-secondary")}
                       onClick={() => setDeliveryPlan("self")}
@@ -399,25 +406,27 @@ export default function GroceryLabPage() {
 
                   <div className="small" style={{ marginTop: ".65rem" }}>
                     {deliveryPlan === "credit"
-                      ? "Credit plan: you pay a monthly amount; if fees exceed the credit, you pay the difference."
+                      ? "Credit plan: monthly amount; if fees exceed credit, you pay the difference."
                       : "Self-pay: you pay delivery fees per store directly (no monthly credit)."}
                   </div>
                 </div>
               )}
 
               <div className="gl-nav">
-                <button className="btn btn-secondary" onClick={prev}>Previous</button>
-                <button className="btn btn-primary" onClick={next}>Next</button>
+                <button className="btn btn-secondary" onClick={prev}>
+                  Previous
+                </button>
+                <button className="btn btn-primary" onClick={next}>
+                  Next
+                </button>
               </div>
             </div>
 
-            {/* STEP 3: Stores include/exclude + request store */}
+            {/* STEP 3 */}
             <div className="gl-panel">
               <div className="gl-tag">STEP 3</div>
               <h2 className="gl-h2">Stores</h2>
-              <p className="small">
-                You don’t have to choose stores — 3C does. This is only “exclude stores I won’t use.”
-              </p>
+              <p className="small">Optional: exclude stores you won’t use.</p>
 
               <div className="gl-store-row">
                 {STORES.map((s) => (
@@ -434,8 +443,9 @@ export default function GroceryLabPage() {
               <div className="card glass-inner" style={{ marginTop: "1rem", padding: "1rem" }}>
                 <div className="gl-mini-title">Don’t see your store?</div>
                 <p className="small" style={{ marginTop: ".35rem" }}>
-                  Request it. For Alpha, we simply collect the request.
+                  Request it — we capture it for Beta.
                 </p>
+
                 <label className="label">Store name</label>
                 <input
                   className="input"
@@ -443,10 +453,13 @@ export default function GroceryLabPage() {
                   onChange={(e) => setRequestStore(e.target.value)}
                   placeholder="Example: WinCo, Safeway, H-E-B..."
                 />
+
                 <div className="nav-row">
                   <button
                     className="btn btn-primary"
-                    onClick={() => alert(requestStore ? `Request saved (demo): ${requestStore}` : "Type a store name first (demo).")}
+                    onClick={() =>
+                      alert(requestStore ? `Request saved (demo): ${requestStore}` : "Type a store name first.")
+                    }
                   >
                     Submit Request
                   </button>
@@ -454,26 +467,30 @@ export default function GroceryLabPage() {
               </div>
 
               <div className="gl-nav">
-                <button className="btn btn-secondary" onClick={prev}>Previous</button>
-                <button className="btn btn-primary" onClick={() => setStep(4)}>Finish</button>
+                <button className="btn btn-secondary" onClick={prev}>
+                  Previous
+                </button>
+                <button className="btn btn-primary" onClick={() => setStep(4)}>
+                  Finish
+                </button>
               </div>
             </div>
 
-            {/* STEP 4: Results (split cart) */}
+            {/* STEP 4 */}
             <div className="gl-panel">
               <div className="gl-tag">RESULT</div>
               <h2 className="gl-h2">Your Cart Strategy</h2>
               <p className="small">
-                Lane: <strong style={{ color: "var(--gold)" }}>{laneLabel}</strong> ·
-                Fulfillment: <strong style={{ color: "var(--blue)" }}> {fulfillLabel}</strong>
+                Lane: <strong style={{ color: "var(--gold)" }}>{laneLabel}</strong> · Fulfillment:{" "}
+                <strong style={{ color: "var(--blue)" }}>{fulfillLabel}</strong>
               </p>
 
               <div className="grid" style={{ marginTop: "1rem" }}>
-                {/* LEFT: Today’s Plan */}
+                {/* LEFT: Plan */}
                 <div className="card glass-inner" style={{ padding: "1rem" }}>
                   <div className="gl-mini-title">Today’s Plan</div>
                   <p className="small" style={{ marginTop: ".35rem" }}>
-                    This is what 3C would build for you right now (demo prices).
+                    Demo prices for Alpha testing.
                   </p>
 
                   {todaysPlan.type === "single" ? (
@@ -533,16 +550,20 @@ export default function GroceryLabPage() {
                   </div>
                 </div>
 
-                {/* RIGHT: Roll the Dice */}
+                {/* RIGHT: Dice */}
                 <div className="card glass-inner" style={{ padding: "1rem" }}>
-                  <div className="gl-mini-title">Today’s Planned (Roll the Dice)</div>
+                  <div className="gl-mini-title">Try a different vibe</div>
                   <p className="small" style={{ marginTop: ".35rem" }}>
-                    Want a different vibe today? One tap suggests + applies a new strategy.
+                    One tap suggests + applies a new strategy.
                   </p>
 
                   <div className="nav-row">
-                    <button className="btn btn-primary" onClick={rollDice}>Roll Again</button>
-                    <button className="btn btn-secondary" onClick={() => setStep(1)}>Change Manually</button>
+                    <button className="btn btn-primary" onClick={rollDice}>
+                      Roll Again
+                    </button>
+                    <button className="btn btn-secondary" onClick={() => setStep(1)}>
+                      Change Manually
+                    </button>
                   </div>
 
                   {dicePick ? (
@@ -573,7 +594,9 @@ export default function GroceryLabPage() {
               </div>
 
               <div className="gl-nav">
-                <button className="btn btn-secondary" onClick={() => setStep(3)}>Previous</button>
+                <button className="btn btn-secondary" onClick={() => setStep(3)}>
+                  Previous
+                </button>
                 <button className="btn btn-primary" onClick={() => alert("Alpha demo: Strategy saved to device")}>
                   Save Strategy
                 </button>
@@ -583,10 +606,17 @@ export default function GroceryLabPage() {
         </div>
       </div>
 
-      {/* Quick “Change Strategy” button (always visible, simple) */}
+      {/* Bottom bar = app-like navigation */}
       <div className="gl-bottom">
-        <button className="btn btn-secondary" onClick={() => setStep(1)}>Change Strategy</button>
-        <button className="btn btn-secondary" onClick={() => nav("/app/settings")}>Settings</button>
+        <button className="btn btn-secondary" onClick={() => nav("/app")}>
+          Dashboard
+        </button>
+        <button className="btn btn-secondary" onClick={() => setStep(1)}>
+          Change Strategy
+        </button>
+        <button className="btn btn-secondary" onClick={() => nav("/app/settings")}>
+          Settings
+        </button>
       </div>
     </section>
   );
