@@ -164,7 +164,62 @@ body{
   padding: 1.1rem 1.1rem 1rem;
   box-shadow: 0 18px 46px rgba(0,0,0,.20);
 }
+/* ===== Global Glass Treatment + Watermark ===== */
 
+/* 95% see-through is too transparent for readability.
+   This is a "clear glass" compromise that still shows watermark. */
+:root{
+  --glass-alpha: 0.10;      /* lower = more see-through */
+  --glass-border: rgba(126,224,255,.16);
+  --glass-blur: 16px;
+}
+
+/* Apply to ALL cards */
+.card.glass{
+  background:
+    var(--bg-graphic),
+    rgba(5,9,18,var(--glass-alpha));
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+}
+
+/* Dashboard watermark wrapper */
+.dashboard-watermark{
+  position: relative;
+}
+
+.dashboard-watermark::before{
+  content:"";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.10; /* watermark strength */
+  background:
+    url("/icons/icon-512.png") center/380px no-repeat;
+  filter: saturate(1.1) contrast(1.05);
+}
+
+/* tighten dashboard top spacing */
+.dash-top{
+  display:flex;
+  justify-content: space-between;
+  align-items:flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+/* Optional: subtle float animation for premium feel */
+@keyframes floaty {
+  0%{ transform: translateY(0px); }
+  50%{ transform: translateY(-6px); }
+  100%{ transform: translateY(0px); }
+}
+.card.glass{
+  animation: floaty 6s ease-in-out infinite;
+}
+
+If the watermark feels too strong, reduce opacity: 0.10 to 0.06.
 /* Grid */
 .grid{
   display:grid;
@@ -276,4 +331,35 @@ html[data-theme="pearl-luxe"] .btn-secondary{
   flex-wrap:wrap;
   gap:.6rem;
   margin-top: 1rem;
+}
+/* ===== One-screen app shell (no vertical scroll) ===== */
+.app-one-screen{
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;           /* kill vertical scroll */
+  display: flex;
+  flex-direction: column;
+}
+.app-stage{
+  flex: 1;
+  overflow: hidden;           /* no scrolling inside stage */
+  display: flex;
+  min-height: 0;
+}
+
+/* Smaller buttons default (app feel, less “website”) */
+.btn{
+  padding: .58rem .85rem;
+  font-size: .72rem;
+  letter-spacing: .07em;
+}
+.nav-row{ gap: .5rem; margin-top: .75rem; }
+
+/* Smoky glass baseline for cards everywhere */
+.card.glass{
+  background:
+    var(--bg-graphic),
+    rgba(5,9,18,.65);        /* ~65% smoky glass */
+  border: 1px solid rgba(126,224,255,.18);
+  backdrop-filter: blur(10px);
 }

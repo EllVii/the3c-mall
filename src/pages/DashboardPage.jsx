@@ -1,341 +1,203 @@
 // src/pages/DashboardPage.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import "../styles/DashboardPage.css";
+import {
+  getPrefsSafe,
+  setFocus,
+  setNavMode,
+  shouldShowNudge,
+  advanceNudgeSchedule,
+  disableNudges
+} from "../utils/prefs";
 
-const KEY = "3c.dashboard.wizard.v3";
-const KEY_MIN = "3c.concierge.min.v1";
-
-const GOALS = [
-  { id: "save", title: "Save money on groceries", desc: "Auto-build your cart strategy.", route: "/app/grocery-lab" },
-  { id: "meal", title: "Meal prep / meal plan", desc: "Date → time → meal (demo).", route: "/app/meal-plans" },
-  { id: "workout", title: "Workout today", desc: "Quick plan + tracking (demo).", route: "/app/coming-soon" },
-  { id: "pt", title: "PT Mode", desc: "Client list + check-ins (demo).", route: "/app/pt" },
+const ZONES = [
+  { id: "grocery", title: "Save money on groceries", desc: "Build a cart optimized automatically.", route: "/app/grocery-lab" },
+  { id: "meals", title: "Plan meals fast", desc: "Set a meal slot and generate a grocery list.", route: "/app/meal-plans" },
+  { id: "workout", title: "Training & performance", desc: "Strength goals + recovery pacing.", route: "/app/coming-soon" },
+  { id: "community", title: "Community support", desc: "Encouragement without pressure.", route: "/app/community" },
 ];
 
-const EXPERIENCE = [
-  { id: "fast", title: "Fast", desc: "Keep it short. Minimal text." },
-  { id: "normal", title: "Normal", desc: "Quick choices. Keep me moving." },
-  { id: "deep", title: "Deep", desc: "Show comparisons + the “why” (optional)." },
-];
-
-function readJSON(key, fallback) {
-  try {
-    const raw = localStorage.getItem(key);
-    if (!raw) return fallback;
-    return JSON.parse(raw);
-  } catch {
-    return fallback;
-  }
-}
-function writeJSON(key, value) {
-  try {
-    localStorage.setItem(key, JSON.stringify(value));
-  } catch {
-    // ignore
-  }
+function pickRandom(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
 }
 
 export default function DashboardPage() {
   const nav = useNavigate();
+  const [prefs, setPrefsState] = useState(() => getPrefsSafe());
+  const [conciergeOpen, setConciergeOpen] = useState(true);
+  const [nudge, setNudge] = useState({ show: false, state: null });
 
-  // steps: 0=concierge, 1=goal, 2=experience
-  const [step, setStep] = useState(0);
-  const [goalId, setGoalId] = useState(null);
-  const [expId, setExpId] = useState("normal");
-  const [conciergeMin, setConciergeMin] = useState(false);
-
-  // Load persisted
   useEffect(() => {
-    const saved = readJSON(KEY, null);
-    if (saved) {
-      setStep(typeof saved.step === "number" ? saved.step : 0);
-      setGoalId(saved.goalId ?? null);
-      setExpId(saved.expId ?? "normal");
-    } else {
-      // no saved state: ALWAYS start at concierge
-      setStep(0);
-    }
-
-    const m = readJSON(KEY_MIN, null);
-    if (m && typeof m.min === "boolean") setConciergeMin(m.min);
+    setPrefsState(getPrefsSafe());
+    setNudge(shouldShowNudge());
   }, []);
 
-  // Persist wizard
-  useEffect(() => {
-    writeJSON(KEY, { step, goalId, expId });
-  }, [step, goalId, expId]);
+  const focusedZone = useMemo(() => {
+    if (!prefs?.focus || prefs.focus === "explore") return null;
+    return ZONES.find((z) => z.id === prefs.focus) || null;
+  }, [prefs]);
 
-  // Persist concierge minimized state
-  useEffect(() => {
-    writeJSON(KEY_MIN, { min: conciergeMin });
-  }, [conciergeMin]);
+  const visibleZones = useMemo(() => {
+    if (prefs?.navMode === "full") return ZONES;
+    // focused mode: show only grocery + one “explore” option + one “upgrade” teaser
+    const grocery = ZONES.find((z) => z.id === "grocery");
+    const pick = focusedZone || grocery;
+    return [pick].filter(Boolean);
+  }, [prefs, focusedZone]);
 
-  const selectedGoal = useMemo(() => GOALS.find((g) => g.id === goalId) || null, [goalId]);
-  const selectedExp = useMemo(() => EXPERIENCE.find((e) => e.id === expId) || EXPERIENCE[1], [expId]);
-
-  function startOver() {
-    // Start over brings them back to Concierge, and expands it.
-    setGoalId(null);
-    setExpId("normal");
-    setConciergeMin(false);
-    setStep(0);
-    writeJSON(KEY, { step: 0, goalId: null, expId: "normal" });
-    writeJSON(KEY_MIN, { min: false });
+  function chooseFocus(id) {
+    const next = setFocus(id);
+    setPrefsState(next);
   }
 
-  function chooseGoal(id) {
-    setGoalId(id);
-    setStep(2); // auto-advance
+  function toggleNavMode() {
+    const nextMode = prefs?.navMode === "full" ? "focused" : "full";
+    const next = setNavMode(nextMode);
+    setPrefsState(next);
   }
 
-  function chooseExp(id) {
-    setExpId(id);
+  function handleNudgeSeen() {
+    advanceNudgeSchedule();
+    setNudge({ show: false, state: shouldShowNudge().state });
   }
 
-  function minimizeConcierge() {
-    setConciergeMin(true);
-    // Move them forward so they don't feel stuck
-    if (step === 0) setStep(1);
+  function handleDisableNudges() {
+    disableNudges();
+    setNudge({ show: false, state: shouldShowNudge().state });
   }
 
-  function openConcierge() {
-    setConciergeMin(false);
-    setStep(0);
-  }
-
-  const concierge = useMemo(() => {
-    if (conciergeMin) return null;
-
-    // simple “teaching” copy (alpha safe)
-    if (!selectedGoal) {
-      return {
-        title: "3C Concierge (Demo)",
-        body:
-          "I’m here to guide you. Pick what you want today, and I’ll route you to the right zone. You can minimize me anytime.",
-        ctas: [
-          { label: "Save money on groceries", action: () => { setGoalId("save"); setStep(2); } },
-          { label: "Meal prep / meal plan", action: () => { setGoalId("meal"); setStep(2); } },
-          { label: "Workout today", action: () => { setGoalId("workout"); setStep(2); } },
-          { label: "PT Mode", action: () => { setGoalId("pt"); setStep(2); } },
-        ],
-        hint: "Alpha = smooth + clear. Beta = real integrations + real data.",
-      };
-    }
-
-    return {
-      title: "Locked in.",
-      body: `You chose "${selectedGoal.title}". Pick how fast you want the experience, then I’ll open the correct zone.`,
-      ctas: [
-        { label: "Continue", action: () => setStep(2) },
-        { label: "Open now", action: () => nav(selectedGoal.route) },
-      ],
-      hint: `Mode: ${selectedExp.title}`,
-    };
-  }, [conciergeMin, selectedGoal, selectedExp, nav]);
-
-  const launchLabel = useMemo(() => {
-    if (!selectedGoal) return "Choose a goal first";
-    if (selectedGoal.id === "save") return "Open Grocery Lab";
-    if (selectedGoal.id === "meal") return "Open Meal Plans";
-    if (selectedGoal.id === "workout") return "Open Fitness";
-    return "Open PT Mode";
-  }, [selectedGoal]);
+  const explorePick = useMemo(() => pickRandom(ZONES), []);
 
   return (
-    <section className="page db-shell">
-      {/* Headline only (no logo next to title) */}
-      <div className="db-top">
-        <p className="kicker">DASHBOARD</p>
-        <h1 className="h1" style={{ margin: 0 }}>
-          How can we help you today?
-        </h1>
-        <p className="sub" style={{ marginTop: ".45rem" }}>
-          Start with the Concierge. Minimize it if you prefer a clean dashboard.
-        </p>
-      </div>
-
-      {/* Floating concierge pill (only when minimized) */}
-      {conciergeMin && (
-        <button className="db-float-pill" onClick={openConcierge} aria-label="Open Concierge">
-          Concierge
-        </button>
-      )}
-
-      <div className="grid" style={{ marginTop: "1rem" }}>
-        {/* LEFT: Wizard */}
-        <div className="card db-card glass">
-          <div className="db-card-head">
-            <div className="db-step">
-              <span className="db-step-dot" data-on={step === 0} />
-              <span className="db-step-dot" data-on={step === 1} />
-              <span className="db-step-dot" data-on={step === 2} />
-            </div>
-
-            <div className="db-head-actions">
-              {!conciergeMin ? (
-                <button className="btn btn-ghost db-head-btn" onClick={minimizeConcierge}>
-                  Minimize Concierge
-                </button>
-              ) : (
-                <button className="btn btn-secondary db-head-btn" onClick={openConcierge}>
-                  Open Concierge
-                </button>
-              )}
-
-              <button className="btn btn-ghost db-head-btn" onClick={startOver}>
-                Start Over
-              </button>
-            </div>
-          </div>
-
-          {/* Sliding stage */}
-          <div className="db-stage glass-inner">
-            <div className="db-track" style={{ transform: `translateX(-${step * 100}%)` }}>
-              {/* STEP 0: Concierge */}
-              <div className="db-panel">
-                <div className="db-card-tag">STEP 0</div>
-                <h2 className="db-h2">Concierge</h2>
-                <p className="small">This is the guided entry point (the app teaches you first).</p>
-
-                {!conciergeMin && concierge && (
-                  <div className="db-ai-panel glass-inner">
-                    <div className="db-ai">
-                      <div className="db-ai-badge">3C</div>
-                      <div>
-                        <div className="db-ai-title">{concierge.title}</div>
-                        <div className="small">Mock AI for Alpha. Real AI later.</div>
-                      </div>
-                    </div>
-
-                    <p className="db-ai-p">{concierge.body}</p>
-
-                    <div className="nav-row">
-                      {concierge.ctas.map((c) => (
-                        <button key={c.label} className="btn btn-primary" onClick={c.action}>
-                          {c.label}
-                        </button>
-                      ))}
-                    </div>
-
-                    <div className="db-ai-foot small">{concierge.hint}</div>
-                  </div>
-                )}
-
-                <div className="db-nav">
-                  <button className="btn btn-secondary" disabled>
-                    Previous
-                  </button>
-                  <button className="btn btn-primary" onClick={() => setStep(1)}>
-                    Next
-                  </button>
-                </div>
-              </div>
-
-              {/* STEP 1: Goal */}
-              <div className="db-panel">
-                <div className="db-card-tag">STEP 1</div>
-                <h2 className="db-h2">Pick your goal</h2>
-                <p className="small">Pick intent. We route you. No overload.</p>
-
-                <div className="db-choice-grid">
-                  {GOALS.map((g) => (
-                    <button
-                      key={g.id}
-                      className={"db-choice glass-inner " + (goalId === g.id ? "db-choice-on" : "")}
-                      onClick={() => chooseGoal(g.id)}
-                    >
-                      <div className="db-choice-title">{g.title}</div>
-                      <div className="db-choice-desc">{g.desc}</div>
-                    </button>
-                  ))}
-                </div>
-
-                <div className="db-nav">
-                  <button className="btn btn-secondary" onClick={() => setStep(0)}>
-                    Previous
-                  </button>
-                  <button className="btn btn-primary" onClick={() => setStep(2)} disabled={!goalId}>
-                    Next
-                  </button>
-                </div>
-              </div>
-
-              {/* STEP 2: Experience */}
-              <div className="db-panel">
-                <div className="db-card-tag">STEP 2</div>
-                <h2 className="db-h2">Choose your experience</h2>
-                <p className="small">Controls how much detail we show — not your outcome.</p>
-
-                <div className="db-choice-grid">
-                  {EXPERIENCE.map((x) => (
-                    <button
-                      key={x.id}
-                      className={"db-choice glass-inner " + (expId === x.id ? "db-choice-on" : "")}
-                      onClick={() => chooseExp(x.id)}
-                    >
-                      <div className="db-choice-title">{x.title}</div>
-                      <div className="db-choice-desc">{x.desc}</div>
-                    </button>
-                  ))}
-                </div>
-
-                <div className="db-nav">
-                  <button className="btn btn-secondary" onClick={() => setStep(1)}>
-                    Previous
-                  </button>
-                  <button
-                    className="btn btn-primary"
-                    onClick={() => selectedGoal && nav(selectedGoal.route)}
-                    disabled={!selectedGoal}
-                  >
-                    {launchLabel}
-                  </button>
-                </div>
-
-                <div className="small" style={{ marginTop: ".75rem" }}>
-                  Focus:{" "}
-                  <strong style={{ color: "var(--gold)" }}>
-                    {selectedGoal ? selectedGoal.title : "Not set"}
-                  </strong>{" "}
-                  · Mode: <strong style={{ color: "var(--blue)" }}>{selectedExp.title}</strong>
-                </div>
-              </div>
-            </div>
-          </div>
+    <section className="page dashboard-watermark">
+      <div className="dash-top">
+        <div>
+          <p className="kicker">3C Mall · Lifestyle Intelligence OS</p>
+          <h1 className="h1">How can we help today?</h1>
+          <p className="sub">
+            Pick one focus — the Concierge remembers. You can keep it grocery-only and still get full value.
+          </p>
         </div>
 
-        {/* RIGHT: Summary */}
-        <div className="card db-card glass">
-          <div className="db-right">
-            <div className="db-right-title">Today’s Plan</div>
-            <div className="small" style={{ marginTop: ".35rem" }}>
-              {selectedGoal ? (
-                <>
-                  You’re headed to <strong style={{ color: "var(--gold)" }}>{selectedGoal.title}</strong>.
-                  <br />
-                  Mode: <strong style={{ color: "var(--blue)" }}>{selectedExp.title}</strong>.
-                </>
-              ) : (
-                "Use the Concierge first, or pick a goal."
-              )}
-            </div>
+        <div className="pill">
+          <span>Mode</span>
+          <strong>{prefs?.navMode === "full" ? "Full Mall" : "Focused"}</strong>
+        </div>
+      </div>
 
-            <div className="nav-row" style={{ marginTop: "1rem" }}>
-              <button className="btn btn-primary" disabled={!selectedGoal} onClick={() => selectedGoal && nav(selectedGoal.route)}>
-                {launchLabel}
-              </button>
-              <button className="btn btn-secondary" onClick={() => nav("/app/settings")}>
-                Settings
-              </button>
-            </div>
+      {/* Concierge FIRST */}
+      <div className="card glass" style={{ marginTop: "1rem" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", gap: "1rem", alignItems: "flex-start" }}>
+          <div>
+            <div className="card-tag">Concierge Demo</div>
+            <h2 style={{ margin: ".35rem 0 .4rem", color: "var(--gold)" }}>
+              3C Concierge
+            </h2>
+            <p className="small">
+              Quick demo. In Beta this becomes real AI. For now: choose a focus and we guide you.
+            </p>
+          </div>
 
-            <div className="db-right-foot small">
-              Alpha goal: smoothness + clarity.
-              <br />
-              Beta goal: real integrations + real data.
+          <button className="btn btn-ghost" onClick={() => setConciergeOpen((p) => !p)}>
+            {conciergeOpen ? "Minimize" : "Open"}
+          </button>
+        </div>
+
+        {conciergeOpen && (
+          <div className="grid" style={{ marginTop: "1rem" }}>
+            {[
+              { id: "grocery", label: "Groceries only" },
+              { id: "meals", label: "Meal planning" },
+              { id: "workout", label: "Training" },
+              { id: "community", label: "Community" },
+              { id: "explore", label: "Surprise me 🎲" },
+            ].map((x) => (
+              <button
+                key={x.id}
+                className={"btn " + (prefs?.focus === x.id ? "btn-primary" : "btn-secondary")}
+                onClick={() => {
+                  if (x.id === "explore") {
+                    chooseFocus(explorePick.id);
+                    nav(explorePick.route);
+                    return;
+                  }
+                  chooseFocus(x.id);
+                  // auto-navigate for fast UX:
+                  const hit = ZONES.find((z) => z.id === x.id);
+                  if (hit) nav(hit.route);
+                }}
+              >
+                {x.label}
+              </button>
+            ))}
+          </div>
+        )}
+
+        <div className="nav-row" style={{ marginTop: "1rem" }}>
+          <button className="btn btn-secondary" onClick={toggleNavMode}>
+            {prefs?.navMode === "full" ? "Switch to Focused" : "Switch to Full Mall"}
+          </button>
+        </div>
+      </div>
+
+      {/* In-app Nudge (Alpha “notifications”) */}
+      {nudge.show && (
+        <div className="card glass" style={{ marginTop: "1rem", borderColor: "rgba(246,220,138,.35)" }}>
+          <div className="card-tag">Quick Tip</div>
+          <h3 style={{ margin: ".35rem 0", color: "var(--gold)" }}>
+            You’re only using one feature — want the other wins too?
+          </h3>
+          <p className="small">
+            3C Mall can also plan meals, track fasting timers, and support consistency without pressure.
+            You can ignore this forever — your choice.
+          </p>
+
+          <div className="nav-row">
+            <button className="btn btn-primary" onClick={() => { handleNudgeSeen(); setNavMode("full"); }}>
+              Show me more
+            </button>
+            <button className="btn btn-secondary" onClick={handleNudgeSeen}>
+              Not now
+            </button>
+            <button className="btn btn-ghost" onClick={handleDisableNudges}>
+              Don’t remind me
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Focused Cards (less options) */}
+      <div className="grid" style={{ marginTop: "1rem" }}>
+        {visibleZones.map((z) => (
+          <div key={z.id} className="card glass">
+            <div className="card-tag">Zone</div>
+            <h3 style={{ margin: ".35rem 0", color: "var(--gold)" }}>{z.title}</h3>
+            <p className="small">{z.desc}</p>
+            <div className="nav-row">
+              <button className="btn btn-primary" onClick={() => nav(z.route)}>
+                Open →
+              </button>
+              <button className="btn btn-secondary" onClick={() => chooseFocus(z.id)}>
+                Set as default
+              </button>
             </div>
           </div>
+        ))}
+      </div>
+
+      {/* Optional image slot (your dashboard image) */}
+      <div className="card glass" style={{ marginTop: "1rem" }}>
+        <div className="card-tag">Preview</div>
+        <h3 style={{ margin: ".35rem 0", color: "var(--gold)" }}>What to expect</h3>
+        <p className="small">This is a guided experience. The app does the work — you choose the lane.</p>
+
+        {/* Put your image in /public and reference it like below */}
+        <div style={{ marginTop: ".8rem", overflow: "hidden", borderRadius: "1rem", border: "1px solid rgba(126,224,255,.18)" }}>
+          <img
+            src="/dashboard-mock.png"
+            alt="3C Mall Dashboard Preview"
+            style={{ width: "100%", display: "block", opacity: 0.92 }}
+          />
         </div>
       </div>
     </section>
