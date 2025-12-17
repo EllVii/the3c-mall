@@ -1,0 +1,95 @@
+.ft-card {
+  margin-top: 1rem;
+}
+
+.ft-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+.ft-title {
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  font-size: 1.15rem;
+  margin-top: 0.2rem;
+}
+
+.ft-sub {
+  color: var(--muted);
+  font-size: 0.86rem;
+  max-width: 680px;
+  margin-top: 0.35rem;
+}
+
+.ft-pill {
+  border-radius: 999px;
+  border: 1px solid rgba(126,224,255,0.35);
+  background: rgba(5,9,18,0.92);
+  padding: 0.55rem 1.05rem;
+  font-size: 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.ft-pill span {
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted2);
+}
+
+.ft-pill strong {
+  color: var(--gold);
+}
+
+.ft-pill-done {
+  border-color: rgba(246,220,138,0.55);
+  background: rgba(20,14,5,0.5);
+}
+
+.ft-controls {
+  margin-top: 0.9rem;
+  display: grid;
+  gap: 0.7rem;
+}
+
+.ft-mode, .ft-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.ft-timer {
+  margin-top: 1rem;
+  border-radius: 1.2rem;
+  border: 1px solid rgba(126,224,255,0.18);
+  background: rgba(4,8,18,0.55);
+  padding: 1rem;
+}
+
+.ft-time {
+  font-size: 2.1rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  color: var(--text);
+}
+
+.ft-bar {
+  margin-top: 0.75rem;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(126,224,255,0.18);
+  overflow: hidden;
+}
+
+.ft-bar-fill {
+  height: 100%;
+  background: linear-gradient(135deg, var(--gold), var(--blue));
+  width: 0%;
+  transition: width 0.35s ease;
+}

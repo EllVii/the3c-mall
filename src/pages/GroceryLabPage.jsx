@@ -1,14 +1,13 @@
 // src/pages/GroceryLabPage.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { readJSON, writeJSON, safeId } from "../utils/Storage";
 import "../styles/GroceryLabPage.css";
 
-const STORAGE_KEY = "gl.strategy.v1";
+const STRAT_KEY = "3c.grocery.strategy.v1";
+const UI_KEY = "3c.grocery.ui.v1";
 
 const STORES = ["Costco", "Walmart", "ALDI", "Target", "Kroger"];
 
-/** Demo items until real product/catalog APIs exist */
 const DEMO_ITEMS = [
   { id: "i1", name: "Chicken thighs", category: "Meat", qty: 2, unit: "lb" },
   { id: "i2", name: "Ground beef 90/10", category: "Meat", qty: 3, unit: "lb" },
@@ -18,7 +17,6 @@ const DEMO_ITEMS = [
   { id: "i6", name: "Broccoli", category: "Produce", qty: 2, unit: "head" },
 ];
 
-/** Fake prices. Real pricing comes from store APIs (not AI alone). */
 const DEMO_PRICES = {
   Costco: { i1: 8.5, i2: 14.2, i3: 6.4, i4: 7.5, i5: 9.0, i6: 5.2 },
   Walmart: { i1: 9.2, i2: 12.8, i3: 6.0, i4: 5.9, i5: 6.7, i6: 4.8 },
@@ -27,50 +25,83 @@ const DEMO_PRICES = {
   Kroger: { i1: 9.7, i2: 13.9, i3: 6.2, i4: 6.1, i5: 7.1, i6: 4.9 },
 };
 
-const DEFAULT_STRATEGY = {
-  fulfillment: "in-store", // in-store | pickup | delivery
-  lane: "auto-multi", // auto-multi | single-store
-  blockedStores: [],
-  deliveryPlan: "self", // self | credit
-  createdAt: null,
-};
-
+function readJSON(key, fallback) {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return fallback;
+    return JSON.parse(raw);
+  } catch {
+    return fallback;
+  }
+}
+function writeJSON(key, value) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    // ignore
+  }
+}
 function clamp(n, a, b) {
   return Math.max(a, Math.min(b, n));
+}
+function pickRandom(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
 }
 
 export default function GroceryLabPage() {
   const nav = useNavigate();
 
-  // Strategy state (what we save)
-  const [strategy, setStrategy] = useState(() => {
-    const saved = readJSON(STORAGE_KEY, null);
-    return saved ? saved : { ...DEFAULT_STRATEGY, createdAt: new Date().toISOString() };
-  });
+  // Wizard steps:
+  // 0 = welcome + recommended default
+  // 1 = lane (single vs multi)
+  // 2 = fulfillment (in-store/pickup/delivery)
+  // 3 = stores include/exclude + request store
+  // 4 = results (split cart)
+  const [step, setStep] = useState(0);
 
-  // Wizard state (UI flow)
-  const [step, setStep] = useState(0); // 0..3
-  const [direction, setDirection] = useState("next"); // for slide animation
-  const [showCompare, setShowCompare] = useState(false);
+  const [lane, setLane] = useState("auto-multi"); // auto-multi | single-store
+  const [fulfillment, setFulfillment] = useState("in-store"); // in-store | pickup | delivery
+  const [deliveryPlan, setDeliveryPlan] = useState("credit"); // credit | self (only if delivery)
+  const [blockedStores, setBlockedStores] = useState([]);
+  const [requestStore, setRequestStore] = useState("");
 
-  const items = DEMO_ITEMS;
+  // “Today’s planned” / roll-of-dice
+  const [dicePick, setDicePick] = useState(null);
+
+  // Load persisted
+  useEffect(() => {
+    const saved = readJSON(STRAT_KEY, null);
+    if (saved) {
+      setLane(saved.lane ?? "auto-multi");
+      setFulfillment(saved.fulfillment ?? "in-store");
+      setDeliveryPlan(saved.deliveryPlan ?? "credit");
+      setBlockedStores(Array.isArray(saved.blockedStores) ? saved.blockedStores : []);
+    }
+    const ui = readJSON(UI_KEY, null);
+    if (ui && typeof ui.step === "number") setStep(clamp(ui.step, 0, 4));
+  }, []);
 
   // Persist strategy
   useEffect(() => {
-    writeJSON(STORAGE_KEY, strategy);
-  }, [strategy]);
+    writeJSON(STRAT_KEY, { lane, fulfillment, deliveryPlan, blockedStores });
+  }, [lane, fulfillment, deliveryPlan, blockedStores]);
 
-  // Derived store list
+  // Persist UI step
+  useEffect(() => {
+    writeJSON(UI_KEY, { step });
+  }, [step]);
+
+  const items = DEMO_ITEMS;
+
   const activeStores = useMemo(() => {
-    const filtered = STORES.filter((s) => !strategy.blockedStores.includes(s));
-    return filtered.length ? filtered : STORES;
-  }, [strategy.blockedStores]);
+    const list = STORES.filter((s) => !blockedStores.includes(s));
+    return list.length ? list : STORES;
+  }, [blockedStores]);
 
-  // Single-store ranking
   const singleStoreRanking = useMemo(() => {
-    const totals = activeStores.map((store) => {
-      const total = items.reduce((sum, it) => sum + (DEMO_PRICES[store]?.[it.id] || 0), 0);
-      return { store, total };
+    const totals = activeStores.map((s) => {
+      const total = items.reduce((sum, it) => sum + (DEMO_PRICES[s]?.[it.id] || 0), 0);
+      return { store: s, total };
     });
     totals.sort((a, b) => a.total - b.total);
     return totals;
@@ -78,7 +109,6 @@ export default function GroceryLabPage() {
 
   const bestSingle = singleStoreRanking[0]?.store || "Walmart";
 
-  // Multi-store auto allocation
   const autoAllocation = useMemo(() => {
     const perItem = items.map((it) => {
       let best = { store: activeStores[0], price: Infinity };
@@ -99,446 +129,464 @@ export default function GroceryLabPage() {
     return { perItem, grouped, total };
   }, [activeStores, items]);
 
-  // Wizard steps definition
-  const steps = useMemo(() => {
-    return [
-      {
-        id: "lane-first",
-        title: "How would you like to shop today?",
-        subtitle: "We’ll keep it simple. Pick your lane first—then we’ll show store options that fit.",
-        render: () => (
-          <div className="gl-options">
-            <button
-              className="btn btn-primary"
-              onClick={() => chooseAndAdvance({ lane: "auto-multi" })}
-            >
-              Multi-store (best overall cart)
-            </button>
-
-            <button
-              className="btn btn-secondary"
-              onClick={() => chooseAndAdvance({ lane: "single-store" })}
-            >
-              One store (lowest total)
-            </button>
-
-            <div className="gl-hint">
-              Recommended for most people: <strong>Multi-store</strong> (we do the work, you save time + money).
-            </div>
-          </div>
-        ),
-      },
-      {
-        id: "stores",
-        title: strategy.lane === "single-store" ? "Choose your store" : "Stores we can use",
-        subtitle:
-          strategy.lane === "single-store"
-            ? "Pick one store you like. We’ll still show the best total by store so you can decide fast."
-            : "You don’t have to pick stores. But if you *want* control, choose allowed stores or exclude ones you hate.",
-        render: () => (
-          <div className="gl-options">
-            {strategy.lane === "single-store" ? (
-              <div className="gl-store-grid">
-                {STORES.map((s) => (
-                  <button
-                    key={s}
-                    className={"gl-chip " + (activeStores.includes(s) ? "is-on" : "is-off")}
-                    onClick={() => {
-                      // In single-store mode, “choosing store” means “block all others”
-                      const blocked = STORES.filter((x) => x !== s);
-                      chooseAndAdvance({ blockedStores: blocked });
-                    }}
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
-            ) : (
-              <>
-                <div className="gl-store-grid">
-                  {STORES.map((s) => {
-                    const excluded = strategy.blockedStores.includes(s);
-                    return (
-                      <button
-                        key={s}
-                        className={"gl-chip " + (excluded ? "is-off" : "is-on")}
-                        onClick={() => {
-                          setStrategy((prev) => ({
-                            ...prev,
-                            blockedStores: excluded
-                              ? prev.blockedStores.filter((x) => x !== s)
-                              : [...prev.blockedStores, s],
-                          }));
-                        }}
-                      >
-                        {excluded ? `Excluded: ${s}` : s}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <div className="gl-mini">
-                  Don’t see a store you use? You’ll be able to request it after the wizard.
-                </div>
-
-                <div className="gl-row">
-                  <button className="btn btn-secondary" onClick={() => goNext()}>
-                    Continue →
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        ),
-      },
-      {
-        id: "fulfillment",
-        title: "How do you want to receive groceries?",
-        subtitle: "Delivery is optional. Pick what matches your life today.",
-        render: () => (
-          <div className="gl-options">
-            {[
-              { id: "in-store", label: "In-Store (self shopper)" },
-              { id: "pickup", label: "Pickup" },
-              { id: "delivery", label: "Delivery" },
-            ].map((x) => (
-              <button
-                key={x.id}
-                className={"btn " + (strategy.fulfillment === x.id ? "btn-primary" : "btn-secondary")}
-                onClick={() => chooseAndAdvance({ fulfillment: x.id })}
-              >
-                {x.label}
-              </button>
-            ))}
-
-            <div className="gl-hint">
-              Tip: If you’re rushed, start with <strong>Pickup</strong>—it’s usually the least chaos.
-            </div>
-          </div>
-        ),
-      },
-      {
-        id: "delivery-plan",
-        title: "Delivery options",
-        subtitle: "Only applies if you picked Delivery. Otherwise you’re done.",
-        render: () => {
-          if (strategy.fulfillment !== "delivery") {
-            return (
-              <div className="gl-options">
-                <div className="gl-done">
-                  ✅ You’re set. We’ll build your cart with this strategy.
-                </div>
-                <button className="btn btn-primary" onClick={() => setShowCompare((p) => !p)}>
-                  {showCompare ? "Hide Compare" : "Compare (optional)"}
-                </button>
-              </div>
-            );
-          }
-
-          return (
-            <div className="gl-options">
-              <div className="gl-row">
-                <button
-                  className={"btn " + (strategy.deliveryPlan === "credit" ? "btn-primary" : "btn-secondary")}
-                  onClick={() => setStrategy((p) => ({ ...p, deliveryPlan: "credit" }))}
-                >
-                  3C Delivery Credit (monthly)
-                </button>
-
-                <button
-                  className={"btn " + (strategy.deliveryPlan === "self" ? "btn-primary" : "btn-secondary")}
-                  onClick={() => setStrategy((p) => ({ ...p, deliveryPlan: "self" }))}
-                >
-                  Pay delivery yourself
-                </button>
-              </div>
-
-              <div className="gl-delivery-box">
-                {strategy.deliveryPlan === "credit" ? (
-                  <>
-                    <div className="gl-delivery-title">Credit Plan (MVP)</div>
-                    <div className="gl-mini">
-                      • Monthly credit: <strong>$24.99</strong> (demo) <br />
-                      • Covers delivery fees automatically <br />
-                      • If fees exceed the credit, you pay only the difference <br />
-                      • Multi-store supported
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="gl-delivery-title">Self-Pay (MVP)</div>
-                    <div className="gl-mini">
-                      • No monthly delivery credit <br />
-                      • Delivery fees are paid to the store/service <br />
-                      • Best for occasional delivery users
-                    </div>
-                  </>
-                )}
-              </div>
-
-              <button className="btn btn-primary" onClick={() => setShowCompare((p) => !p)}>
-                {showCompare ? "Hide Compare" : "Compare (optional)"}
-              </button>
-            </div>
-          );
-        },
-      },
-    ];
-  }, [strategy.lane, strategy.fulfillment, strategy.deliveryPlan, strategy.blockedStores, activeStores]);
-
-  const current = steps[clamp(step, 0, steps.length - 1)];
-
-  function goPrev() {
-    setDirection("prev");
-    setStep((s) => clamp(s - 1, 0, steps.length - 1));
-  }
-
-  function goNext() {
-    setDirection("next");
-    setStep((s) => clamp(s + 1, 0, steps.length - 1));
-  }
-
-  function chooseAndAdvance(partial) {
-    setStrategy((prev) => ({ ...prev, ...partial }));
-    // auto-advance (v1.1)
-    setTimeout(() => {
-      setDirection("next");
-      setStep((s) => clamp(s + 1, 0, steps.length - 1));
-    }, 0);
-  }
-
-  function startOver() {
-    setStrategy({ ...DEFAULT_STRATEGY, createdAt: new Date().toISOString() });
-    setDirection("prev");
-    setStep(0);
-    setShowCompare(false);
-  }
-
-  function recommendedDefaultOneTap() {
-    // One tap finishes wizard with “recommended default”
-    setStrategy({
-      fulfillment: "pickup",
-      lane: "auto-multi",
-      blockedStores: [],
-      deliveryPlan: "self",
-      createdAt: new Date().toISOString(),
-    });
-    setDirection("next");
-    setStep(steps.length - 1);
-  }
-
-  const summary = useMemo(() => {
-    const laneLabel = strategy.lane === "auto-multi" ? "Multi-store optimized" : "Single-store lowest total";
-    const fulfillmentLabel =
-      strategy.fulfillment === "in-store"
-        ? "In-store"
-        : strategy.fulfillment === "pickup"
-        ? "Pickup"
-        : "Delivery";
-    const allowed = STORES.filter((s) => !strategy.blockedStores.includes(s));
+  // Split cart sections
+  const todaysPlan = useMemo(() => {
+    if (lane === "single-store") {
+      return {
+        type: "single",
+        store: bestSingle,
+        total: singleStoreRanking[0]?.total ?? 0,
+        items: items.map((it) => ({
+          ...it,
+          chosenStore: bestSingle,
+          price: DEMO_PRICES[bestSingle]?.[it.id] ?? 0,
+        })),
+      };
+    }
     return {
-      laneLabel,
-      fulfillmentLabel,
-      allowedStores: allowed.length ? allowed : STORES,
+      type: "multi",
+      grouped: autoAllocation.grouped,
+      total: autoAllocation.total,
     };
-  }, [strategy]);
+  }, [lane, bestSingle, singleStoreRanking, autoAllocation, items]);
 
-  function buildOrderCTA() {
-    // MVP action stub – later this triggers cart build + API calls
-    alert(
-      `MVP: Build order\n\nLane: ${summary.laneLabel}\nFulfillment: ${summary.fulfillmentLabel}\nStores: ${summary.allowedStores.join(
-        ", "
-      )}`
+  function toggleBlock(store) {
+    setBlockedStores((prev) =>
+      prev.includes(store) ? prev.filter((s) => s !== store) : [...prev, store]
     );
   }
 
-  const laneIsSingle = strategy.lane === "single-store";
-  const computedTotal = laneIsSingle
-    ? singleStoreRanking.find((x) => x.store === (activeStores[0] || bestSingle))?.total ?? singleStoreRanking[0]?.total ?? 0
-    : autoAllocation.total;
+  function startOver() {
+    setLane("auto-multi");
+    setFulfillment("in-store");
+    setDeliveryPlan("credit");
+    setBlockedStores([]);
+    setRequestStore("");
+    setDicePick(null);
+    setStep(0);
+    writeJSON(UI_KEY, { step: 0 });
+  }
+
+  function recommendedDefault() {
+    // Your best “one tap finishes wizard” default
+    setLane("auto-multi");
+    setFulfillment("in-store");
+    setDeliveryPlan("credit");
+    setBlockedStores([]);
+    setRequestStore("");
+    setStep(4); // jump right to results
+  }
+
+  function next() {
+    setStep((s) => clamp(s + 1, 0, 4));
+  }
+  function prev() {
+    setStep((s) => clamp(s - 1, 0, 4));
+  }
+
+  // Auto-advance (but NO blank cards)
+  function pickLane(v) {
+    setLane(v);
+    // advance to fulfillment
+    setStep(2);
+  }
+  function pickFulfillment(v) {
+    setFulfillment(v);
+    // if delivery, keep deliveryPlan selection on same step (results later)
+    setStep(3);
+  }
+
+  function rollDice() {
+    // “Today’s planned” random: pick a random lane + fulfillment combo
+    const lanePick = pickRandom(["auto-multi", "single-store"]);
+    const fulfillPick = pickRandom(["in-store", "pickup", "delivery"]);
+    const planPick = fulfillPick === "delivery" ? pickRandom(["credit", "self"]) : "credit";
+
+    const suggestion = {
+      lane: lanePick,
+      fulfillment: fulfillPick,
+      deliveryPlan: planPick,
+      why:
+        fulfillPick === "delivery"
+          ? "Convenience day. Let the app route stores and you choose how delivery fees are handled."
+          : fulfillPick === "pickup"
+            ? "Fast day. Pickup keeps it efficient."
+            : "Control day. Shop in-store and still let the app do the math.",
+    };
+
+    setDicePick(suggestion);
+
+    // Apply it (one tap)
+    setLane(suggestion.lane);
+    setFulfillment(suggestion.fulfillment);
+    setDeliveryPlan(suggestion.deliveryPlan);
+    setStep(4);
+  }
+
+  const laneLabel =
+    lane === "auto-multi"
+      ? "Multi-store optimized (3C splits items automatically)"
+      : "One-store lowest total (3C picks best single store)";
+
+  const fulfillLabel =
+    fulfillment === "delivery" ? "Delivery" : fulfillment === "pickup" ? "Pickup" : "In-Store";
 
   return (
-    <section className="gl-page">
-      <header className="gl-header">
+    <section className="page gl-shell">
+      <header className="gl-top">
         <div>
-          <p className="kicker">Lab • Grocery</p>
+          <p className="kicker">LAB · GROCERY</p>
           <h1 className="h1">Grocery Lab</h1>
           <p className="sub">
-            Customer-service first: you answer a couple questions, then the app does the work.
-            <br />
-            <strong>Thoughtless by design.</strong>
+            Thoughtless by design: you answer a few quick questions — 3C chooses the cart strategy.
           </p>
 
           <div className="nav-row">
-            <button className="btn btn-secondary" onClick={() => nav("/app")}>
-              ← Dashboard
-            </button>
-            <button className="btn btn-secondary" onClick={() => nav("/app/meal-plans")}>
-              Meal Plans →
-            </button>
-
-            <button className="btn btn-primary" onClick={recommendedDefaultOneTap}>
-              Recommended Default (1 tap)
-            </button>
-
-            <button className="btn btn-ghost" onClick={startOver}>
-              Start Over
-            </button>
+            <button className="btn btn-secondary" onClick={() => nav("/app")}>Dashboard</button>
+            <button className="btn btn-secondary" onClick={() => nav("/app/meal-plans")}>Meal Plans</button>
+            <button className="btn btn-ghost" onClick={startOver}>Start Over</button>
           </div>
         </div>
 
-        <div className="pill">
+        <div className="pill gl-pill">
           <span>Strategy</span>
-          <strong>{summary.laneLabel}</strong>
+          <strong>{lane === "auto-multi" ? "Multi-store" : "Single-store"} · {fulfillLabel}</strong>
         </div>
       </header>
 
-      {/* Wizard card */}
-      <div className="gl-wizard">
-        <div className={"gl-slide gl-" + direction} key={safeId(current.id + ":" + step)}>
-          <div className="gl-card">
-            <div className="gl-card-top">
-              <div>
-                <div className="gl-title">{current.title}</div>
-                <div className="gl-subtitle">{current.subtitle}</div>
+      {/* Wizard Card (single card, sliding inside) */}
+      <div className="card glass gl-wizard">
+        <div className="gl-wiz-head">
+          <div className="gl-dots">
+            <span className={"gl-dot " + (step === 0 ? "on" : "")} />
+            <span className={"gl-dot " + (step === 1 ? "on" : "")} />
+            <span className={"gl-dot " + (step === 2 ? "on" : "")} />
+            <span className={"gl-dot " + (step === 3 ? "on" : "")} />
+            <span className={"gl-dot " + (step === 4 ? "on" : "")} />
+          </div>
+
+          <button className="btn btn-primary" onClick={recommendedDefault}>
+            Recommended Default
+          </button>
+        </div>
+
+        <div className="gl-stage glass-inner">
+          <div className="gl-track" style={{ transform: `translateX(-${step * 100}%)` }}>
+            {/* STEP 0 */}
+            <div className="gl-panel">
+              <div className="gl-tag">STEP 0</div>
+              <h2 className="gl-h2">Welcome</h2>
+              <p className="small">
+                3C will do the work. You’re just telling us how you want to shop today.
+              </p>
+
+              <div className="grid">
+                <div className="card glass-inner" style={{ padding: "1rem" }}>
+                  <div className="gl-mini-title">Today’s Planned</div>
+                  <p className="small" style={{ marginTop: ".35rem" }}>
+                    Want a quick recommendation? Roll it — apply in one tap.
+                  </p>
+                  <div className="nav-row">
+                    <button className="btn btn-primary" onClick={rollDice}>Roll the Dice</button>
+                  </div>
+                  {dicePick && (
+                    <div className="small" style={{ marginTop: ".75rem" }}>
+                      Suggestion:{" "}
+                      <strong style={{ color: "var(--gold)" }}>
+                        {dicePick.lane === "auto-multi" ? "Multi-store" : "Single-store"}
+                      </strong>{" "}
+                      · <strong style={{ color: "var(--blue)" }}>{dicePick.fulfillment}</strong>
+                      <div className="small" style={{ marginTop: ".35rem", color: "var(--muted)" }}>
+                        {dicePick.why}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="card glass-inner" style={{ padding: "1rem" }}>
+                  <div className="gl-mini-title">Manual (still easy)</div>
+                  <p className="small" style={{ marginTop: ".35rem" }}>
+                    If you prefer control, go step-by-step.
+                  </p>
+                  <div className="nav-row">
+                    <button className="btn btn-secondary" onClick={() => setStep(1)}>Start Wizard</button>
+                  </div>
+                </div>
               </div>
-              <div className="gl-step">
-                Step <strong>{step + 1}</strong> / {steps.length}
+
+              <div className="gl-nav">
+                <button className="btn btn-secondary" disabled>Previous</button>
+                <button className="btn btn-primary" onClick={() => setStep(1)}>Next</button>
               </div>
             </div>
 
-            <div className="gl-body">{current.render()}</div>
+            {/* STEP 1: Lane first (your newest logic) */}
+            <div className="gl-panel">
+              <div className="gl-tag">STEP 1</div>
+              <h2 className="gl-h2">How would you like to shop today?</h2>
+              <p className="small">One store, or let 3C optimize the best overall cart.</p>
 
-            <div className="gl-footer">
-              <button className="btn btn-secondary" onClick={goPrev} disabled={step === 0}>
-                ← Previous
-              </button>
+              <div className="gl-choice-grid">
+                <button
+                  className={"gl-choice glass-inner " + (lane === "auto-multi" ? "on" : "")}
+                  onClick={() => pickLane("auto-multi")}
+                >
+                  <div className="gl-choice-title">Multiple stores</div>
+                  <div className="gl-choice-desc">3C splits items automatically for best overall value.</div>
+                </button>
 
-              <div className="gl-footer-mid">
-                <span className="gl-link" onClick={() => setShowCompare((p) => !p)}>
-                  {showCompare ? "Hide compare" : "Compare prices"}
-                </span>
+                <button
+                  className={"gl-choice glass-inner " + (lane === "single-store" ? "on" : "")}
+                  onClick={() => pickLane("single-store")}
+                >
+                  <div className="gl-choice-title">One single store</div>
+                  <div className="gl-choice-desc">3C picks the one store with the lowest total.</div>
+                </button>
               </div>
 
-              <button className="btn btn-secondary" onClick={goNext} disabled={step === steps.length - 1}>
-                Next →
-              </button>
+              <div className="gl-nav">
+                <button className="btn btn-secondary" onClick={prev}>Previous</button>
+                <button className="btn btn-primary" onClick={next}>Next</button>
+              </div>
+            </div>
+
+            {/* STEP 2: Fulfillment */}
+            <div className="gl-panel">
+              <div className="gl-tag">STEP 2</div>
+              <h2 className="gl-h2">How do you want to get groceries?</h2>
+              <p className="small">Delivery is optional. You’re never forced into it.</p>
+
+              <div className="gl-choice-grid">
+                {[
+                  { id: "in-store", title: "In-Store", desc: "You shop. 3C does the math." },
+                  { id: "pickup", title: "Pickup", desc: "Order pickup with the same strategy." },
+                  { id: "delivery", title: "Delivery", desc: "Choose credit plan or pay yourself." },
+                ].map((x) => (
+                  <button
+                    key={x.id}
+                    className={"gl-choice glass-inner " + (fulfillment === x.id ? "on" : "")}
+                    onClick={() => pickFulfillment(x.id)}
+                  >
+                    <div className="gl-choice-title">{x.title}</div>
+                    <div className="gl-choice-desc">{x.desc}</div>
+                  </button>
+                ))}
+              </div>
+
+              {/* Delivery plan stays on THIS SAME STEP (no blank card) */}
+              {fulfillment === "delivery" && (
+                <div className="card glass-inner" style={{ marginTop: "1rem", padding: "1rem" }}>
+                  <div className="gl-mini-title">Delivery Options</div>
+                  <p className="small" style={{ marginTop: ".35rem" }}>
+                    Pick how fees are handled (Alpha demo).
+                  </p>
+
+                  <div className="nav-row">
+                    <button
+                      className={"btn " + (deliveryPlan === "credit" ? "btn-primary" : "btn-secondary")}
+                      onClick={() => setDeliveryPlan("credit")}
+                    >
+                      3C Delivery Credit
+                    </button>
+
+                    <button
+                      className={"btn " + (deliveryPlan === "self" ? "btn-primary" : "btn-secondary")}
+                      onClick={() => setDeliveryPlan("self")}
+                    >
+                      Pay Delivery Yourself
+                    </button>
+                  </div>
+
+                  <div className="small" style={{ marginTop: ".65rem" }}>
+                    {deliveryPlan === "credit"
+                      ? "Credit plan: you pay a monthly amount; if fees exceed the credit, you pay the difference."
+                      : "Self-pay: you pay delivery fees per store directly (no monthly credit)."}
+                  </div>
+                </div>
+              )}
+
+              <div className="gl-nav">
+                <button className="btn btn-secondary" onClick={prev}>Previous</button>
+                <button className="btn btn-primary" onClick={next}>Next</button>
+              </div>
+            </div>
+
+            {/* STEP 3: Stores include/exclude + request store */}
+            <div className="gl-panel">
+              <div className="gl-tag">STEP 3</div>
+              <h2 className="gl-h2">Stores</h2>
+              <p className="small">
+                You don’t have to choose stores — 3C does. This is only “exclude stores I won’t use.”
+              </p>
+
+              <div className="gl-store-row">
+                {STORES.map((s) => (
+                  <button
+                    key={s}
+                    className={"btn " + (blockedStores.includes(s) ? "btn-ghost" : "btn-secondary")}
+                    onClick={() => toggleBlock(s)}
+                  >
+                    {blockedStores.includes(s) ? `Excluded: ${s}` : s}
+                  </button>
+                ))}
+              </div>
+
+              <div className="card glass-inner" style={{ marginTop: "1rem", padding: "1rem" }}>
+                <div className="gl-mini-title">Don’t see your store?</div>
+                <p className="small" style={{ marginTop: ".35rem" }}>
+                  Request it. For Alpha, we simply collect the request.
+                </p>
+                <label className="label">Store name</label>
+                <input
+                  className="input"
+                  value={requestStore}
+                  onChange={(e) => setRequestStore(e.target.value)}
+                  placeholder="Example: WinCo, Safeway, H-E-B..."
+                />
+                <div className="nav-row">
+                  <button
+                    className="btn btn-primary"
+                    onClick={() => alert(requestStore ? `Request saved (demo): ${requestStore}` : "Type a store name first (demo).")}
+                  >
+                    Submit Request
+                  </button>
+                </div>
+              </div>
+
+              <div className="gl-nav">
+                <button className="btn btn-secondary" onClick={prev}>Previous</button>
+                <button className="btn btn-primary" onClick={() => setStep(4)}>Finish</button>
+              </div>
+            </div>
+
+            {/* STEP 4: Results (split cart) */}
+            <div className="gl-panel">
+              <div className="gl-tag">RESULT</div>
+              <h2 className="gl-h2">Your Cart Strategy</h2>
+              <p className="small">
+                Lane: <strong style={{ color: "var(--gold)" }}>{laneLabel}</strong> ·
+                Fulfillment: <strong style={{ color: "var(--blue)" }}> {fulfillLabel}</strong>
+              </p>
+
+              <div className="grid" style={{ marginTop: "1rem" }}>
+                {/* LEFT: Today’s Plan */}
+                <div className="card glass-inner" style={{ padding: "1rem" }}>
+                  <div className="gl-mini-title">Today’s Plan</div>
+                  <p className="small" style={{ marginTop: ".35rem" }}>
+                    This is what 3C would build for you right now (demo prices).
+                  </p>
+
+                  {todaysPlan.type === "single" ? (
+                    <>
+                      <div className="gl-summary-line">
+                        <span>Store</span>
+                        <strong style={{ color: "var(--blue)" }}>{todaysPlan.store}</strong>
+                      </div>
+                      <div className="gl-summary-line">
+                        <span>Total</span>
+                        <strong style={{ color: "var(--gold)" }}>${Number(todaysPlan.total).toFixed(2)}</strong>
+                      </div>
+
+                      <div className="gl-list">
+                        {todaysPlan.items.map((it) => (
+                          <div key={it.id} className="gl-row">
+                            <span>{it.name}</span>
+                            <strong style={{ color: "var(--gold)" }}>
+                              ${(DEMO_PRICES[todaysPlan.store]?.[it.id] ?? 0).toFixed(2)}
+                            </strong>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="gl-summary-line">
+                        <span>Total</span>
+                        <strong style={{ color: "var(--gold)" }}>${todaysPlan.total.toFixed(2)}</strong>
+                      </div>
+
+                      <div className="gl-list">
+                        {Object.keys(todaysPlan.grouped).map((store) => (
+                          <div key={store} style={{ marginBottom: ".7rem" }}>
+                            <div className="gl-store-title">{store}</div>
+                            {todaysPlan.grouped[store].map((x) => (
+                              <div key={x.id} className="gl-row">
+                                <span>{x.name}</span>
+                                <strong style={{ color: "var(--gold)" }}>
+                                  {Number.isFinite(x.price) ? `$${x.price.toFixed(2)}` : "—"}
+                                </strong>
+                              </div>
+                            ))}
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
+
+                  <div className="nav-row" style={{ marginTop: ".9rem" }}>
+                    <button
+                      className="btn btn-primary"
+                      onClick={() => alert(`Alpha demo: Build ${fulfillLabel} order(s) with this plan`)}
+                    >
+                      Build {fulfillLabel} Order
+                    </button>
+                  </div>
+                </div>
+
+                {/* RIGHT: Roll the Dice */}
+                <div className="card glass-inner" style={{ padding: "1rem" }}>
+                  <div className="gl-mini-title">Today’s Planned (Roll the Dice)</div>
+                  <p className="small" style={{ marginTop: ".35rem" }}>
+                    Want a different vibe today? One tap suggests + applies a new strategy.
+                  </p>
+
+                  <div className="nav-row">
+                    <button className="btn btn-primary" onClick={rollDice}>Roll Again</button>
+                    <button className="btn btn-secondary" onClick={() => setStep(1)}>Change Manually</button>
+                  </div>
+
+                  {dicePick ? (
+                    <div className="card glass-inner" style={{ marginTop: "1rem", padding: "1rem" }}>
+                      <div className="small">
+                        Suggestion:
+                        <div style={{ marginTop: ".35rem" }}>
+                          <strong style={{ color: "var(--gold)" }}>
+                            {dicePick.lane === "auto-multi" ? "Multi-store" : "Single-store"}
+                          </strong>{" "}
+                          · <strong style={{ color: "var(--blue)" }}>{dicePick.fulfillment}</strong>
+                        </div>
+                        <div className="small" style={{ marginTop: ".55rem", color: "var(--muted)" }}>
+                          {dicePick.why}
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="small" style={{ marginTop: "1rem", color: "var(--muted2)" }}>
+                      Roll once to generate a suggestion.
+                    </div>
+                  )}
+
+                  <div className="small" style={{ marginTop: "1rem" }}>
+                    Active stores: <strong style={{ color: "var(--blue)" }}>{activeStores.join(", ")}</strong>
+                  </div>
+                </div>
+              </div>
+
+              <div className="gl-nav">
+                <button className="btn btn-secondary" onClick={() => setStep(3)}>Previous</button>
+                <button className="btn btn-primary" onClick={() => alert("Alpha demo: Strategy saved to device")}>
+                  Save Strategy
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Results block (always visible, calm + reassuring) */}
-      <div className="gl-results">
-        <div className="gl-card">
-          <div className="gl-results-grid">
-            <div>
-              <div className="gl-results-title">Your strategy (saved)</div>
-              <div className="gl-mini">
-                Lane: <strong>{summary.laneLabel}</strong> <br />
-                Fulfillment: <strong>{summary.fulfillmentLabel}</strong>
-                {strategy.fulfillment === "delivery" ? (
-                  <>
-                    <br />
-                    Delivery plan:{" "}
-                    <strong>{strategy.deliveryPlan === "credit" ? "3C Credit" : "Self-pay"}</strong>
-                  </>
-                ) : null}
-              </div>
-
-              <div className="gl-mini" style={{ marginTop: ".55rem" }}>
-                Allowed stores: <strong>{summary.allowedStores.join(", ")}</strong>
-              </div>
-
-              <div className="nav-row" style={{ marginTop: ".85rem" }}>
-                <button className="btn btn-primary" onClick={buildOrderCTA}>
-                  Build Order →
-                </button>
-              </div>
-            </div>
-
-            <div>
-              <div className="gl-results-title">Demo cart totals</div>
-
-              {strategy.lane === "single-store" ? (
-                <div className="gl-mini">
-                  Best single-store: <strong>{bestSingle}</strong>
-                  <div className="gl-rank">
-                    {singleStoreRanking.slice(0, 5).map((x) => (
-                      <div className="gl-rank-row" key={x.store}>
-                        <span>{x.store}</span>
-                        <strong>${x.total.toFixed(2)}</strong>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <div className="gl-mini">
-                  Multi-store total: <strong>${autoAllocation.total.toFixed(2)}</strong>
-                  <div className="gl-mini" style={{ marginTop: ".5rem" }}>
-                    (Demo) The app assigns each item to the lowest-price store automatically.
-                  </div>
-                </div>
-              )}
-
-              <div className="pill" style={{ marginTop: ".85rem" }}>
-                <span>Estimated Total</span>
-                <strong>${Number(computedTotal || 0).toFixed(2)}</strong>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {showCompare && (
-          <div className="gl-card" style={{ marginTop: "1rem" }}>
-            <div className="gl-results-title">Compare (optional)</div>
-            <div className="gl-mini">This is for “I want to see it” users. Everyone else can ignore it.</div>
-
-            <div className="gl-table-wrap">
-              <table className="gl-table">
-                <thead>
-                  <tr>
-                    <th>Item</th>
-                    {activeStores.map((s) => (
-                      <th key={s}>{s}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {items.map((it) => (
-                    <tr key={it.id}>
-                      <td className="gl-td-strong">{it.name}</td>
-                      {activeStores.map((s) => (
-                        <td key={s} className="gl-td-gold">
-                          ${(DEMO_PRICES[s]?.[it.id] ?? 0).toFixed(2)}
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            <div className="gl-mini" style={{ marginTop: ".75rem" }}>
-              Beta note: These are demo values. Real pricing requires store catalog/pricing APIs.
-            </div>
-          </div>
-        )}
-
-        {/* Store request panel (customer-service first) */}
-        <div className="gl-card" style={{ marginTop: "1rem" }}>
-          <div className="gl-results-title">Request a store</div>
-          <div className="gl-mini">
-            Don’t see your store? Submit it. When enough users request the same store, it becomes a priority for API support.
-          </div>
-
-          <div className="gl-request">
-            <input className="input" placeholder="Type store name (ex: WinCo, H-E-B, Meijer…)" />
-            <button className="btn btn-secondary" onClick={() => alert("MVP: Store request captured (wire to backend later)")}>
-              Submit Request
-            </button>
-          </div>
-        </div>
+      {/* Quick “Change Strategy” button (always visible, simple) */}
+      <div className="gl-bottom">
+        <button className="btn btn-secondary" onClick={() => setStep(1)}>Change Strategy</button>
+        <button className="btn btn-secondary" onClick={() => nav("/app/settings")}>Settings</button>
       </div>
     </section>
   );

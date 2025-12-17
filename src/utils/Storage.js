@@ -1,23 +1,45 @@
 // src/utils/Storage.js
 
 export function safeId(prefix = "id") {
-  return `${prefix}_${Math.random().toString(36).slice(2, 9)}`;
+  try {
+    return `${prefix}_${Math.random().toString(16).slice(2)}_${Date.now().toString(16)}`;
+  } catch {
+    return `${prefix}_${Date.now()}`;
+  }
 }
 
-export function writeJSON(key, value) {
+export function nowISO() {
   try {
-    localStorage.setItem(key, JSON.stringify(value));
-  } catch (e) {
-    console.warn("Storage write failed:", e);
+    return new Date().toISOString();
+  } catch {
+    return String(Date.now());
   }
 }
 
 export function readJSON(key, fallback = null) {
   try {
     const raw = localStorage.getItem(key);
-    return raw ? JSON.parse(raw) : fallback;
-  } catch (e) {
-    console.warn("Storage read failed:", e);
+    if (!raw) return fallback;
+    return JSON.parse(raw);
+  } catch {
     return fallback;
+  }
+}
+
+export function writeJSON(key, value) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function removeKey(key) {
+  try {
+    localStorage.removeItem(key);
+    return true;
+  } catch {
+    return false;
   }
 }

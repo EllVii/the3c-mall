@@ -21,6 +21,10 @@ import ComingSoon from "./pages/ComingSoon.jsx";
 import PTModePage from "./pages/PTModePage.jsx";
 import SettingsPage from "./pages/SettingsPage.jsx";
 
+// Recipe Center Pages
+import RecipesPage from "./pages/RecipesPage.jsx";
+import RecipeDetailPage from "./pages/RecipeDetailPage.jsx";
+
 export default function App() {
   return (
     <div className="app-shell">
@@ -42,10 +46,14 @@ export default function App() {
           <Route path="grocery-lab" element={<GroceryLabPage />} />  
           <Route path="pt" element={<PTModePage />} />  
           <Route path="settings" element={<SettingsPage />} />
+          
+          {/* Recipe Routes */}
+          <Route path="recipes" element={<RecipesPage />} />
+          <Route path="recipes/:id" element={<RecipeDetailPage />} />
+          
           <Route path="coming-soon" element={<ComingSoon />} />
           
-          {/* INTERNAL CATCH-ALL: 
-              If inside /app/something-wrong, stay in /app instead of bouncing to landing */}
+          {/* INTERNAL CATCH-ALL: Stay in /app instead of bouncing out */}
           <Route path="*" element={<Navigate to="/app" replace />} />
         </Route>  
 
