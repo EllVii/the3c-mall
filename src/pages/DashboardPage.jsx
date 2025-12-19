@@ -383,6 +383,12 @@ export default function DashboardPage() {
           device: navigator.userAgent,
         }}
       />
+<button
+  className="btn btn-secondary"
+  onClick={() => window.open("https://forms.gle/bdWFtAEAABbJnb8n7", "_blank", "noopener,noreferrer")}
+>
+  Feedback
+</button>
 
       {/* Optional floating concierge “Apple-like” pill (hide if you don’t want it yet) */}
       <button

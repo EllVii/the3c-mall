@@ -1,59 +1,90 @@
-// src/pages/CommunityPage.jsx
-import React from "react";
-import { useNavigate } from "react-router-dom";
-import "../styles/CommunityPage.css";
+/* src/styles/FitnessZonePage.css */
+/* Uses the same "smoky glass" system you already use elsewhere */
 
-export default function CommunityPage() {
-  const nav = useNavigate();
+.fz-shell{
+  position: relative;
+  isolation: isolate;
+  min-height: calc(100vh - 0px);
+}
 
-  return (
-    <section className="cm-page">
-      <header className="cm-header">
-        <div>
-          <p className="cm-kicker">Center · Community</p>
-          <h1 className="cm-title">
-            Community <span className="cm-accent">— family + challenges.</span>
-          </h1>
-          <p className="cm-subtitle">
-            Household accounts: linked data, shared goals, savings competitions, and team challenges.
-          </p>
-        </div>
+/* Logo watermark backdrop */
+.fz-shell::before{
+  content:"";
+  position:absolute;
+  inset: 0;
+  background-image: url("/icons/3c-mall.png");
+  background-repeat: no-repeat;
+  background-position: 50% 34%;
+  background-size: min(520px, 70vw);
+  opacity: 0.10;
+  filter: blur(0.2px) saturate(1.1);
+  z-index: -1;
+  pointer-events:none;
+}
 
-        <div className="cm-meta">
-          <span>Mode</span>
-          <strong>Household MVP</strong>
-        </div>
-      </header>
+/* Soft radial sheen behind everything */
+.fz-shell::after{
+  content:"";
+  position:absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 25% 18%, rgba(126,224,255,.10), transparent 55%),
+    radial-gradient(circle at 82% 14%, rgba(246,220,138,.08), transparent 55%),
+    radial-gradient(circle at 60% 90%, rgba(31,93,255,.10), transparent 60%);
+  opacity: .9;
+  z-index: -2;
+  pointer-events:none;
+}
 
-      <div className="cm-actions">
-        <button className="btn btn-gold" onClick={() => nav("/app")}>Dashboard →</button>
-        <button className="btn btn-blue" onClick={() => nav("/app/grocery-lab")}>Grocery Lab →</button>
-        <button className="btn btn-ghost" onClick={() => nav("/app/settings")}>Settings →</button>
-      </div>
+/* Smoky glass */
+.fz-glass{
+  background: rgba(8, 12, 24, 0.65);
+  border: 1px solid rgba(126,224,255,.16);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-radius: 18px;
+}
 
-      <div className="cm-grid">
-        <article className="cm-card">
-          <div className="card-tag">Challenges</div>
-          <h2 className="cm-card-title">Team goals</h2>
-          <p className="cm-card-sub">
-            Strength championships, weight gain/loss goals, and consistency streaks.
-          </p>
-          <button className="btn btn-ghost" onClick={() => nav("/app/coming-soon")}>
-            Coming soon →
-          </button>
-        </article>
+.fz-glass-inner{
+  background: rgba(8, 12, 24, 0.55);
+  border: 1px solid rgba(126,224,255,.12);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 18px;
+}
 
-        <article className="cm-card">
-          <div className="card-tag">Savings</div>
-          <h2 className="cm-card-title">Household competitions</h2>
-          <p className="cm-card-sub">
-            Later: monthly awards + affiliate-driven “spend more to save more” mechanics.
-          </p>
-          <button className="btn btn-ghost" onClick={() => nav("/app/coming-soon")}>
-            Rewards roadmap →
-          </button>
-        </article>
-      </div>
-    </section>
-  );
+.fz-top{
+  display:flex;
+  align-items:flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.fz-grid{
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: .9rem;
+}
+
+.fz-card{
+  padding: 1.1rem;
+}
+
+.fz-title{
+  margin: .35rem 0 .45rem;
+  font-size: 1.25rem;
+  font-weight: 900;
+}
+
+.fz-sub{
+  margin: 0;
+  color: var(--muted);
+}
+
+.fz-actions{
+  display:flex;
+  gap: .6rem;
+  flex-wrap: wrap;
+  margin-top: .9rem;
 }

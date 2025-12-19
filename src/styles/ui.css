@@ -1,36 +1,41 @@
-.fb-float{
-  position: fixed;
-  right: 16px;
-  bottom: 16px;
-  z-index: 50;
-  padding: .6rem .9rem;
-  font-size: .72rem;
+/* =========================================================
+   SAFE OVERRIDES (ADD THIS AT THE VERY BOTTOM OF ui.css)
+   Prevent wizard/card overflow + button stretching
+   ========================================================= */
+
+/* Never allow horizontal overflow from UI elements */
+.page, .card, .glass, .glass-inner,
+.gl-wizard, .gl-stage, .gl-panel,
+.db-shell, .db-stage, .db-panel {
+  max-width: 100%;
 }
 
-.fb-backdrop{
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,.55);
-  backdrop-filter: blur(6px);
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  padding: 16px;
-  z-index: 60;
+/* Buttons MUST be allowed to shrink + wrap */
+.btn{
+  max-width: 100%;
+  min-width: 0;            /* critical */
+  white-space: normal;     /* allow wrap */
+  text-align: center;
+  line-height: 1.1;
 }
 
-.fb-modal{
-  width: min(720px, 100%);
+/* If your shimmer layer exists, keep it from affecting layout */
+.btn::after{
+  pointer-events: none;
 }
 
-.fb-debug{
-  margin-top: 1rem;
-  padding: .75rem;
-  border-radius: 12px;
-  border: 1px solid rgba(126,224,255,.18);
-  background: rgba(4,8,18,.45);
-  color: var(--muted2);
-  font-size: .72rem;
-  overflow: auto;
-  max-height: 180px;
+/* Any grid item with long text must be allowed to shrink */
+.gl-choice, .db-choice,
+.gl-choice * , .db-choice *{
+  min-width: 0;
+}
+
+/* For store buttons row: don’t let flex items stretch weirdly */
+.gl-store-row .btn{
+  flex: 0 0 auto;
+}
+
+/* Hard kill any accidental horizontal scrolling */
+body{
+  overflow-x: hidden;
 }
