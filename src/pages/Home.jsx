@@ -6,7 +6,7 @@ export default function Home() {
     <section className="landing">
       {/* Left: Hero text */}
       <div className="landing-hero">
-        <div className="landing-pill">Convert • Commit • Come Back</div>
+        <div className="landing-pill">Concierge • Cost • Community</div>
 
         <h1 className="landing-title">
           Lifestyle coaching with

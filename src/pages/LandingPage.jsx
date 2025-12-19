@@ -5,7 +5,7 @@ export default function LandingPage() {
   return (
     <section style={{ maxWidth: 1100, margin: "0 auto", padding: "2rem 0", color: "#fff" }}>
       <p style={{ color: "rgba(126,224,255,0.9)", fontWeight: 800, letterSpacing: "0.08em" }}>
-        CARNIVORE • COST • COMMUNITY
+        Concierge • Cost • Community
       </p>
 
       <h1 style={{ fontSize: "2.6rem", lineHeight: 1.05, margin: "0.6rem 0 1rem" }}>  
