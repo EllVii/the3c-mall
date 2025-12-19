@@ -1,4 +1,3 @@
-// src/pages/FitnessZone.jsx
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/FitnessZonePage.css";
@@ -7,47 +6,50 @@ export default function FitnessZone() {
   const nav = useNavigate();
 
   return (
-    <section className="fz-page">
+    <section className="page fz-shell">
       <header className="fz-header">
         <div>
-          <p className="fz-kicker">Zone · Fitness</p>
-          <h1 className="fz-title">
-            Fitness Zone <span className="highlight">— MVP foundation.</span>
+          <p className="kicker">Zone · Fitness</p>
+          <h1 className="h1">
+            Fitness Zone <span className="fz-accent">— MVP foundation.</span>
           </h1>
-          <p className="fz-subtitle">
+          <p className="sub">
             Next: Metabolic Echo hooks that trend over time, strength goals, and trainer controls.
           </p>
         </div>
 
-        <div className="fz-meta-pill">
+        <div className="pill fz-meta">
           <span>Status</span>
           <strong>Stub Ready</strong>
         </div>
       </header>
 
-      <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", marginBottom: "1rem" }}>
-        <button className="btn btn-gold" onClick={() => nav("/app")}>Dashboard →</button>
-        <button className="btn btn-blue" onClick={() => nav("/app/meal-plans")}>Meal Plans →</button>
+      <div className="nav-row">
+        <button className="btn btn-secondary" onClick={() => nav("/app")}>Dashboard →</button>
+        <button className="btn btn-secondary" onClick={() => nav("/app/meal-plans")}>Meal Plans →</button>
         <button className="btn btn-ghost" onClick={() => nav("/app/pt")}>PT Mode →</button>
       </div>
 
-      <div className="fz-grid">
-        <div className="fz-card fz-card-today">
+      <div className="grid">
+        <div className="card glass fz-card">
           <div className="card-tag">Metabolic Echo</div>
-          <div className="fz-plan-title">Today’s state (placeholder)</div>
-          <p className="fz-plan-subtitle">
-            We’ll replace this with actual daily signals (energy, recovery, hydration, etc.).
+          <h2 className="fz-card-title">Today’s state (placeholder)</h2>
+          <p className="small">
+            We’ll replace this with daily signals (energy, recovery, hydration, etc.).
           </p>
+          <p className="small fz-foot">Alpha note: this zone becomes active in Beta.</p>
         </div>
 
-        <div className="fz-card fz-card-right">
+        <div className="card glass fz-card">
           <div className="card-tag">Goals</div>
-          <div className="fz-plan-title">Strength targets (placeholder)</div>
-          <p className="fz-plan-subtitle">
+          <h2 className="fz-card-title">Strength targets (placeholder)</h2>
+          <p className="small">
             Later: PR goals, progression blocks, and trainer edits.
           </p>
+          <p className="small fz-foot">Alpha note: tracking + charts land after API phase.</p>
         </div>
       </div>
     </section>
   );
 }
+

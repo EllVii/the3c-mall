@@ -1,4 +1,3 @@
-// src/pages/CommunityPage.jsx
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/CommunityPage.css";
@@ -7,51 +6,61 @@ export default function CommunityPage() {
   const nav = useNavigate();
 
   return (
-    <section className="cm-page">
+    <section className="page cm-shell">
       <header className="cm-header">
         <div>
-          <p className="cm-kicker">Center · Community</p>
-          <h1 className="cm-title">
+          <p className="kicker">Center · Community</p>
+          <h1 className="h1">
             Community <span className="cm-accent">— family + challenges.</span>
           </h1>
-          <p className="cm-subtitle">
+          <p className="sub">
             Household accounts: linked data, shared goals, savings competitions, and team challenges.
           </p>
         </div>
 
-        <div className="cm-meta">
+        <div className="pill cm-meta">
           <span>Mode</span>
           <strong>Household MVP</strong>
         </div>
       </header>
 
-      <div className="cm-actions">
-        <button className="btn btn-gold" onClick={() => nav("/app")}>Dashboard →</button>
-        <button className="btn btn-blue" onClick={() => nav("/app/grocery-lab")}>Grocery Lab →</button>
-        <button className="btn btn-ghost" onClick={() => nav("/app/settings")}>Settings →</button>
+      <div className="nav-row">
+        <button className="btn btn-secondary" onClick={() => nav("/app")}>
+          Dashboard →
+        </button>
+        <button className="btn btn-secondary" onClick={() => nav("/app/grocery-lab")}>
+          Grocery Lab →
+        </button>
+        <button className="btn btn-ghost" onClick={() => nav("/app/settings")}>
+          Settings →
+        </button>
       </div>
 
-      <div className="cm-grid">
-        <article className="cm-card">
+      <div className="grid">
+        <article className="card glass cm-card">
           <div className="card-tag">Challenges</div>
           <h2 className="cm-card-title">Team goals</h2>
-          <p className="cm-card-sub">
+          <p className="small">
             Strength championships, weight gain/loss goals, and consistency streaks.
           </p>
-          <button className="btn btn-ghost" onClick={() => nav("/app/coming-soon")}>
-            Coming soon →
-          </button>
+          <div className="nav-row">
+            <button className="btn btn-ghost" onClick={() => nav("/app/coming-soon")}>
+              Coming soon →
+            </button>
+          </div>
         </article>
 
-        <article className="cm-card">
+        <article className="card glass cm-card">
           <div className="card-tag">Savings</div>
           <h2 className="cm-card-title">Household competitions</h2>
-          <p className="cm-card-sub">
+          <p className="small">
             Later: monthly awards + affiliate-driven “spend more to save more” mechanics.
           </p>
-          <button className="btn btn-ghost" onClick={() => nav("/app/coming-soon")}>
-            Rewards roadmap →
-          </button>
+          <div className="nav-row">
+            <button className="btn btn-ghost" onClick={() => nav("/app/coming-soon")}>
+              Rewards roadmap →
+            </button>
+          </div>
         </article>
       </div>
     </section>

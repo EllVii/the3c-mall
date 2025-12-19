@@ -1,93 +1,67 @@
-/* src/assets/components/FeedbackPanel.css */
+/* src/styles/FeedbackDrawer.css */
 
-.fb-overlay{
+.fb-backdrop{
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,.68);
-  z-index: 9999;
-  display:flex;
-  align-items: center;
+  background: rgba(0,0,0,.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: flex-end;
   justify-content: center;
-  padding: 14px;
+  padding: 16px;
+  z-index: 80;
 }
 
 .fb-modal{
-  width: min(980px, 96vw);
-  max-height: 92vh;
-  overflow: hidden;
-  border-radius: 18px;
-  border: 1px solid rgba(126,224,255,.18);
-  background: rgba(8,12,24,.75);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  box-shadow: 0 22px 70px rgba(0,0,0,.75);
-  display:flex;
-  flex-direction: column;
+  width: min(720px, 100%);
+  border-radius: 1.4rem;
 }
 
 .fb-head{
-  display:flex;
+  display: flex;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
-  padding: 14px 14px 10px;
-  border-bottom: 1px solid rgba(126,224,255,.12);
-}
-
-.fb-tag{
-  font-size: .72rem;
-  letter-spacing: .18em;
-  text-transform: uppercase;
-  color: var(--blue);
-  font-weight: 900;
+  gap: 1rem;
 }
 
 .fb-title{
-  font-size: 1.25rem;
-  font-weight: 1000;
-  margin-top: .35rem;
+  margin: .35rem 0 .35rem;
   color: var(--gold);
+  font-weight: 900;
+  letter-spacing: .02em;
 }
 
 .fb-sub{
-  margin-top: .35rem;
-  color: var(--muted);
-  font-size: .88rem;
+  margin: 0;
 }
 
 .fb-close{
-  appearance: none;
-  border: 1px solid rgba(246,220,138,.28);
-  background: rgba(0,0,0,.2);
-  color: var(--gold);
-  border-radius: 12px;
-  padding: 8px 10px;
-  cursor: pointer;
-  font-weight: 900;
+  padding: .55rem .85rem;
+  font-size: .72rem;
 }
 
 .fb-actions{
-  padding: 12px 14px;
-  display:flex;
+  display: flex;
+  gap: .6rem;
   flex-wrap: wrap;
-  gap: 8px;
-  border-bottom: 1px solid rgba(126,224,255,.10);
+  margin-top: 1rem;
 }
 
-.fb-frameWrap{
-  flex: 1;
-  overflow: hidden;
-  background: rgba(0,0,0,.12);
+.fb-hint{
+  margin-top: 1rem;
+  padding: 1rem;
+  border-radius: 1.1rem;
 }
 
-.fb-iframe{
-  width: 100%;
-  height: 100%;
-  border: 0;
-  background: transparent;
-}
-
-.fb-foot{
-  padding: 10px 14px 14px;
+.fb-debug{
+  margin-top: 1rem;
+  padding: .75rem;
+  border-radius: 12px;
+  border: 1px solid rgba(126,224,255,.18);
+  background: rgba(4,8,18,.45);
   color: var(--muted2);
-  border-top: 1px solid rgba(126,224,255,.10);
+  font-size: .72rem;
+  overflow: auto;
+  max-height: 180px;
 }

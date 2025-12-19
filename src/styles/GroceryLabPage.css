@@ -3,8 +3,6 @@
 .gl-shell{
   position: relative;
   isolation: isolate;
-  width: 100%;
-  max-width: 100%;
 }
 
 /* SINGLE logo watermark centered */
@@ -42,6 +40,7 @@
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
 }
+
 .glass-inner{
   background: rgba(8, 12, 24, 0.55);
   border: 1px solid rgba(126,224,255,.12);
@@ -49,6 +48,7 @@
   -webkit-backdrop-filter: blur(12px);
 }
 
+/* Page header row */
 .gl-top{
   display:flex;
   justify-content: space-between;
@@ -57,16 +57,21 @@
 }
 
 .gl-pill{
-  padding: .85rem 1rem;
-  border-radius: 1.1rem;
+  align-self:flex-start;
+  border-radius: 999px;
+  padding: .75rem 1rem;
 }
 
+.gl-pill .gl-pill-text{
+  font-size: .82rem;
+  color: rgba(255,255,255,.86);
+}
+
+/* Wizard container */
 .gl-wizard{
   padding: 1.1rem;
   margin-top: 1rem;
-  border-radius: 1.2rem;
-  overflow: hidden; /* IMPORTANT */
-  max-width: 100%;
+  border-radius: 1.4rem;
 }
 
 .gl-wiz-head{
@@ -91,33 +96,6 @@
   border-color: rgba(246,220,138,.35);
 }
 
-.gl-stage{
-  border-radius: 1.1rem;
-  overflow:hidden;       /* IMPORTANT */
-  max-width: 100%;
-  min-height: 420px;
-}
-
-/* Track is a flex row that slides */
-.gl-track{
-  display:flex;
-  align-items: stretch;
-  transition: transform .28s ease;
-  will-change: transform;
-}
-
-/* ✅ CRITICAL FIX: every panel is exactly 100% of viewport */
-.gl-panel{
-  flex: 0 0 100%;
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
-  padding: 1rem;
-  box-sizing: border-box;
-  overflow: hidden;
-  min-height: 420px;
-}
-
 .gl-tag{
   font-size: .72rem;
   letter-spacing: .18em;
@@ -126,56 +104,162 @@
   font-weight: 900;
 }
 
-.gl-h2{
-  margin: .35rem 0 .45rem;
-  font-size: 1.25rem;
+/* Track/Panel — FIXES the “poking out” / sideways cards issue */
+.gl-stage{
+  border-radius: 1.1rem;
+  overflow:hidden;
+  min-height: 420px;
 }
 
-/* Choices */
+.gl-track{
+  display:flex;
+  align-items: stretch;
+  transition: transform .28s ease;
+  will-change: transform;
+}
+
+.gl-panel{
+  flex: 0 0 25%;
+  width: 25%;
+  padding: 1rem;
+  min-height: 420px;
+}
+
+/* Text */
+.gl-h2{ margin: .35rem 0 .45rem; font-size: 1.25rem; }
+
+/* Choice grid */
 .gl-choice-grid{
   display:grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: .75rem;
   margin-top: .9rem;
-  max-width: 100%;
+}
+
+@media (max-width: 720px){
+  .gl-choice-grid{ grid-template-columns: 1fr; }
 }
 
 .gl-choice{
-  width: 100%;
-  min-width: 0;
-  max-width: 100%;
   text-align:left;
   border-radius: 1.1rem;
   padding: .95rem;
   color: var(--text);
   cursor:pointer;
-  overflow:hidden;
-  box-sizing: border-box;
   transition: transform .16s ease, filter .16s ease, border-color .16s ease;
+  border: 1px solid rgba(126,224,255,.12);
 }
+
 .gl-choice:hover{ filter: brightness(1.05); transform: translateY(-1px); }
+
 .gl-choice.on{
   border-color: rgba(246,220,138,.45) !important;
   box-shadow: 0 10px 26px rgba(0,0,0,.65);
 }
 
 .gl-choice-title{ font-weight: 900; letter-spacing: .02em; }
-.gl-choice-desc{
-  margin-top: .35rem;
-  color: var(--muted);
-  font-size: .86rem;
-  white-space: normal;
-  overflow-wrap: anywhere;
-}
+.gl-choice-desc{ margin-top: .35rem; color: var(--muted); font-size: .86rem; }
 
+/* Stores list becomes a grid (mobile-safe) */
 .gl-store-row{
-  display:flex;
-  flex-wrap: wrap;
-  gap: .6rem;
-  margin-top: .8rem;
-  max-width: 100%;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .75rem;
+  margin-top: .9rem;
 }
 
+@media (max-width: 560px){
+  .gl-store-row{ grid-template-columns: 1fr; }
+}
+
+.gl-store-btn{
+  display: flex;
+  align-items: center;
+  gap: .8rem;
+  width: 100%;
+  text-align: left;
+  padding: .9rem;
+  border-radius: 1.1rem;
+  cursor: pointer;
+  border: 1px solid rgba(126,224,255,.12);
+}
+
+.gl-store-btn.is-on{
+  border-color: rgba(126,224,255,.35);
+}
+
+.gl-store-btn.is-rec{
+  border-color: rgba(246,220,138,.45);
+  box-shadow: 0 10px 26px rgba(0,0,0,.65);
+}
+
+.gl-store-mark{
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  font-weight: 1000;
+  letter-spacing: .08em;
+  background: linear-gradient(135deg, var(--gold), var(--blue));
+  color: var(--blackText);
+  box-shadow: 0 10px 20px rgba(0,0,0,.55);
+  flex: 0 0 auto;
+}
+
+.gl-store-meta{
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.gl-store-name{
+  font-weight: 900;
+  letter-spacing: .02em;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gl-store-badge{
+  margin-top: .25rem;
+  font-size: .70rem;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  font-weight: 900;
+  color: var(--blackText);
+  background: linear-gradient(135deg, var(--gold), var(--blue));
+  border-radius: 999px;
+  padding: .25rem .6rem;
+  width: fit-content;
+}
+
+.gl-store-badge.ghost{
+  background: rgba(4,8,18,.45);
+  border: 1px solid rgba(126,224,255,.18);
+  color: var(--muted2);
+}
+
+.gl-store-check{
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(126,224,255,.22);
+  color: rgba(255,255,255,.35);
+  flex: 0 0 auto;
+}
+
+.gl-store-check.on{
+  color: var(--blackText);
+  background: linear-gradient(135deg, var(--gold), var(--blue));
+  border-color: rgba(246,220,138,.35);
+}
+
+/* Prev/Next row */
 .gl-nav{
   display:flex;
   justify-content: space-between;
@@ -183,19 +267,25 @@
   margin-top: 1rem;
 }
 
+.gl-wide{ width: 100%; }
+
+/* Review panel */
 .gl-review{
   border-radius: 1.1rem;
   padding: 1rem;
+  margin-top: .75rem;
 }
 
 .gl-summary-line{
   display:flex;
   justify-content: space-between;
   gap: .75rem;
-  padding: .35rem 0;
+  padding: .45rem 0;
   border-bottom: 1px solid rgba(126,224,255,.10);
 }
+.gl-summary-line:last-child{ border-bottom: none; }
 
+/* Bottom buttons */
 .gl-bottom{
   margin-top: 1rem;
   display:flex;
@@ -205,6 +295,4 @@
 
 @media (max-width: 860px){
   .gl-top{ flex-direction: column; }
-  .gl-choice-grid{ grid-template-columns: 1fr; }
-  .gl-panel{ min-height: 460px; }
 }

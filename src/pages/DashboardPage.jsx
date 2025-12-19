@@ -2,9 +2,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/DashboardPage.css";
-
 import FeedbackDrawer from "../assets/components/FeedbackDrawer";
-
 import {
   getPrefsSafe,
   setFocus,
@@ -53,15 +51,17 @@ export default function DashboardPage() {
   const [prefs, setPrefsState] = useState(() => getPrefsSafe());
   const [conciergeOpen, setConciergeOpen] = useState(true);
 
-  // Wizard “card swipe” behavior (no scrolling mindset)
-  // 0 = Concierge, 1 = Zones, 2 = What to expect
+  // Wizard step: 0 Concierge, 1 Zones, 2 Preview
   const [step, setStep] = useState(0);
 
   // Alpha “nudge/notification” demo
   const [nudge, setNudge] = useState({ show: false, state: null });
 
-  // Feedback drawer (same visual language)
+  // Feedback drawer
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+
+  // NEW: Concierge hint modal to prevent confusion
+  const [feedbackHintOpen, setFeedbackHintOpen] = useState(false);
 
   useEffect(() => {
     setPrefsState(getPrefsSafe());
@@ -73,11 +73,8 @@ export default function DashboardPage() {
     return ZONES.find((z) => z.id === prefs.focus) || null;
   }, [prefs]);
 
-  // Focused vs Full Mall
   const visibleZones = useMemo(() => {
     if (prefs?.navMode === "full") return ZONES;
-
-    // Focused: show only their chosen focus (or grocery by default)
     const grocery = ZONES.find((z) => z.id === "grocery");
     const pick = focusedZone || grocery;
     return [pick].filter(Boolean);
@@ -113,8 +110,6 @@ export default function DashboardPage() {
     setStep((s) => Math.max(0, s - 1));
   }
 
-  // Optional: keeps UI tight and avoids accidental scroll vibe
-  // You can remove this if it causes issues on small devices.
   useEffect(() => {
     document.body.style.overflowY = "auto";
     return () => {
@@ -124,9 +119,16 @@ export default function DashboardPage() {
 
   return (
     <section className="page db-shell">
-      {/* Top header — NO buttons */}
+      {/* Top header */}
       <div className="db-top">
-        <div style={{ display: "flex", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            gap: "1rem",
+            flexWrap: "wrap",
+          }}
+        >
           <div>
             <p className="kicker">3C Mall · Lifestyle Intelligence OS</p>
             <h1 className="h1">How can we help today?</h1>
@@ -142,35 +144,37 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Wizard Card (single container) */}
+      {/* Single wizard card */}
       <div className="card glass db-card">
         <div className="db-card-head">
-          <div className="db-step">
+          <div className="db-step" aria-label="wizard progress">
             <span className="db-step-dot" data-on={step === 0 ? "true" : "false"} />
             <span className="db-step-dot" data-on={step === 1 ? "true" : "false"} />
             <span className="db-step-dot" data-on={step === 2 ? "true" : "false"} />
           </div>
 
-          {/* Minimal actions ONLY (not in header) */}
+          {/* ONLY 2 actions */}
           <div className="db-head-actions">
             <button className="btn btn-secondary db-head-btn" onClick={toggleNavMode}>
               {prefs?.navMode === "full" ? "Focused" : "Full Mall"}
             </button>
-            <button className="btn btn-secondary db-head-btn" onClick={() => setFeedbackOpen(true)}>
+
+            <button
+              className="btn btn-secondary db-head-btn"
+              onClick={() => setFeedbackOpen(true)}
+            >
               Feedback
             </button>
           </div>
         </div>
 
         <div className="db-stage glass-inner">
-          <div
-            className="db-track"
-            style={{ transform: `translateX(-${step * 100}%)` }}
-          >
-            {/* PANEL 0 — Concierge first */}
+          <div className="db-track" style={{ transform: `translateX(-${step * 100}%)` }}>
+            {/* PANEL 0 — Concierge */}
             <div className="db-panel">
               <div className="db-ai">
                 <div className="db-ai-badge">3C</div>
+
                 <div>
                   <div className="db-ai-title">Concierge Demo</div>
                   <div className="small" style={{ color: "var(--muted)" }}>
@@ -178,7 +182,15 @@ export default function DashboardPage() {
                   </div>
                 </div>
 
-                <div style={{ marginLeft: "auto" }}>
+                <div style={{ marginLeft: "auto", display: "flex", gap: ".5rem" }}>
+                  <button
+                    className="btn btn-ghost"
+                    onClick={() => setFeedbackHintOpen(true)}
+                    title="How feedback works"
+                  >
+                    Feedback?
+                  </button>
+
                   <button className="btn btn-ghost" onClick={() => setConciergeOpen((v) => !v)}>
                     {conciergeOpen ? "Minimize" : "Open"}
                   </button>
@@ -190,8 +202,10 @@ export default function DashboardPage() {
                   Tell me what you want to work on today — groceries, meals, training, or community.
                   I’ll remember your choice so the app stays clean and doesn’t waste your time.
                 </p>
+
                 <div className="db-ai-foot small">
-                  Alpha note: settings are saved on this device. (Login/profile sync comes in Beta.)
+                  Alpha note: this Concierge demo doesn’t collect typed messages yet.
+                  For feedback, use the <strong>Feedback</strong> button (top-right).
                 </div>
 
                 {conciergeOpen && (
@@ -244,7 +258,7 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* PANEL 1 — Zone cards (less options, clean) */}
+            {/* PANEL 1 — Zones */}
             <div className="db-panel">
               <div className="db-card-tag">ZONES</div>
               <h2 className="db-h2">Your Mall (based on your focus)</h2>
@@ -252,9 +266,11 @@ export default function DashboardPage() {
                 If you’re in Focused mode, you’ll see only what you chose. You can switch to Full Mall anytime.
               </p>
 
-              {/* Alpha “nudge” card (notification demo) */}
               {nudge?.show && (
-                <div className="card glass-inner" style={{ marginTop: ".9rem", borderColor: "rgba(246,220,138,.25)" }}>
+                <div
+                  className="card glass-inner"
+                  style={{ marginTop: ".9rem", borderColor: "rgba(246,220,138,.25)" }}
+                >
                   <div className="db-card-tag">QUICK TIP</div>
                   <h3 style={{ margin: ".35rem 0", color: "var(--gold)" }}>
                     Want the other wins too?
@@ -268,8 +284,8 @@ export default function DashboardPage() {
                       className="btn btn-primary"
                       onClick={() => {
                         handleNudgeSeen();
-                        const next = setNavMode("full");
-                        setPrefsState(next);
+                        const nextPrefs = setNavMode("full");
+                        setPrefsState(nextPrefs);
                       }}
                     >
                       Show me more
@@ -293,11 +309,13 @@ export default function DashboardPage() {
                   >
                     <div className="db-choice-title">{z.title}</div>
                     <div className="db-choice-desc">{z.desc}</div>
+
                     <div className="nav-row" style={{ marginTop: ".75rem" }}>
                       <span className="pill">
                         <span>Default</span>
                         <strong>{prefs?.focus === z.id ? "Yes" : "No"}</strong>
                       </span>
+
                       <button
                         className="btn btn-secondary"
                         onClick={(e) => {
@@ -322,7 +340,7 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* PANEL 2 — What to expect + preview image slot */}
+            {/* PANEL 2 — Preview */}
             <div className="db-panel">
               <div className="db-card-tag">PREVIEW</div>
               <h2 className="db-h2">What to expect (Alpha)</h2>
@@ -340,14 +358,9 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              {/* Optional dashboard image: put file in /public/icons or /public */}
               <div
                 className="card glass-inner"
-                style={{
-                  marginTop: ".9rem",
-                  padding: "1rem",
-                  overflow: "hidden",
-                }}
+                style={{ marginTop: ".9rem", padding: "1rem", overflow: "hidden" }}
               >
                 <div className="db-card-tag">MOCK</div>
                 <div style={{ borderRadius: "1rem", overflow: "hidden", border: "1px solid rgba(126,224,255,.16)" }}>
@@ -372,7 +385,58 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Feedback drawer: same design language (not a different “app inside the app”) */}
+      {/* Concierge Feedback Hint Modal */}
+      {feedbackHintOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setFeedbackHintOpen(false)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,.55)",
+            backdropFilter: "blur(6px)",
+            zIndex: 80,
+            display: "flex",
+            alignItems: "flex-end",
+            justifyContent: "center",
+            padding: "16px",
+          }}
+        >
+          <div
+            className="card glass"
+            onClick={(e) => e.stopPropagation()}
+            style={{ width: "min(720px, 100%)" }}
+          >
+            <div className="db-card-tag">ALPHA FEEDBACK</div>
+            <h3 style={{ margin: ".35rem 0 .5rem", color: "var(--gold)" }}>
+              Feedback is handled in the form
+            </h3>
+            <p className="small" style={{ margin: 0 }}>
+              The Concierge demo doesn’t collect typed messages yet.
+              For bug reports, UI/UX notes, or feature requests, use the{" "}
+              <strong>Feedback</strong> button (top-right) to open the official form.
+            </p>
+
+            <div className="nav-row" style={{ marginTop: ".9rem" }}>
+              <button
+                className="btn btn-primary"
+                onClick={() => {
+                  setFeedbackHintOpen(false);
+                  setFeedbackOpen(true);
+                }}
+              >
+                Open Feedback
+              </button>
+              <button className="btn btn-secondary" onClick={() => setFeedbackHintOpen(false)}>
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Feedback drawer */}
       <FeedbackDrawer
         open={feedbackOpen}
         onClose={() => setFeedbackOpen(false)}
@@ -383,14 +447,8 @@ export default function DashboardPage() {
           device: navigator.userAgent,
         }}
       />
-<button
-  className="btn btn-secondary"
-  onClick={() => window.open("https://forms.gle/bdWFtAEAABbJnb8n7", "_blank", "noopener,noreferrer")}
->
-  Feedback
-</button>
 
-      {/* Optional floating concierge “Apple-like” pill (hide if you don’t want it yet) */}
+      {/* Optional floating concierge pill */}
       <button
         className="db-float-pill"
         onClick={() => {

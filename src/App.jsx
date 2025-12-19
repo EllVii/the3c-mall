@@ -1,4 +1,3 @@
-// src/App.jsx
 import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 
@@ -25,14 +24,15 @@ import ComingSoon from "./pages/ComingSoon.jsx";
 import PTModePage from "./pages/PTModePage.jsx";
 import SettingsPage from "./pages/SettingsPage.jsx";
 
+// ✅ ADD THESE IMPORTS
+import CommunityPage from "./pages/CommunityPage.jsx";
+import FitnessZone from "./pages/FitnessZone.jsx";
+
 // Recipe Center Pages
 import RecipesPage from "./pages/RecipesPage.jsx";
 import RecipeDetailPage from "./pages/RecipeDetailPage.jsx";
 
 export default function App() {
-  // Optional “bypass” toggle:
-  // - set VITE_ALPHA_CHIP=0 to hide it (production / demos)
-  // - set VITE_ALPHA_CHIP=1 to show it (alpha)
   const showAlphaChip = import.meta.env.VITE_ALPHA_CHIP !== "0";
 
   return (
@@ -55,6 +55,11 @@ export default function App() {
           <Route index element={<DashboardPage />} />
           <Route path="meal-plans" element={<MealPlannerPage />} />
           <Route path="grocery-lab" element={<GroceryLabPage />} />
+
+          {/* ✅ NEW ROUTES (fixes bypass) */}
+          <Route path="community" element={<CommunityPage />} />
+          <Route path="fitness" element={<FitnessZone />} />
+
           <Route path="pt" element={<PTModePage />} />
           <Route path="settings" element={<SettingsPage />} />
 
