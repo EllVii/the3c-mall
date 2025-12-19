@@ -1,18 +1,12 @@
-// src/assets/components/FeedbackDrawer.jsx
 import React from "react";
-import "../../styles/FeedbackDrawer.css";
+import "./FeedbackDrawer.css";
 
 export default function FeedbackDrawer({ open, onClose, formUrl, context }) {
   if (!open) return null;
 
-  const payload = {
-    ...context,
-    ts: new Date().toISOString(),
-  };
+  const payload = { ...context, ts: new Date().toISOString() };
 
   function openForm() {
-    // NOTE: We can't prefill a shortlink Google Form without a special prefill URL.
-    // So we open the official form and show context in the drawer for copy/paste.
     window.open(formUrl, "_blank", "noopener,noreferrer");
   }
 
@@ -45,7 +39,8 @@ export default function FeedbackDrawer({ open, onClose, formUrl, context }) {
         <div className="fb-hint card glass-inner">
           <div className="db-card-tag">WHAT YOU’LL SEE</div>
           <p className="small" style={{ margin: 0 }}>
-            The form will ask for: <strong>Name/Tester ID</strong>, <strong>Type</strong> (Bug/Feature/UI/UX/Performance),
+            The form will ask for: <strong>Name/Tester ID</strong>,{" "}
+            <strong>Type</strong> (Bug/Feature/UI/UX/Performance),{" "}
             <strong>Severity</strong>, and <strong>Details</strong>.
           </p>
         </div>
@@ -60,3 +55,4 @@ export default function FeedbackDrawer({ open, onClose, formUrl, context }) {
     </div>
   );
 }
+

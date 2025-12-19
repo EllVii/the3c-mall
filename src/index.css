@@ -501,11 +501,6 @@ footer {
   --gold: #f6dc8a;
 }
 
-body{
-  background: var(--bg);
-  color: var(--text);
-}
-
 /* Themes */
 [data-theme="midnight"]{
   --bg: #050912;

@@ -39,3 +39,531 @@
 body{
   overflow-x: hidden;
 }
+
+/* =========================================================
+   3C HEADER EMBLEM — BRAND ANCHOR
+   ========================================================= */
+
+.brand-emblem{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: .5rem;
+}
+
+.brand-emblem img{
+  height: 160px;
+  width: auto;
+
+  opacity: auto;
+
+  filter:
+    drop-shadow(0 0 px rgba(126,224,255,.35))
+    drop-shadow(0 0 px rgba(246,220,138,.28));
+
+  transition: transform .3s ease, filter .3s ease;
+}
+
+/* Subtle presence on hover (desktop only) */
+@media (hover:hover){
+  .brand-emblem img:hover{
+    transform: scale(.03);
+    filter:
+      drop-shadow(0 0 px rgba(126,224,255,.45))
+      drop-shadow(0 0 px rgba(246,220,138,.35));
+  }
+}
+
+/* =========================================================
+   3C MALL — SINGLE SOURCE OF TRUTH (ui.css)
+   Theme + Base + Components + Safe Overrides
+   ========================================================= */
+
+
+/* =========================================================
+   THEME TOKENS (DEFAULTS)
+   ========================================================= */
+
+::root{
+  /* ...your existing vars... */
+
+  :root{
+  /* Global emblem watermark */
+  --emblem-url: url("/brand/3c-emblem.png");
+  --emblem-opacity: .12;          /* base strength */
+  --emblem-size: 560px;           /* main emblem size */
+  --emblem-glow-blue: rgba(126,224,255,.20);
+  --emblem-glow-gold: rgba(246,220,138,.16);
+}
+
+
+  /* NEW: global background authority */
+  --bg-top: var(--bg1);
+  --bg-bottom: var(--bg0);
+
+  /* Theme “energy” glow (changes per theme) */
+  --themeGlowA: rgba(126,224,255,.14);
+  --themeGlowB: rgba(246,220,138,.10);
+  --themeGlowC: rgba(31,93,255,.12);
+
+  /* A subtle “speed streak” layer (changes per theme) */
+  --bg-streaks:
+    radial-gradient(circle at 50% 50%, rgba(255,255,255,.06), transparent 60%);
+}
+
+/* --- Theme 1: Midnight Lux --- */
+html[data-theme="midnight-lux"]{
+  --bg0:#02040a;
+  --bg1:#050912;
+  --card:#070d1a;
+  --line:rgba(126,224,255,.18);
+
+  --blue:#7ee0ff;
+  --blueDeep:#1f5dff;
+  --gold:#f6dc8a;
+
+  --text:#f4f6ff;
+  --muted:#a9b4d2;
+  --muted2:#8d98b6;
+  --blackText:#0b0f17;
+
+  --bg-graphic:
+    radial-gradient(circle at 12% 18%, rgba(126,224,255,.14), transparent 55%),
+    radial-gradient(circle at 85% 10%, rgba(246,220,138,.10), transparent 50%),
+    radial-gradient(circle at 70% 90%, rgba(31,93,255,.12), transparent 55%);
+}
+
+/* --- Theme 2: Velocity Red --- */
+html[data-theme="velocity-red"]{
+  --bg0:#05050a;
+  --bg1:#0b0b14;
+  --card:#0d0d18;
+  --line:rgba(255,94,94,.22);
+
+  html[data-theme="velocity-red"]{
+  --emblem-opacity: .16;
+  --emblem-glow-blue: rgba(126,224,255,.22);
+  --emblem-glow-gold: rgba(246,220,138,.18);
+}
+
+
+  /* Keep buttons brand-consistent: DO NOT make buttons red */
+  --blue:#7ee0ff;
+  --blueDeep:#1f5dff;
+  --gold:#f6dc8a;
+
+  --text:#f7f7ff;
+  --muted:#c2c3da;
+  --muted2:#a8aac7;
+  --blackText:#0a0b10;
+
+  /* THIS is the pop: red energy is in the background glow */
+  --themeGlowA: rgba(255, 52, 82, .28);   /* hot red */
+  --themeGlowB: rgba(246, 220, 138, .14); /* premium gold */
+  --themeGlowC: rgba(255, 42, 42, .18);   /* deeper red */
+
+  /* Streaks that feel like motion */
+  --bg-streaks:
+    radial-gradient(circle at 50% 60%, rgba(255,255,255,.05), transparent 62%),
+    linear-gradient(90deg, transparent 0%, rgba(255,52,82,.10) 45%, transparent 100%),
+    linear-gradient(90deg, transparent 0%, rgba(255,42,42,.08) 55%, transparent 100%);
+}
+
+
+/* --- Theme 3: Pearl Luxe --- */
+html[data-theme="pearl-luxe"]{
+  --bg0:#0b1018;
+  --bg1:#111a26;
+  --card:#0f1621;
+  --line:rgba(180,197,216,.22);
+
+  --blue:#b4c5d8;
+  --blueDeep:#6f8fb0;
+  --gold:#d9c08a;
+
+  --text:#f1f4ff;
+  --muted:#b7c1d8;
+  --muted2:#9ba7c2;
+  --blackText:#0a0b10;
+
+  --bg-graphic:
+    radial-gradient(circle at 18% 22%, rgba(180,197,216,.18), transparent 55%),
+    radial-gradient(circle at 86% 12%, rgba(217,192,138,.12), transparent 55%),
+    radial-gradient(circle at 70% 90%, rgba(111,143,176,.14), transparent 60%);
+}
+
+/* --- Theme 4: Retro Fusion --- */
+html[data-theme="retro-fusion"]{
+  --bg0:#040610;
+  --bg1:#070a18;
+  --card:#080c1d;
+  --line:rgba(120,255,214,.18);
+
+  --blue:#78ffd6;
+  --blueDeep:#7c5cff;
+  --gold:#ffcf6b;
+
+  --text:#f3f5ff;
+  --muted:#b4b8da;
+  --muted2:#9aa0c9;
+  --blackText:#070914;
+
+  --bg-graphic:
+    radial-gradient(circle at 12% 18%, rgba(120,255,214,.18), transparent 55%),
+    radial-gradient(circle at 85% 14%, rgba(124,92,255,.16), transparent 55%),
+    radial-gradient(circle at 70% 88%, rgba(255,207,107,.12), transparent 60%);
+}
+
+
+/* =========================================================
+   GLOBAL RESET + SAFE BASELINE (ONE TIME ONLY)
+   ========================================================= */
+
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html, body { height: 100%; }
+
+body{
+  margin: 0;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+  color: var(--text);
+
+  /* BIG upgrade: theme gradient + theme glows + graphic sheen */
+  background:
+    var(--bg-streaks),
+    radial-gradient(circle at 18% 20%, var(--themeGlowA), transparent 58%),
+    radial-gradient(circle at 86% 12%, var(--themeGlowB), transparent 55%),
+    radial-gradient(circle at 70% 88%, var(--themeGlowC), transparent 60%),
+    linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
+
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  background-size: cover;
+
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+
+#root{
+  min-height: 100%;
+  width: 100%;
+  display: block;
+}
+
+a{ color: inherit; text-decoration: none; }
+a:hover{ opacity: .92; }
+
+
+/* =========================================================
+   PAGE SHELL + TYPOGRAPHY
+   ========================================================= */
+
+.page{
+  width: 100%;
+  max-width: 1150px;
+  margin: 0 auto;
+  padding: 1.5rem 1.25rem 3rem;
+}
+
+.kicker{
+  font-size:.75rem;
+  text-transform:uppercase;
+  letter-spacing:.18em;
+  color: var(--blue);
+  margin: 0 0 .25rem;
+}
+
+.h1{
+  font-size: 2rem;
+  margin: .2rem 0 .6rem;
+  letter-spacing: .02em;
+}
+
+.sub{
+  color: var(--muted);
+  font-size: .95rem;
+  max-width: 820px;
+  margin: 0;
+}
+
+.small{
+  color: var(--muted2);
+  font-size: .82rem;
+  line-height: 1.35;
+}
+
+
+/* =========================================================
+   UNIVERSAL CARDS + GRIDS
+   ========================================================= */
+
+.card{
+  border-radius: 1.4rem;
+  border: 1px solid var(--line);
+  background:
+    var(--bg-graphic),
+    rgba(5, 9, 18, 0.92);
+  padding: 1.1rem 1.1rem 1rem;
+  box-shadow: 0 18px 46px rgba(0,0,0,.85);
+}
+
+.grid{
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+/* Optional glass helpers (only if you use them) */
+.glass{
+  background: rgba(8, 12, 24, 0.65);
+  border: 1px solid rgba(126,224,255,.16);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-radius: 18px;
+}
+.glass-inner{
+  background: rgba(8, 12, 24, 0.55);
+  border: 1px solid rgba(126,224,255,.12);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 18px;
+}
+
+
+/* =========================================================
+   PILLS
+   ========================================================= */
+
+.pill{
+  display: inline-flex;
+  flex-direction: column;
+  gap: .15rem;
+  border-radius: 999px;
+  border: 1px solid rgba(126,224,255,.35);
+  background: rgba(5,9,18,.92);
+  padding: .55rem 1.05rem;
+  font-size: .8rem;
+}
+
+.pill span{
+  font-size: .68rem;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--muted2);
+}
+
+.pill strong{ color: var(--gold); }
+
+
+/* =========================================================
+   SHIMMER BUTTON SYSTEM (ONE TIME ONLY)
+   ========================================================= */
+
+.btn{
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+
+  border: none;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+
+  border-radius: 999px;
+  padding: .72rem 1.05rem;
+  font-weight: 900;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  font-size: .78rem;
+
+  transition: transform .18s ease, filter .18s ease;
+  overflow: hidden;
+}
+
+.btn:active{ transform: scale(.98); }
+
+.btn-primary{
+  background: linear-gradient(135deg, var(--gold), var(--blue));
+  color: var(--blackText);
+  box-shadow: 0 14px 34px rgba(0,0,0,.85);
+}
+
+.btn-secondary{
+  background: rgba(4,8,18,.55);
+  color: var(--blue);
+  border: 1px solid rgba(126,224,255,.35);
+}
+
+.btn-ghost{
+  background: transparent;
+  color: var(--gold);
+  border: 1px solid rgba(246,220,138,.35);
+}
+
+/* shimmer layer */
+.btn::after{
+  content:"";
+  position:absolute;
+  top:-60%;
+  left:-80%;
+  width: 60%;
+  height: 220%;
+  transform: rotate(20deg);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255,255,255,.55) 45%,
+    transparent 100%
+  );
+  opacity: 0;
+  filter: blur(1px);
+  pointer-events: none;
+}
+
+.btn:hover::after,
+.btn:focus-visible::after{
+  opacity: .55;
+  animation: shimmer 1.2s ease-in-out forwards;
+}
+
+.btn:hover,
+.btn:focus-visible{ filter: brightness(1.05); }
+
+@keyframes shimmer{
+  0%{ left:-80%; }
+  100%{ left:140%; }
+}
+
+
+/* =========================================================
+   ROWS + INPUTS
+   ========================================================= */
+
+.nav-row{
+  display:flex;
+  flex-wrap:wrap;
+  gap:.6rem;
+  margin-top: 1rem;
+}
+
+.input, .select, .textarea{
+  width: 100%;
+  border-radius: .9rem;
+  padding: .75rem .85rem;
+  border: 1px solid rgba(126,224,255,.28);
+  background: rgba(4,8,18,.62);
+  color: var(--text);
+  outline: none;
+}
+
+.textarea{ resize: vertical; min-height: 92px; }
+
+.label{
+  display:block;
+  color: var(--muted);
+  font-weight: 800;
+  margin: .55rem 0 .35rem;
+  letter-spacing: .02em;
+}
+
+
+/* =========================================================
+   SAFE OVERRIDES (BOTTOM OF FILE — KEEP LAST)
+   Prevent wizard/card overflow + button stretching
+   ========================================================= */
+
+/* Never allow horizontal overflow from UI elements */
+.page, .card, .glass, .glass-inner,
+.gl-wizard, .gl-stage, .gl-panel,
+.db-shell, .db-stage, .db-panel {
+  max-width: 100%;
+}
+
+/* Buttons MUST be allowed to shrink + wrap */
+.btn{
+  max-width: 100%;
+  min-width: 0;            /* critical */
+  white-space: normal;     /* allow wrap */
+  text-align: center;
+  line-height: 1.1;
+}
+
+/* Any grid item with long text must be allowed to shrink */
+.gl-choice, .db-choice,
+.gl-choice * , .db-choice *{
+  min-width: 0;
+}
+
+/* For store buttons row: don’t let flex items stretch weirdly */
+.gl-store-row .btn{
+  flex: 0 0 auto;
+}
+
+/* Hard kill any accidental horizontal scrolling */
+body{
+  overflow-x: hidden;
+}
+
+/* =========================================================
+   GLOBAL EMBLEM SHINE (watermark that pops through the UI)
+   ========================================================= */
+:root{
+  /* 3C Emblem Watermark */
+  --emblem-url: url("/brand/3c-emblem.png");
+  --emblem-opacity: .00007;        /* global strength */
+  --emblem-size: 560px;
+
+  --emblem-glow-blue: rgba(126,224,255,.22);
+  --emblem-glow-gold: rgba(246,220,138,.18);
+}
+
+#root{
+  position: relative;
+  isolation: isolate; /* keeps blend-modes clean */
+}
+
+/* The emblem layer */
+#root::before{
+  content:"";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+
+  /* Center emblem + subtle repeats */
+  background:
+    radial-gradient(circle at 50% 45%, rgba(0,0,0,.0), rgba(0,0,0,.55) 68%, rgba(0,0,0,.75) 100%),
+    var(--emblem-url);
+
+  background-repeat: no-repeat;
+  background-position: center 46%;
+  background-size: var(--emblem-size);
+
+  opacity: var(--emblem-opacity);
+
+  /* Make it feel like it’s “emitting” */
+  filter:
+    drop-shadow(0 0 22px var(--emblem-glow-blue))
+    drop-shadow(0 0 18px var(--emblem-glow-gold))
+    saturate(1.12)
+    contrast(1.08);
+
+  /* This is the magic that makes it shine through */
+  mix-blend-mode: screen;
+
+  /* Soft mask so it fades into the edges */
+  -webkit-mask-image: radial-gradient(circle at 50% 45%, rgba(0,0,0,1) 0%, rgba(0,0,0,.9) 35%, rgba(0,0,0,0) 78%);
+          mask-image: radial-gradient(circle at 50% 45%, rgba(0,0,0,1) 0%, rgba(0,0,0,.9) 35%, rgba(0,0,0,0) 78%);
+}
+
+/* Ensure your actual UI renders above it */
+#root > *{
+  position: relative;
+  z-index: 1;
+}
