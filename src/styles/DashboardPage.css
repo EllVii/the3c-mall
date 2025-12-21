@@ -1,202 +1,69 @@
-  /* src/styles/DashboardPage.css */
+/* src/styles/DashboardPage.css
+   DASHBOARD — APP-LIKE BANDS + NO GLASS + NO DARK CARDS
+   The visual system lives in ui.css (tiles, buttons, page bands).
+*/
 
-  .db-shell{
-    position: relative;
-    isolation: isolate;
-  }
+/* Dashboard shell should behave like an app screen */
+.db-shell{
+  height: 100%;
+  width: 100%;
+  position: relative;
+  isolation: isolate;
+}
 
-  /* Logo watermark backdrop */
-  .db-shell::before{
-    content:"";
-    position:absolute;
-    inset: 0;
-    background-image: url("/icons/3c-mall.png");
-    background-repeat: no-repeat;
-    background-position: 50% 32%;
-    background-size: min(520px, 70vw);
-    opacity: 0.10;
-    filter: blur(0.2px) saturate(1.1);
-    z-index: -1;
-    pointer-events:none;
-  }
+/* OPTIONAL: super subtle watermark that does NOT darken the wallpaper
+   (If you don't want it, delete this block.)
+*/
+.db-shell::before{
+  content:"";
+  position:absolute;
+  inset: 0;
+  pointer-events:none;
+  z-index: 0;
 
-  /* soft radial sheen behind everything */
-  .db-shell::after{
-    content:"";
-    position:absolute;
-    inset: 0;
-    background:
-      radial-gradient(circle at 25% 18%, rgba(126,224,255,.10), transparent 55%),
-      radial-gradient(circle at 82% 14%, rgba(246,220,138,.08), transparent 55%),
-      radial-gradient(circle at 60% 90%, rgba(31,93,255,.10), transparent 60%);
-    opacity: .9;
-    z-index: -2;
-    pointer-events:none;
-  }
+  background-image: url("/brand/3c-emblem.png");
+  background-repeat: no-repeat;
+  background-position: 50% 28%;
+  background-size: min(520px, 70vw);
 
-  .db-top{ margin-bottom: .75rem; }
+  opacity: 0.06;          /* lower than your old 0.10 */
+  filter: saturate(1.08) contrast(1.05);
+}
 
-  /* Smoky glass (65% translucent) */
-  .glass{
-    background: rgba(8, 12, 24, 0.65) !important;
-    border: 1px solid rgba(126,224,255,.16) !important;
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-  }
+/* Ensure actual UI content sits above watermark */
+.db-shell > *{
+  position: relative;
+  z-index: 1;
+}
 
-  .glass-inner{
-    background: rgba(8, 12, 24, 0.55);
-    border: 1px solid rgba(126,224,255,.12);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-  }
+/* Remove ALL glass + card styling from this page (ui.css controls tiles now) */
+.glass,
+.glass-inner,
+.card,
+.db-card{
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
 
-  .db-card{ padding: 1.2rem; }
+/* Old dashboard admin layout classes: neutralize safely (no "all: unset" nukes) */
+.db-top,
+.db-card-head,
+.db-card-tag,
+.db-h2,
+.db-choice-grid,
+.db-choice,
+.db-choice-on,
+.db-ai,
+.db-ai-panel,
+.db-float-pill,
+.grid{
+  display: none !important;
+}
 
-  .db-card-head{
-    display:flex;
-    align-items:center;
-    justify-content: space-between;
-    gap: .75rem;
-    margin-bottom: .8rem;
-  }
-
-  .db-step{ display:flex; gap:.45rem; align-items:center; }
-  .db-step-dot{
-    width: 9px;
-    height: 9px;
-    border-radius: 999px;
-    border: 1px solid rgba(126,224,255,.35);
-    background: rgba(4,8,18,.55);
-  }
-  .db-step-dot[data-on="true"]{
-    background: linear-gradient(135deg, var(--gold), var(--blue));
-    border-color: rgba(246,220,138,.35);
-  }
-
-  .db-head-actions{ display:flex; gap:.5rem; flex-wrap: wrap; }
-  .db-head-btn{ padding: .55rem .85rem; font-size: .72rem; }
-
-  .db-stage{
-    overflow:hidden;
-    border-radius: 1.1rem;
-  }
-
-  .db-track{
-    display:flex;
-    width: 300%;
-    transition: transform .28s ease;
-    will-change: transform;
-  }
-
-  .db-panel{ width: 100%; padding: 1rem; }
-
-  .db-card-tag{
-    font-size: .72rem;
-    letter-spacing: .18em;
-    text-transform: uppercase;
-    color: var(--blue);
-    font-weight: 900;
-  }
-
-  .db-h2{ margin: .35rem 0 .45rem; font-size: 1.25rem; }
-
-  .db-choice-grid{
-    display:grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: .75rem;
-    margin-top: .9rem;
-  }
-
-  .db-choice{
-    text-align:left;
-    border-radius: 1.1rem;
-    padding: .95rem;
-    color: var(--text);
-    cursor:pointer;
-    transition: transform .16s ease, filter .16s ease, border-color .16s ease;
-  }
-
-  .db-choice:hover{ filter: brightness(1.05); transform: translateY(-1px); }
-  .db-choice-on{
-    border-color: rgba(246,220,138,.45) !important;
-    box-shadow: 0 10px 26px rgba(0,0,0,.65);
-  }
-
-  .db-choice-title{ font-weight: 900; letter-spacing: .02em; }
-  .db-choice-desc{ margin-top: .35rem; color: var(--muted); font-size: .86rem; }
-
-  /* Prev/Next anchored */
-  .db-nav{
-    display:flex;
-    justify-content: space-between;
-    gap: .6rem;
-    margin-top: 1rem;
-  }
-
-  /* AI panel */
-  .db-ai{
-    display:flex;
-    align-items:center;
-    gap: .8rem;
-    margin-bottom: .8rem;
-  }
-
-  .db-ai-badge{
-    width: 44px;
-    height: 44px;
-    border-radius: 14px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-weight: 1000;
-    letter-spacing: .08em;
-    color: var(--blackText);
-    background: linear-gradient(135deg, var(--gold), var(--blue));
-    box-shadow: 0 10px 20px rgba(0,0,0,.55);
-  }
-
-  .db-ai-title{
-    font-weight: 900;
-    letter-spacing: .06em;
-    text-transform: uppercase;
-  }
-
-  .db-ai-panel{
-    border-radius: 1.1rem;
-    padding: 1rem;
-    margin-top: .75rem;
-  }
-
-  .db-ai-p{ margin: 0; color: rgba(255,255,255,.82); line-height: 1.45; }
-  .db-ai-foot{ margin-top: .8rem; color: var(--muted2); }
-
-  /* Right side */
-  .db-right-title{
-    font-weight: 900;
-    letter-spacing: .06em;
-    text-transform: uppercase;
-    color: var(--gold);
-  }
-  .db-right-foot{ margin-top: 1rem; color: var(--muted2); }
-
-  /* Floating concierge pill (Apple-like) */
-  .db-float-pill{
-    position: fixed;
-    right: 16px;
-    bottom: 16px;
-    z-index: 50;
-    border: 1px solid rgba(126,224,255,.28);
-    background: rgba(8,12,24,.65);
-    color: var(--blue);
-    border-radius: 999px;
-    padding: .72rem 1rem;
-    font-weight: 900;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    box-shadow: 0 14px 34px rgba(0,0,0,.7);
-    cursor: pointer;
-  }
-  .db-float-pill:active{ transform: scale(.98); }
+/* Nudge auto-hide on short screens (prevents scroll) */
+@media (max-height: 760px){
+  .db-nudge{ display: none !important; }
+}

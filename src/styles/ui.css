@@ -1,94 +1,540 @@
 /* =========================================================
-   MOBILE HEADER + PADDING FIX (FINAL)
+   3C MALL — UI SYSTEM (SINGLE SOURCE OF TRUTH)
+   Concierge · Cost · Community
+   NO SCROLL · APP-LIKE · SYMMETRICAL · CLEAN
    ========================================================= */
 
-/* GLOBAL: kill any accidental side gaps */
-html, body {
-  width: 100%;
-  overflow-x: hidden;
-}
+/* =========================================================
+   RESET + APP CONSTRAINTS (NO SCROLL)
+   ========================================================= */
+*,
+*::before,
+*::after { box-sizing: border-box; }
 
-/* === HEADER EMBLEM: CLEAN, NO HALO === */
-.brand-emblem{
-  background: none !important;       /* remove halo / glow plate */
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  border-bottom: none;
-  padding: 0;
+html, body {
+  height: 100%;
+  width: 100%;
   margin: 0;
 }
 
-/* Remove ALL glow effects behind the image */
-.brand-emblem img{
-  filter: none !important;
-  opacity: 1;
+body{
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+  color: var(--text);
+
+  /* Theme background pipeline:
+     1) optional image
+     2) energy glows
+     3) overlay gradient for readability
+     4) fallback base gradient
+  */
+background:
+  var(--bg-image),
+  radial-gradient(circle at 18% 20%, var(--themeGlowA), transparent 55%),
+  radial-gradient(circle at 86% 12%, var(--themeGlowB), transparent 55%),
+  radial-gradient(circle at 70% 88%, var(--themeGlowC), transparent 60%),
+  linear-gradient(180deg, var(--bgOverlayTop), var(--bgOverlayBottom));
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+
+  overflow: hidden; /* 🚫 NO SCROLL EVER */
 }
 
-/* =========================================================
-   MOBILE EDGE-TO-EDGE HEADER IMAGE
-   ========================================================= */
-@media (max-width: 480px){
-
-  /* Let header image break out of page padding */
-  .brand-emblem{
-    width: 100vw;
-    margin-left: calc(50% - 50vw);
-    margin-right: calc(50% - 50vw);
-    margin-bottom: .85rem;
-  }
-
-  .brand-emblem img{
-    width: 100%;
-    height: auto;
-    max-height: 110px;
-    object-fit: cover;
-    display: block;
-  }
-
-  /* Tighten page padding (mobile) */
-  .page{
-    padding: .9rem .85rem 2.25rem;
-  }
-
-  /* Cards feel less cramped */
-  .card{
-    padding: .9rem .9rem .85rem;
-  }
-
-  /* Buttons don’t crowd */
-  .nav-row{
-    gap: .45rem;
-  }
-}
-/* =========================================================
-   SUBTLE HEADER DIVIDER — PREMIUM, NON-INTRUSIVE
-   ========================================================= */
-
-/* Divider lives directly under the header image */
-.brand-emblem::after{
-  content: "";
-  display: block;
+#root{
+  height: 100%;
   width: 100%;
-  height: 1px;
-  margin-top: .35rem;
-
-  /* Luxury gradient divider */
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(126,224,255,.25) 30%,
-    rgba(246,220,138,.35) 50%,
-    rgba(126,224,255,.25) 70%,
-    transparent 100%
-  );
+  display: flex;
+  flex-direction: column;
+  isolation: isolate;
 }
 
-/* Mobile: slightly softer so it doesn’t feel busy */
+/* =========================================================
+   THEME TOKENS (BRAND FIRST)
+   ========================================================= */
+:root{
+  /* Surface system (lets wallpaper show) */
+  --surface: rgba(255,255,255,.06);
+  --surface-strong: rgba(255,255,255,.10);
+  --surface-border: rgba(255,255,255,.18);
+  
+  /* Base / default (Midnight Lux look) */
+  --bg0:#02040a;
+  --bg1:#050912;
+  --card:#070d1a;
+  --line:rgba(126,224,255,.18);
+
+  /* BRAND (do NOT theme-shift buttons) */
+  --blue:#7ee0ff;
+  --blueDeep:#1f5dff;
+  --gold:#f6dc8a;
+
+  --text:#f4f6ff;
+  --muted:#a9b4d2;
+  --muted2:#8d98b6;
+  --blackText:#0b0f17;
+
+  /* Default energy glows */
+  --themeGlowA: rgba(126,224,255,.14);
+  --themeGlowB: rgba(246,220,138,.10);
+  --themeGlowC: rgba(31,93,255,.12);
+
+  /* Background overlays (controls readability) */
+  --bgOverlayTop: rgba(2,4,10,.35);
+  --bgOverlayBottom: rgba(2,4,10,.75);
+
+  /* Background image (optional per theme) */
+  --bg-image: none;
+}
+
+/* =========================================================
+   THEME: MIDNIGHT LUX (no image; procedural only)
+   ========================================================= */
+html[data-theme="midnight-lux"]{
+  --bg0:#02040a;
+  --bg1:#050912;
+  --card:#070d1a;
+  --line:rgba(126,224,255,.18);
+
+  --themeGlowA: rgba(126,224,255,.14);
+  --themeGlowB: rgba(246,220,138,.10);
+  --themeGlowC: rgba(31,93,255,.12);
+
+  --bgOverlayTop: rgba(2,4,10,.30);
+  --bgOverlayBottom: rgba(2,4,10,.82);
+
+  --bg-image: none;
+}
+
+/* =========================================================
+   THEME: VELOCITY RED (image + red energy; buttons stay brand)
+   File: /public/themes/velocity-red-bg.jpg
+   ========================================================= */
+html[data-theme="velocity-red"]{
+  --surface: rgba(255,255,255,.08);
+  --surface-strong: rgba(255,255,255,.14);
+  --surface-border: rgba(255,90,90,.35);
+
+  --bgOverlayTop: rgba(10,0,4,.18);
+  --bgOverlayBottom: rgba(10,0,4,.55);
+}
+
+/* =========================================================
+   THEME: PEARL LUXE (image + calm glows)
+   File: /public/themes/pearl-luxe-bg.jpg
+   Note: background is light, so overlays must be stronger.
+   ========================================================= */
+html[data-theme="pearl-luxe"]{
+  --text:#141414;
+  --muted:#3c3c3c;
+  --muted2:#595959;
+
+  --surface: rgba(255,255,255,.62);
+  --surface-strong: rgba(255,255,255,.82);
+  --surface-border: rgba(210,190,120,.55);
+
+  --bgOverlayTop: rgba(255,255,255,.10);
+  --bgOverlayBottom: rgba(255,255,255,.28);
+}
+
+/* =========================================================
+   THEME: RETRO FUSION (image + playful glows)
+   File: /public/themes/retro-fusion-bg.jpg
+   ========================================================= */
+html[data-theme="retro-fusion"]{
+  --surface: rgba(255,255,255,.14);
+  --surface-strong: rgba(255,255,255,.22);
+  --surface-border: rgba(255,255,255,.30);
+
+  --bgOverlayTop: rgba(6,8,18,.18);
+  --bgOverlayBottom: rgba(6,8,18,.50);
+}
+
+/* =========================================================
+   APP PAGE LAYOUT (NO SCROLL, 3 BANDS)
+   header / content / footer
+   ========================================================= */
+.page{
+  height: 100%;
+  width: 100%;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  padding: 0;
+  min-height: 0; /* important for grid overflow rules */
+}
+
+/* =========================================================
+   HEADER — EDGE TO EDGE IMAGE (NO HALO) + SUBTLE DIVIDER
+   Supports either:
+     A) emblem png centered, OR
+     B) full-width banner image
+   ========================================================= */
+.brand-emblem{
+  width: 100%;
+  margin: 0;
+  padding: .55rem 0 .55rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  /* no halo; keep it simple */
+  background: rgba(4,8,18,.35);
+
+  /* subtle divider */
+  border-bottom: 1px solid rgba(126,224,255,.12);
+}
+
+/* default emblem image */
+.brand-emblem img{
+  height: 64px;
+  width: auto;
+  display: block;
+}
+
+/* If you use a WIDE banner instead of emblem PNG:
+   <div className="brand-emblem brand-banner"><img ... /></div>
+*/
+.brand-emblem.brand-banner{
+  padding: 0;
+  background: transparent;
+}
+.brand-emblem.brand-banner img{
+  width: 100%;
+  height: 96px;         /* desktop header height */
+  object-fit: cover;    /* fills edge-to-edge */
+  display: block;
+}
+
+/* mobile edge-to-edge */
 @media (max-width: 480px){
-  .brand-emblem::after{
-    margin-top: .25rem;
-    opacity: .65;
+  .brand-emblem img{ height: 56px; }
+
+  .brand-emblem.brand-banner img{
+    height: 84px; /* mobile header height */
   }
 }
 
+/* =========================================================
+   CONTENT AREA — MUST FIT SCREEN (NO SCROLL)
+   ========================================================= */
+.page-content{
+  padding: .85rem .85rem .65rem;
+  display: grid;
+  align-content: start;
+  gap: .85rem;
+  overflow: hidden;
+  min-height: 0;
+}
 
+/* =========================================================
+   GRID RULES (FENG SHUI)
+   ========================================================= */
+.fit-grid{
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0,1fr));
+  gap: .85rem;
+  min-height: 0;
+}
+
+.tile-hero{ grid-column: 1 / -1; }
+
+/* Mobile: 1 column for symmetry + fit */
+@media (max-width: 560px){
+  .fit-grid{ grid-template-columns: 1fr; }
+}
+
+/* =========================================================
+   TILES
+   ========================================================= */
+.tile{
+  border-radius: 1.2rem;
+  border: 1px solid var(--line);
+
+  /* LIGHTER tile so wallpaper shows */
+  background: rgba(255,255,255,.08);
+
+  /* remove smoky glass */
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+
+  padding: .85rem .9rem;
+  display: grid;
+  gap: .35rem;
+  min-height: 88px;
+  min-width: 0;
+}
+
+.tile-title{
+  font-weight: 900;
+  letter-spacing: .04em;
+  color: var(--gold);
+}
+.tile-desc{
+  font-size: .82rem;
+  color: var(--muted);
+  line-height: 1.3;
+}
+
+/* compact mode */
+.fit-compact .tile{
+  min-height: 78px;
+  padding: .75rem .8rem;
+}
+
+/* =========================================================
+   FOOTER — SECONDARY ACTIONS ONLY (MAX 2)
+   ========================================================= */
+.page-footer{
+  padding: .6rem .85rem .75rem;
+  border-top: 1px solid rgba(126,224,255,.12);
+  display: flex;
+  gap: .6rem;
+  justify-content: center;
+}
+
+/* =========================================================
+   BUTTON SYSTEM (CONSISTENT BRAND)
+   ========================================================= */
+.btn{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .4rem;
+  border-radius: 999px;
+  padding: .7rem 1rem;
+  font-weight: 900;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  font-size: .75rem;
+  border: none;
+  cursor: pointer;
+
+  white-space: nowrap;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.btn-primary{
+  background: linear-gradient(135deg, var(--gold), var(--blue));
+  color: var(--blackText);
+  box-shadow: 0 14px 34px rgba(0,0,0,.55);
+}
+.btn-secondary{
+  background: rgba(4,8,18,.60);
+  border: 1px solid rgba(126,224,255,.35);
+  color: var(--blue);
+}
+.btn-ghost{
+  background: transparent;
+  border: 1px solid rgba(246,220,138,.35);
+  color: var(--gold);
+}
+
+/* =========================================================
+   TYPOGRAPHY HELPERS
+   ========================================================= */
+.kicker{
+  font-size: .7rem;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--blue);
+  margin: 0;
+}
+.h1{
+  font-size: 1.6rem;
+  font-weight: 900;
+  margin: .25rem 0 .35rem;
+}
+.sub{
+  font-size: .9rem;
+  color: var(--muted);
+  margin: 0;
+}
+.small{
+  font-size: .8rem;
+  color: var(--muted2);
+}
+
+/* =========================================================
+   SAFETY OVERRIDES (KEEP LAST)
+   ========================================================= */
+.page, .page-content, .fit-grid, .tile { max-width: 100%; }
+body { overflow-x: hidden; }
+
+/* =========================================================
+   CONCIERGE OVERLAY (PAGE NEVER SCROLLS)
+   overlay can scroll internally if needed
+   ========================================================= */
+.cc-overlay{
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  display: grid;
+  place-items: center;
+  pointer-events: auto;
+}
+
+.cc-backdrop{
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,.35); /* lighter */
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.cc-panel{
+  position: relative;
+  width: min(980px, calc(100vw - 22px));
+  max-height: calc(100vh - 22px);
+  border-radius: 1.4rem;
+  border: 1px solid var(--surface-border);
+  background: linear-gradient(180deg, var(--surface-strong), var(--surface));
+  box-shadow: 0 24px 72px rgba(0,0,0,.55);
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: auto 1fr;
+}
+
+.cc-head{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .8rem;
+  padding: .95rem 1rem;
+  border-bottom: 1px solid rgba(255,225,255,.12);
+  background: rgba(255,255,225,.06);
+}
+
+.cc-head-left{
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  min-width: 0;
+}
+
+.cc-badge{
+  height: 38px;
+  width: 38px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-weight: 900;
+  letter-spacing: .08em;
+  color: var(--blackText);
+  background: linear-gradient(135deg, var(--gold), var(--blue));
+  flex: 0 0 auto;
+}
+
+.cc-title{
+  font-weight: 900;
+  letter-spacing: .02em;
+  font-size: 1.05rem;
+  color: var(--text);
+}
+.cc-sub{
+  font-size: .72rem;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--muted2);
+}
+
+.cc-actions{
+  display: flex;
+  gap: .5rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.cc-btn{ padding: .6rem .85rem; font-size: .72rem; }
+
+/* Body can scroll internally ONLY if needed */
+.cc-body{
+  padding: .95rem 1rem 1rem;
+  display: grid;
+  gap: .85rem;
+  overflow: auto;
+}
+
+.cc-copy{ margin: 0; }
+
+/* Symmetrical grid */
+.cc-grid{
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .75rem;
+}
+@media (max-width: 560px){
+  .cc-grid{ grid-template-columns: 1fr; }
+}
+
+.cc-choice{
+  text-align: left;
+  border-radius: 1.2rem;
+  border: 1px solid var(--surface-border);
+  background: linear-gradient(180deg, var(--surface-strong), var(--surface));
+  padding: .85rem .9rem;
+  cursor: pointer;
+  transition: transform .18s ease, filter .18s ease, border-color .18s ease;
+  color: var(--text);
+  min-height: 78px;
+
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.cc-choice:hover{
+  transform: translateY(-2px);
+  filter: brightness(1.04);
+  border-color: rgba(126,224,255,.35);
+}
+
+.cc-choice-title{
+  font-weight: 900;
+  letter-spacing: .04em;
+  color: var(--gold);
+  margin-bottom: .25rem;
+}
+.cc-choice-desc{
+  color: var(--muted);
+  font-size: .86rem;
+  line-height: 1.3;
+}
+
+.cc-foot{
+  border-top: 1px solid rgba(126,224,255,.10);
+  padding-top: .75rem;
+}
+
+/* Minimized pill */
+.cc-pill{
+  position: fixed;
+  z-index: 998;
+  right: 14px;
+  bottom: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: .55rem;
+  border-radius: 999px;
+  padding: .7rem .95rem;
+  border: 1px solid rgba(126,224,255,.30);
+  background: rgba(4,8,18,.72);
+  color: var(--text);
+  box-shadow: 0 18px 44px rgba(0,0,0,.75);
+  cursor: pointer;
+}
+
+.cc-pill-badge{
+  height: 28px;
+  width: 28px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-weight: 900;
+  letter-spacing: .08em;
+  color: var(--blackText);
+  background: linear-gradient(135deg, var(--gold), var(--blue));
+}
+.cc-pill-text{
+  font-weight: 900;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  font-size: .72rem;
+}
