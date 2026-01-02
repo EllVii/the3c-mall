@@ -35,11 +35,11 @@ export default function DashboardPage() {
   const [prefs, setPrefsState] = useState(() => getPrefsSafe());
   const [nudge, setNudge] = useState({ show: false });
 
-  // Concierge overlay — OPEN BY DEFAULT
+  /* Concierge overlay — OPEN BY DEFAULT */
   const [ccOpen, setCcOpen] = useState(true);
   const [ccMin, setCcMin] = useState(false);
 
-  // Feedback modal
+  /* Feedback modal */
   const [feedbackOpen, setFeedbackOpen] = useState(false);
 
   useEffect(() => {
@@ -92,7 +92,9 @@ export default function DashboardPage() {
       chooseFocus(explorePick.id);
       nav(explorePick.route);
     } else {
-      if (["grocery", "meals", "workout", "community"].includes(x.id)) chooseFocus(x.id);
+      if (["grocery", "meals", "workout", "community"].includes(x.id)) {
+        chooseFocus(x.id);
+      }
       nav(x.route);
     }
     setCcOpen(false);
@@ -100,54 +102,44 @@ export default function DashboardPage() {
 
   return (
     <section className="page db-shell">
-      {/* BRAND HEADER (top band) */}
-      <div className="brand-emblem">
-        <img src="/brand/3c-emblem.png" alt="3C Mall" />
-      </div>
-
-      {/* CONCIERGE OVERLAY (PRIMARY ENTRY POINT) */}
+      {/* CONCIERGE OVERLAY */}
       <ConciergeOverlay
         open={ccOpen}
         minimized={ccMin}
-        onMinimize={() => {
-          setCcMin(true);
-          setCcOpen(true);
-        }}
-        onOpen={() => {
-          setCcMin(false);
-          setCcOpen(true);
-        }}
-        onClose={() => {
-          setCcOpen(false);
-          setCcMin(false);
-        }}
+        onMinimize={() => { setCcMin(true); setCcOpen(true); }}
+        onOpen={() => { setCcMin(false); setCcOpen(true); }}
+        onClose={() => { setCcOpen(false); setCcMin(false); }}
         onPick={onConciergePick}
         title="Concierge"
         subtitle="Concierge · Cost · Community"
         options={conciergeOptions}
       />
 
-      {/* PAGE HEADER (this is content, not the top band) */}
+      {/* CONTENT */}
       <div className="page-content">
         <div className="tile tile-hero">
           <div className="kicker">Concierge · Cost · Community</div>
           <div className="h1">How can we help today?</div>
-          <div className="sub">No scrolling. Pick your lane. If it doesn’t fit, it becomes a new screen.</div>
-          <div style={{ marginTop: ".6rem", display: "flex", justifyContent: "center" }}>
-            <div className="pill">
-              <span>Mode</span>
-              <strong>{prefs?.navMode === "full" ? "Full Mall" : "Focused"}</strong>
-            </div>
+          <div className="sub">
+            No scrolling. Pick your lane. If it doesn’t fit, it becomes a new screen.
+          </div>
+
+          <div className="mode-pill">
+            <span>Mode</span>
+            <strong>{prefs?.navMode === "full" ? "Full Mall" : "Focused"}</strong>
           </div>
         </div>
 
         {/* OPTIONAL NUDGE */}
         {nudge.show && (
-          <div className="tile tile-hero" style={{ borderColor: "rgba(246,220,138,.35)" }}>
+          <div className="tile tile-hero">
             <div className="kicker">Quick Tip</div>
             <div className="tile-title">Want the other wins too?</div>
-            <div className="small">3C can plan meals and support consistency. Ignore forever if you want.</div>
-            <div className="page-footer" style={{ borderTop: "0", padding: 0, marginTop: ".6rem" }}>
+            <div className="small">
+              3C can plan meals and support consistency. Ignore forever if you want.
+            </div>
+
+            <div className="page-footer" style={{ borderTop: 0, padding: 0 }}>
               <button
                 className="btn btn-primary"
                 onClick={() => {
@@ -167,12 +159,13 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* ZONES (tile grid, feng shui) */}
+        {/* ZONES */}
         <div className="fit-grid">
           {visibleZones.map((z) => (
             <div key={z.id} className="tile">
               <div className="tile-title">{z.title}</div>
               <div className="tile-desc">{z.desc}</div>
+
               <div style={{ display: "flex", gap: ".5rem", flexWrap: "wrap", marginTop: ".5rem" }}>
                 <button className="btn btn-primary" onClick={() => nav(z.route)}>
                   Open
@@ -189,7 +182,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* FOOTER BAND (keep light) */}
+      {/* FOOTER */}
       <div className="page-footer">
         <button className="btn btn-secondary" onClick={() => { setCcMin(false); setCcOpen(true); }}>
           Concierge
@@ -199,7 +192,7 @@ export default function DashboardPage() {
         </button>
       </div>
 
-      {/* FEEDBACK MODAL */}
+      {/* FEEDBACK */}
       <FeedbackPanel
         open={feedbackOpen}
         onClose={() => setFeedbackOpen(false)}

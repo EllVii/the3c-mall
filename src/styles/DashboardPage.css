@@ -1,69 +1,148 @@
 /* src/styles/DashboardPage.css
-   DASHBOARD — APP-LIKE BANDS + NO GLASS + NO DARK CARDS
-   The visual system lives in ui.css (tiles, buttons, page bands).
+  DASHBOARD â€” bridge file
+  Purpose: map existing DashboardPage.jsx classes to the new ui.css system
+  so you don't have to rewrite JSX during Alpha.
 */
 
-/* Dashboard shell should behave like an app screen */
+/* Dashboard shell */
 .db-shell{
-  height: 100%;
-  width: 100%;
-  position: relative;
-  isolation: isolate;
+ height: 100%;
+ width: 100%;
+ position: relative;
+ isolation: isolate;
 }
 
-/* OPTIONAL: super subtle watermark that does NOT darken the wallpaper
-   (If you don't want it, delete this block.)
-*/
+/* ALPHA: remove watermark. It causes "superimposed" feedback. */
+/* If you really want it later, only enable it on midnight-lux. */
 .db-shell::before{
-  content:"";
-  position:absolute;
-  inset: 0;
-  pointer-events:none;
-  z-index: 0;
-
-  background-image: url("/brand/3c-emblem.png");
-  background-repeat: no-repeat;
-  background-position: 50% 28%;
-  background-size: min(520px, 70vw);
-
-  opacity: 0.06;          /* lower than your old 0.10 */
-  filter: saturate(1.08) contrast(1.05);
+ content: none !important;
 }
 
-/* Ensure actual UI content sits above watermark */
+/* Make sure dashboard children are above any future layers */
 .db-shell > *{
-  position: relative;
-  z-index: 1;
+ position: relative;
+ z-index: 1;
 }
 
-/* Remove ALL glass + card styling from this page (ui.css controls tiles now) */
-.glass,
-.glass-inner,
+/* ---------- Top header block in DashboardPage.jsx ---------- */
+.db-top{
+ /* treat as content band */
+ padding: .85rem .85rem .65rem;
+ display: grid;
+ gap: .35rem;
+ overflow: hidden;
+}
+
+/* ---------- Grid mapping ---------- */
+/* Your JSX uses <div className="grid"> ...cards... */
+.grid{
+ display: grid;
+ grid-template-columns: repeat(2, minmax(0, 1fr));
+ gap: .85rem;
+ padding: 0 .85rem .85rem;
+ overflow: hidden;
+}
+
+/* mobile: one column */
+@media (max-width: 560px){
+ .grid{
+   grid-template-columns: 1fr;
+ }
+}
+
+/* ---------- Card mapping ---------- */
+/* Your JSX uses: className="card glass db-card" and "card glass db-card" */
 .card,
 .db-card{
-  background: transparent !important;
-  border: 0 !important;
-  box-shadow: none !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
+ border-radius: 1.2rem;
+ border: 1px solid var(--surface-border, rgba(255,255,255,.18));
+ background: linear-gradient(
+   180deg,
+   var(--surface-strong, rgba(255,255,255,.10)),
+   var(--surface, rgba(255,255,255,.06))
+ );
+ box-shadow: 0 14px 34px rgba(0,0,0,.30);
+ padding: 1.05rem;
+ min-width: 0;
 }
 
-/* Old dashboard admin layout classes: neutralize safely (no "all: unset" nukes) */
-.db-top,
-.db-card-head,
-.db-card-tag,
-.db-h2,
-.db-choice-grid,
-.db-choice,
-.db-choice-on,
-.db-ai,
-.db-ai-panel,
-.db-float-pill,
-.grid{
-  display: none !important;
+/* Kill the old "smoky glass blur" effect but keep the card visible */
+.glass,
+.glass-inner{
+ backdrop-filter: none !important;
+ -webkit-backdrop-filter: none !important;
 }
 
-/* Nudge auto-hide on short screens (prevents scroll) */
+/* Tag + headers used in your cards */
+.db-card-tag{
+ font-size: .72rem;
+ letter-spacing: .18em;
+ text-transform: uppercase;
+ color: var(--blue);
+ font-weight: 900;
+ margin-bottom: .25rem;
+}
+
+.db-h2{
+ margin: .35rem 0 .45rem;
+ font-size: 1.15rem;
+}
+
+/* Button row used in dashboard cards */
+.nav-row{
+ display: flex;
+ gap: .6rem;
+ flex-wrap: wrap;
+ margin-top: .85rem;
+}
+
+/* The "Mode" pill shown top-right */
+.pill{
+ border-radius: 999px;
+ border: 1px solid var(--surface-border, rgba(255,255,255,.18));
+ background: linear-gradient(
+   180deg,
+   var(--surface-strong, rgba(255,255,255,.10)),
+   var(--surface, rgba(255,255,255,.06))
+ );
+ padding: .55rem .75rem;
+ display: grid;
+ gap: .15rem;
+ align-content: start;
+ min-width: 140px;
+}
+
+.pill span{
+ font-size: .7rem;
+ letter-spacing: .14em;
+ text-transform: uppercase;
+ color: var(--muted2);
+}
+.pill strong{
+ color: var(--text);
+}
+
+/* Nudge card spacing */
+.db-nudge{
+ margin: 0 .85rem;
+}
+
+/* Hide nudge on short screens to prevent overflow */
 @media (max-height: 760px){
-  .db-nudge{ display: none !important; }
+ .db-nudge{ display: none; }
+}
+
+.mode-pill{
+  margin-top: .6rem;
+  align-self: center;
+  display: inline-flex;
+  gap: .45rem;
+  align-items: center;
+  padding: .45rem .75rem;
+  border-radius: 999px;
+  font-weight: 900;
+  letter-spacing: .06em;
+  font-size: .7rem;
+  background: rgba(0,0,0,.18);
+  border: 1px solid rgba(255,255,255,.22);
 }
