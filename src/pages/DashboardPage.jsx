@@ -5,6 +5,8 @@ import "../styles/DashboardPage.css";
 
 import FeedbackPanel from "../assets/components/FeedbackPanel.jsx";
 import ConciergeOverlay from "../assets/components/ConciergeOverlay.jsx";
+import GuidedAssistOverlay from "../assets/components/GuidedAssistOverlay.jsx";
+import SettingsModal from "../assets/components/SettingsModal.jsx";
 
 import {
   getPrefsSafe,
@@ -13,11 +15,10 @@ import {
   shouldShowNudge,
   advanceNudgeSchedule,
   disableNudges,
+  hasSeenGuide,
+  markGuideSeen,
 } from "../utils/prefs";
 
-/* =========================================================
-   ZONES (ALPHA — KEEP TIGHT)
-   ========================================================= */
 const ZONES = [
   { id: "grocery", title: "Save money on groceries", desc: "Build a cart optimized automatically.", route: "/app/grocery-lab" },
   { id: "meals", title: "Plan meals fast", desc: "Choose a date → time → meal. Snacks included.", route: "/app/meal-plans" },
@@ -35,18 +36,73 @@ export default function DashboardPage() {
   const [prefs, setPrefsState] = useState(() => getPrefsSafe());
   const [nudge, setNudge] = useState({ show: false });
 
-  /* Concierge overlay — OPEN BY DEFAULT */
+  // Concierge overlay — OPEN BY DEFAULT
   const [ccOpen, setCcOpen] = useState(true);
   const [ccMin, setCcMin] = useState(false);
 
-  /* Feedback modal */
+  // Guided Assist
+  const [gaOpen, setGaOpen] = useState(false);
+
+  // Feedback
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+
+  // Settings Pop-out (modal)
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   useEffect(() => {
     setPrefsState(getPrefsSafe());
     setNudge(shouldShowNudge());
   }, []);
 
+  // ======= Guided Assist: reliable test + timer =======
+  useEffect(() => {
+    const pageId = "dashboard";
+
+    // Keyboard test: press "g" to force show guide (dev/test)
+    const onKey = (e) => {
+      if (e.key?.toLowerCase() === "g") {
+        setGaOpen(true);
+      }
+      // Shift+G = reset and show again
+      if (e.key?.toLowerCase() === "g" && e.shiftKey) {
+        // don’t require resetGuides; just allow re-show by not marking seen yet
+        setGaOpen(true);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  useEffect(() => {
+    const pageId = "dashboard";
+    if (hasSeenGuide(pageId)) return;
+
+    // Start the 30s timer ONLY after concierge is dismissed
+    // (because concierge is your primary entry point)
+    if (ccOpen) return;
+
+    let timer = setTimeout(() => {
+      setGaOpen(true);
+    }, 30000);
+
+    // Any interaction restarts timer (prevents interrupting active users)
+    const restart = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => setGaOpen(true), 30000);
+    };
+
+    window.addEventListener("pointerdown", restart, { passive: true });
+    window.addEventListener("keydown", restart);
+
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("pointerdown", restart);
+      window.removeEventListener("keydown", restart);
+    };
+  }, [ccOpen]);
+
+  // ======= Focus logic =======
   const focusedZone = useMemo(() => {
     if (!prefs?.focus || prefs.focus === "explore") return null;
     return ZONES.find((z) => z.id === prefs.focus) || null;
@@ -81,20 +137,23 @@ export default function DashboardPage() {
       { id: "meals", label: "Meal planning", hint: "Fast meal + snack flow", route: "/app/meal-plans" },
       { id: "workout", label: "Training", hint: "Strength + recovery", route: "/app/coming-soon" },
       { id: "community", label: "Community", hint: "Support without pressure", route: "/app/community" },
-      { id: "settings", label: "Settings", hint: "Theme + navigation", route: "/app/settings" },
+      { id: "settings", label: "Settings", hint: "Theme + navigation", route: "__modal__" },
       { id: "explore", label: "Surprise me 🎲", hint: "Explore one zone", route: explorePick.route },
     ],
     [explorePick.route]
   );
 
   function onConciergePick(x) {
+    if (x.id === "settings") {
+      setSettingsOpen(true);
+      return;
+    }
+
     if (x.id === "explore") {
       chooseFocus(explorePick.id);
       nav(explorePick.route);
     } else {
-      if (["grocery", "meals", "workout", "community"].includes(x.id)) {
-        chooseFocus(x.id);
-      }
+      if (["grocery", "meals", "workout", "community"].includes(x.id)) chooseFocus(x.id);
       nav(x.route);
     }
     setCcOpen(false);
@@ -106,13 +165,54 @@ export default function DashboardPage() {
       <ConciergeOverlay
         open={ccOpen}
         minimized={ccMin}
-        onMinimize={() => { setCcMin(true); setCcOpen(true); }}
-        onOpen={() => { setCcMin(false); setCcOpen(true); }}
-        onClose={() => { setCcOpen(false); setCcMin(false); }}
+        onMinimize={() => {
+          setCcMin(true);
+          setCcOpen(true);
+        }}
+        onOpen={() => {
+          setCcMin(false);
+          setCcOpen(true);
+        }}
+        onClose={() => {
+          setCcOpen(false);
+          setCcMin(false);
+        }}
         onPick={onConciergePick}
         title="Concierge"
         subtitle="Concierge · Cost · Community"
         options={conciergeOptions}
+      />
+
+      {/* GUIDED ASSIST OVERLAY */}
+      <GuidedAssistOverlay
+        open={gaOpen}
+        title="Need a hand?"
+        message="Most people start with Groceries. Want me to take you there?"
+        primaryLabel="Start with Groceries"
+        secondaryLabel="Not now"
+        onPrimary={() => {
+          markGuideSeen("dashboard");
+          setGaOpen(false);
+          chooseFocus("grocery");
+          nav("/app/grocery-lab");
+        }}
+        onSecondary={() => {
+          markGuideSeen("dashboard");
+          setGaOpen(false);
+        }}
+        onClose={() => {
+          markGuideSeen("dashboard");
+          setGaOpen(false);
+        }}
+        iconText="3C"
+      />
+
+      {/* SETTINGS POP-OUT MODAL */}
+      <SettingsModal
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        prefs={prefs}
+        onChange={(nextPrefs) => setPrefsState(nextPrefs)}
       />
 
       {/* CONTENT */}
@@ -120,26 +220,23 @@ export default function DashboardPage() {
         <div className="tile tile-hero">
           <div className="kicker">Concierge · Cost · Community</div>
           <div className="h1">How can we help today?</div>
-          <div className="sub">
-            No scrolling. Pick your lane. If it doesn’t fit, it becomes a new screen.
-          </div>
+          <div className="sub">No scrolling. Pick your lane. If it doesn’t fit, it becomes a new screen.</div>
 
-          <div className="mode-pill">
-            <span>Mode</span>
-            <strong>{prefs?.navMode === "full" ? "Full Mall" : "Focused"}</strong>
+          <div style={{ marginTop: ".6rem", display: "flex", justifyContent: "center" }}>
+            <div className="pill">
+              <span>Mode</span>
+              <strong>{prefs?.navMode === "full" ? "Full Mall" : "Focused"}</strong>
+            </div>
           </div>
         </div>
 
-        {/* OPTIONAL NUDGE */}
         {nudge.show && (
-          <div className="tile tile-hero">
+          <div className="tile tile-hero" style={{ borderColor: "rgba(246,220,138,.35)" }}>
             <div className="kicker">Quick Tip</div>
             <div className="tile-title">Want the other wins too?</div>
-            <div className="small">
-              3C can plan meals and support consistency. Ignore forever if you want.
-            </div>
+            <div className="small">3C can plan meals and support consistency. Ignore forever if you want.</div>
 
-            <div className="page-footer" style={{ borderTop: 0, padding: 0 }}>
+            <div style={{ display: "flex", gap: ".6rem", flexWrap: "wrap", marginTop: ".6rem" }}>
               <button
                 className="btn btn-primary"
                 onClick={() => {
@@ -159,7 +256,6 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* ZONES */}
         <div className="fit-grid">
           {visibleZones.map((z) => (
             <div key={z.id} className="tile">
@@ -187,12 +283,17 @@ export default function DashboardPage() {
         <button className="btn btn-secondary" onClick={() => { setCcMin(false); setCcOpen(true); }}>
           Concierge
         </button>
-        <button className="btn btn-secondary" onClick={() => nav("/app/settings")}>
+
+        <button className="btn btn-secondary" onClick={() => setSettingsOpen(true)}>
           Settings
+        </button>
+
+        {/* Test + seniors friendly help */}
+        <button className="btn btn-ghost" onClick={() => setGaOpen(true)}>
+          Help ?
         </button>
       </div>
 
-      {/* FEEDBACK */}
       <FeedbackPanel
         open={feedbackOpen}
         onClose={() => setFeedbackOpen(false)}

@@ -124,3 +124,54 @@ export function disableNudges() {
   saveNudgeState(next);
   return next;
 }
+// src/utils/prefs.js
+// ✅ Add these helpers (append near the bottom)
+
+const GUIDE_KEY = "3c_guides_v1";
+
+function readGuidesSafe() {
+  try {
+    const raw = localStorage.getItem(GUIDE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+function writeGuides(next) {
+  try {
+    localStorage.setItem(GUIDE_KEY, JSON.stringify(next || {}));
+  } catch {
+    // ignore
+  }
+}
+
+/**
+ * Returns true if a guide for this page has already been shown/closed.
+ * pageId example: "dashboard", "settings", "grocery-lab"
+ */
+export function hasSeenGuide(pageId) {
+  const guides = readGuidesSafe();
+  return !!guides?.[pageId];
+}
+
+/**
+ * Marks a guide as seen so it won't show again.
+ */
+export function markGuideSeen(pageId) {
+  if (!pageId) return;
+  const guides = readGuidesSafe();
+  guides[pageId] = Date.now();
+  writeGuides(guides);
+}
+
+/**
+ * Optional: allow user to reset all guides in Settings later.
+ */
+export function resetGuides() {
+  try {
+    localStorage.removeItem(GUIDE_KEY);
+  } catch {
+    // ignore
+  }
+}

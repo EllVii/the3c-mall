@@ -2,7 +2,8 @@
   3C MALL — UI SYSTEM (SINGLE SOURCE OF TRUTH)
   Concierge · Cost · Community
   NO SCROLL · APP-LIKE · SYMMETRICAL · CLEAN
-  Theme BACKDROP image only + subtle motion (alive) — NO glass blur
+  WALLPAPER = THEME IMAGE + subtle motion (alive)
+  NO GLASS BLUR
   ========================================================= */
 
 /* =========================================================
@@ -16,7 +17,7 @@ html, body{
   height: 100%;
   width: 100%;
   margin: 0;
-  overflow: hidden;     /* NO SCROLL */
+  overflow: hidden;          /* NO SCROLL */
   overflow-x: hidden;
 }
 
@@ -24,7 +25,18 @@ body{
   font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
   color: var(--text);
   position: relative;
-  background: linear-gradient(180deg, var(--bg1), var(--bg0));
+
+  /* WALLPAPER = theme image (reliable on all browsers) */
+  background-color: var(--bg0);
+  background-image: var(--theme-image);
+  background-size: 10%;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-color: var(--bg0);
+
+  /* Slight “alive” drift without moving layout */
+  transform: translateZ(0);
+  animation: wallpaper-drift 26s ease-in-out infinite alternate;
 }
 
 #root{
@@ -32,8 +44,10 @@ body{
   width: 100%;
   display: flex;
   flex-direction: column;
-  isolation: isolate;
+  isolation: isolate;        /* keeps overlays sane */
   overflow: hidden;
+  position: relative;
+  z-index: 2;                /* above wallpaper overlays */
 }
 
 /* =========================================================
@@ -45,40 +59,51 @@ body{
   --blueDeep:#1f5dff;
   --gold:#f6dc8a;
 
-  /* Base */
+  /* Base (fallback if theme image missing) */
   --bg0:#02040a;
   --bg1:#050912;
 
+  /* Default text (dark themes) */
   --text:#f4f6ff;
   --muted:#a9b4d2;
   --muted2:#8d98b6;
   --blackText:#0b0f17;
 
-  /* ONE image layer (theme backdrop only) */
+  /* Theme wallpaper (single source) */
   --theme-image: none;
 
-  /* Overlay (readability) */
+  /* Readability overlay (sits above wallpaper, behind UI) */
   --bgOverlayTop: rgba(2,4,10,.18);
-  --bgOverlayBottom: rgba(2,4,10,.45);
+  --bgOverlayBottom: rgba(2,4,10,.55);
 
   /* Energy glows */
   --themeGlowA: rgba(126,224,255,.14);
   --themeGlowB: rgba(246,220,138,.10);
   --themeGlowC: rgba(31,93,255,.12);
 
-  /* Surfaces */
+  /* Surfaces (tiles, panels) */
   --surface: rgba(255,255,255,.08);
   --surface-strong: rgba(255,255,255,.14);
   --surface-border: rgba(255,255,255,.18);
 
   --divider: rgba(255,255,255,.14);
+
+  /* NEW: default text shadows off */
+  --tileTextShadow: none;
+  --heroTextShadow: none;
+
+  /* NEW: default tile title color (most themes keep gold) */
+  --tileTitleColor: var(--gold);
 }
 
 /* =========================================================
-  THEMES (Images must be in /public/themes/)
+  THEMES
+  IMPORTANT: these assume your theme selector sets data-theme
+  on <html>. If it sets on <body>, you can duplicate selectors.
+  Images must be in /public/themes/
   ========================================================= */
 
-/* MIDNIGHT LUX */
+/* MIDNIGHT LUX (procedural / no image needed) */
 html[data-theme="midnight-lux"]{
   --bg0:#02040a;
   --bg1:#050912;
@@ -88,7 +113,7 @@ html[data-theme="midnight-lux"]{
   --muted2:#8d98b6;
 
   --bgOverlayTop: rgba(2,4,10,.18);
-  --bgOverlayBottom: rgba(2,4,10,.55);
+  --bgOverlayBottom: rgba(2,4,10,.72);
 
   --themeGlowA: rgba(126,224,255,.14);
   --themeGlowB: rgba(246,220,138,.10);
@@ -98,7 +123,11 @@ html[data-theme="midnight-lux"]{
   --surface-strong: rgba(255,255,255,.12);
   --surface-border: rgba(255,255,255,.16);
 
-  --theme-image: none; /* stays clean */
+  --theme-image: none;
+
+  --tileTitleColor: var(--gold);
+  --tileTextShadow: none;
+  --heroTextShadow: none;
 }
 
 /* VELOCITY RED */
@@ -111,7 +140,7 @@ html[data-theme="velocity-red"]{
   --muted2:#a8aac7;
 
   --bgOverlayTop: rgba(10,0,4,.16);
-  --bgOverlayBottom: rgba(10,0,4,.48);
+  --bgOverlayBottom: rgba(10,0,4,.52);
 
   --themeGlowA: rgba(255, 52, 82, .22);
   --themeGlowB: rgba(246, 220, 138, .12);
@@ -122,9 +151,13 @@ html[data-theme="velocity-red"]{
   --surface-border: rgba(255,90,90,.35);
 
   --theme-image: url("/themes/velocity-red-bg.jpg");
+
+  --tileTitleColor: var(--gold);
+  --tileTextShadow: none;
+  --heroTextShadow: none;
 }
 
-/* PEARL LUXE — darker text for readability */
+/* PEARL LUXE — darker text + DARK GOLD titles + shadow */
 html[data-theme="pearl-luxe"]{
   --bg0:#0b1018;
   --bg1:#111a26;
@@ -134,21 +167,104 @@ html[data-theme="pearl-luxe"]{
   --muted2:#3a4657;
   --blackText:#0b1220;
 
-  --bgOverlayTop: rgba(255,255,255,.08);
-  --bgOverlayBottom: rgba(255,255,255,.22);
+  /* Stronger overlay because wallpaper is lighter */
+  --bgOverlayTop: rgba(255,255,255,.12);
+  --bgOverlayBottom: rgba(255,255,255,.34);
 
   --themeGlowA: rgba(180,197,216,.14);
-  --themeGlowB: rgba(246,220,138,.10);
-  --themeGlowC: rgba(111,143,176,.10);
+  --themeGlowB: rgba(246,220,138,.12);
+  --themeGlowC: rgba(111,143,176,.12);
 
   --surface: rgba(255,255,255,.78);
   --surface-strong: rgba(255,255,255,.92);
   --surface-border: rgba(210,190,120,.55);
 
   --theme-image: url("/themes/pearl-luxe-bg.jpg");
+
+  /* === PREMIUM TEXT SYSTEM === */
+
+  /* Dark gold — luxury, not yellow */
+  --tileTitleColor: #7a5a18;
+
+  /* Micro-outline + depth (engraved look) */
+  --tileTextShadow:
+    /* micro outline */
+    -1px 0   rgba(255,255,255,.65),
+     1px 0   rgba(255,255,255,.65),
+     0 -1px  rgba(255,255,255,.65),
+     0  1px  rgba(255,255,255,.65),
+
+    /* depth */
+     0  3px  8px rgba(0,0,0,.22),
+     0 18px  38px rgba(0,0,0,.28);
+
+  /* Hero / large text gets extra authority */
+  --heroTextShadow:
+    -1px 0   rgba(255,255,255,.65),
+     1px 0   rgba(255,255,255,.65),
+     0 -1px  rgba(255,255,255,.65),
+     0  1px  rgba(255,255,255,.65),
+
+     0  4px  10px rgba(0,0,0,.24),
+     0 20px  42px rgba(0,0,0,.30);
+}
+/* =========================================================
+   PEARL LUXE — SUPER PREMIUM TEXT RENDERING
+   ========================================================= */
+
+html[data-theme="pearl-luxe"] .tile-title{
+  color: var(--tileTitleColor);
+  text-shadow: var(--tileTextShadow);
 }
 
-/* RETRO FUSION — darker text for readability */
+html[data-theme="pearl-luxe"] .h1{
+  color: var(--tileTitleColor);
+  text-shadow: var(--heroTextShadow);
+}
+
+html[data-theme="pearl-luxe"] .tile-desc,
+html[data-theme="pearl-luxe"] .sub,
+html[data-theme="pearl-luxe"] .small{
+  text-shadow:
+    0 1px 0 rgba(255,255,255,.55),
+    0 3px 8px rgba(0,0,0,.18);
+}
+
+/* =========================================================
+   PEARL LUXE — STOP TEXT BLEED (kicker/sub/desc)
+   ========================================================= */
+html[data-theme="pearl-luxe"] .kicker,
+html[data-theme="pearl-luxe"] .sub,
+html[data-theme="pearl-luxe"] .tile-desc,
+html[data-theme="pearl-luxe"] .small{
+  /* slightly darker base improves contrast */
+  color: rgba(20, 28, 40, .92);
+
+  /* premium “engraved” outline + deep shadow stack */
+  text-shadow:
+    /* micro-outline (keeps characters crisp) */
+    -1px 0 rgba(255,255,255,.78),
+     1px 0 rgba(255,255,255,.78),
+     0 -1px rgba(255,255,255,.78),
+     0  1px rgba(255,255,255,.78),
+
+    /* depth */
+     0  3px  8px rgba(0,0,0,.24),
+     0 18px  40px rgba(0,0,0,.30);
+}
+
+/* Make kicker a touch bolder so it doesn’t “thin out” on bright areas */
+html[data-theme="pearl-luxe"] .kicker{
+  font-weight: 900;
+  letter-spacing: .18em;
+}
+
+html[data-theme="pearl-luxe"]{
+  --surface: rgba(255,255,255,.84);
+  --surface-strong: rgba(255,255,255,.96);
+}
+
+/* RETRO FUSION — darker text + stronger shadow */
 html[data-theme="retro-fusion"]{
   --bg0:#040610;
   --bg1:#070a18;
@@ -158,8 +274,8 @@ html[data-theme="retro-fusion"]{
   --muted2:#37465a;
   --blackText:#0b1220;
 
-  --bgOverlayTop: rgba(255,255,255,.06);
-  --bgOverlayBottom: rgba(255,255,255,.16);
+  --bgOverlayTop: rgba(255,255,255,.08);
+  --bgOverlayBottom: rgba(255,255,255,.22);
 
   --themeGlowA: rgba(120,255,214,.12);
   --themeGlowB: rgba(124,92,255,.10);
@@ -170,34 +286,29 @@ html[data-theme="retro-fusion"]{
   --surface-border: rgba(0,0,0,.18);
 
   --theme-image: url("/themes/retro-fusion-bg.jpg");
+
+  /* keep gold but make it read clearly */
+  --tileTitleColor: var(--gold);
+
+  /* NEW: stronger pop for busy retro wallpaper */
+  --tileTextShadow:
+    0 1px 0 rgba(255,255,255,.38),
+    0 10px 24px rgba(0,0,0,.28);
+
+  --heroTextShadow:
+    0 1px 0 rgba(255,255,255,.32),
+    0 12px 28px rgba(0,0,0,.30);
 }
 
 /* =========================================================
-  BACKDROP LAYER (IMAGE + SUBTLE MOTION) — BEHIND EVERYTHING
+  WALLPAPER OVERLAY LAYER (glows + readability)
+  Lives ABOVE wallpaper, BELOW app UI
   ========================================================= */
 body::before{
   content:"";
   position: fixed;
   inset: 0;
-  z-index: -3;
-  pointer-events: none;
-
-  background-image: var(--theme-image);
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-
-  transform: scale(1.08);
-  animation: bg-drift 26s ease-in-out infinite alternate;
-  opacity: 1;
-}
-
-/* Glows + readability overlay */
-body::after{
-  content:"";
-  position: fixed;
-  inset: 0;
-  z-index: -2;
+  z-index: 0;
   pointer-events: none;
 
   background:
@@ -209,20 +320,35 @@ body::after{
   animation: glow-breathe 10s ease-in-out infinite;
 }
 
-@keyframes bg-drift{
-  0%   { transform: scale(1.08) translate3d(-0.8%, -0.6%, 0); filter: saturate(1.02) contrast(1.02); }
-  50%  { transform: scale(1.10) translate3d(0.6%, -0.2%, 0);  filter: saturate(1.04) contrast(1.03); }
-  100% { transform: scale(1.08) translate3d(0.8%, 0.6%, 0);  filter: saturate(1.02) contrast(1.02); }
+@keyframes wallpaper-drift{
+  0%   { background-position: 49% 48%; filter: saturate(1.02) contrast(1.02); }
+  50%  { background-position: 51% 50%; filter: saturate(1.04) contrast(1.03); }
+  100% { background-position: 50% 52%; filter: saturate(1.02) contrast(1.02); }
 }
 
 @keyframes glow-breathe{
-  0%   { opacity: .90; }
+  0%   { opacity: .92; }
   50%  { opacity: 1.00; }
-  100% { opacity: .90; }
+  100% { opacity: .92; }
 }
 
 @media (prefers-reduced-motion: reduce){
-  body::before, body::after{ animation: none !important; }
+  body{ animation: none !important; }
+  body::before{ animation: none !important; }
+}
+/* Light themes: show full artwork */
+html[data-theme="pearl-luxe"] body,
+html[data-theme="retro-fusion"] body{
+  background-size: 10%;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* Dark / cinematic themes: immersive fill */
+html[data-theme="velocity-red"] body,
+html[data-theme="midnight-lux"] body{
+  background-size: 10%;
+  background-position: center;
 }
 
 /* =========================================================
@@ -238,7 +364,7 @@ body::after{
   overflow: hidden;
 }
 
-/* Header image removed per request */
+/* Header removed per request */
 .brand-emblem{ display: none; }
 
 /* Content band */
@@ -262,6 +388,37 @@ body::after{
 }
 
 /* =========================================================
+   HERO TILE SCRIM (premium readability)
+   ========================================================= */
+.tile-hero{
+  position: relative;
+  overflow: hidden;
+}
+
+/* scrim layer inside hero tile only */
+.tile-hero::before{
+  content:"";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+
+  /* premium scrim: gentle top/bottom control */
+  background: linear-gradient(
+    180deg,
+    rgba(255,255,255,.28) 0%,
+    rgba(255,255,255,.16) 45%,
+    rgba(255,255,255,.26) 100%
+  );
+}
+
+/* ensure hero content is above scrim */
+.tile-hero > *{
+  position: relative;
+  z-index: 1;
+}
+
+/* =========================================================
   GRID (FENG SHUI)
   ========================================================= */
 .fit-grid{
@@ -278,7 +435,7 @@ body::after{
 }
 
 /* =========================================================
-  TILES (NO GLASS, BACKDROP VISIBLE BEHIND THEM)
+  TILES (NO BLUR, WALLPAPER VISIBLE AROUND THEM)
   ========================================================= */
 .tile{
   border-radius: 18px;
@@ -299,12 +456,14 @@ body::after{
 .tile-title{
   font-weight: 900;
   letter-spacing: .02em;
-  color: var(--gold);
+  color: var(--tileTitleColor);
+  text-shadow: var(--tileTextShadow);
 }
 .tile-desc{
   font-size: .86rem;
   color: var(--muted);
   line-height: 1.3;
+  text-shadow: var(--tileTextShadow);
 }
 
 /* =========================================================
@@ -315,25 +474,30 @@ body::after{
   letter-spacing: .18em;
   text-transform: uppercase;
   color: var(--blue);
+  text-shadow: var(--heroTextShadow);
 }
 .h1{
   font-size: 1.55rem;
   font-weight: 900;
   margin-top: 2px;
+  text-shadow: var(--heroTextShadow);
 }
 .sub{
   font-size: .92rem;
   color: var(--muted);
+  text-shadow: var(--heroTextShadow);
 }
 .small{
   font-size: .82rem;
   color: var(--muted2);
+  text-shadow: var(--tileTextShadow);
 }
 
 /* =========================================================
   PILL (Mode)
   ========================================================= */
-.pill{
+.pill,
+.mode-pill{
   display:inline-flex;
   flex-direction:column;
   gap:2px;
@@ -342,17 +506,20 @@ body::after{
   background: linear-gradient(180deg, var(--surface-strong), var(--surface));
   padding: 10px 14px;
   font-size: .82rem;
+  width: fit-content;
 }
-.pill span{
+.pill span,
+.mode-pill span{
   font-size: .68rem;
   letter-spacing: .16em;
   text-transform: uppercase;
   color: var(--muted2);
 }
-.pill strong{ color: var(--gold); }
+.pill strong,
+.mode-pill strong{ color: var(--gold); }
 
 /* =========================================================
-  BUTTONS (CLEAN — NO BACKDROP ON BUTTONS)
+  BUTTONS (CLEAN — no wallpaper on buttons)
   ========================================================= */
 .btn{
   display: inline-flex;
@@ -395,7 +562,8 @@ body::after{
   ========================================================= */
 html, body, #root,
 .page, .page-content, .fit-grid, .tile,
-.cc-panel, .cc-grid{
+.cc-panel, .cc-grid,
+.modal-panel, .modal-grid{
   width: 100%;
   max-width: 100%;
   overflow-x: hidden;
@@ -569,4 +737,233 @@ html, body, #root,
   letter-spacing: .08em;
   text-transform: uppercase;
   font-size: .72rem;
+}
+
+/* =========================================================
+  GUIDED ASSIST OVERLAY (ga-*)
+  ========================================================= */
+.ga-overlay{
+  position: fixed;
+  inset: 0;
+  z-index: 1400; /* above concierge + settings */
+  display: grid;
+  place-items: center;
+  pointer-events: auto;
+}
+
+.ga-backdrop{
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,.62);
+}
+
+.ga-panel{
+  position: relative;
+  width: min(720px, calc(100vw - 22px));
+  max-height: calc(100vh - 22px);
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,.16);
+  background: rgba(12, 16, 26, .96);
+  box-shadow: 0 24px 72px rgba(0,0,0,.55);
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: auto 1fr;
+}
+
+.ga-head{
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border-bottom: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.06);
+}
+
+.ga-badge{
+  height: 40px;
+  width: 40px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  font-weight: 900;
+  letter-spacing: .08em;
+  color: var(--blackText);
+  background: linear-gradient(135deg, var(--gold), var(--blue));
+  flex: 0 0 auto;
+}
+
+.ga-head-text{ min-width: 0; }
+
+.ga-title{
+  font-weight: 900;
+  letter-spacing: .02em;
+  font-size: 1.02rem;
+  color: #fff;
+}
+
+.ga-sub{
+  margin-top: 2px;
+  font-size: .88rem;
+  color: rgba(255,255,255,.76);
+  line-height: 1.25;
+}
+
+.ga-x{
+  margin-left: auto;
+  height: 38px;
+  width: 38px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.18);
+  background: rgba(255,255,255,.06);
+  color: #fff;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.ga-body{
+  padding: 14px;
+  display: grid;
+  gap: 12px;
+  overflow: auto; /* internal scroll only if needed */
+}
+
+.ga-actions{
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.ga-btn{ padding: .72rem 1rem; }
+
+.ga-foot{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-top: 1px solid rgba(255,255,255,.10);
+  padding-top: 12px;
+}
+
+.ga-foot-dot{
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(126,224,255,.75);
+}
+
+.ga-foot-text{
+  color: rgba(255,255,255,.72);
+  font-size: .86rem;
+}
+
+/* =========================================================
+  MODAL (Settings pop-out) — internal scroll only
+  ========================================================= */
+.modal-overlay{
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: grid;
+  place-items: center;
+  pointer-events: auto;
+}
+
+.modal-backdrop{
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,.58);
+}
+
+.modal-panel{
+  position: relative;
+  width: min(980px, calc(100vw - 22px));
+  max-height: calc(100vh - 22px);
+  border-radius: 20px;
+  border: 1px solid var(--surface-border);
+  background: rgba(12, 16, 26, .96);
+  box-shadow: 0 24px 72px rgba(0,0,0,.55);
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+}
+
+.modal-head{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border-bottom: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.06);
+}
+
+.modal-title{
+  font-weight: 900;
+  letter-spacing: .02em;
+  font-size: 1.05rem;
+  color: #fff;
+}
+.modal-sub{
+  font-size: .72rem;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.72);
+}
+
+.modal-body{
+  padding: 14px;
+  overflow: auto; /* internal scroll only */
+  display: grid;
+  gap: 14px;
+}
+
+.modal-foot{
+  padding: 12px 14px 14px;
+  border-top: 1px solid rgba(255,255,255,.10);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.modal-section-title{
+  font-weight: 900;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 10px;
+}
+
+.modal-grid{
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0,1fr));
+  gap: 12px;
+}
+
+@media (max-width: 560px){
+  .modal-grid{ grid-template-columns: 1fr; }
+}
+
+.modal-choice{
+  text-align: left;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.06);
+  padding: 14px;
+  cursor: pointer;
+  color: #fff;
+}
+
+.modal-choice[data-on="true"]{
+  border-color: rgba(246,220,138,.45);
+  box-shadow: 0 14px 34px rgba(0,0,0,.35);
+}
+
+.modal-choice-title{
+  font-weight: 900;
+  color: var(--gold);
+  margin-bottom: 4px;
+}
+
+.modal-choice-desc{
+  font-size: .86rem;
+  color: rgba(255,255,255,.72);
 }
