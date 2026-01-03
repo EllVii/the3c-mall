@@ -4,11 +4,11 @@
   NO SCROLL · APP-LIKE · SYMMETRICAL · CLEAN
   WALLPAPER = THEME IMAGE + subtle motion (alive)
   NO GLASS BLUR
-  ========================================================= */
+========================================================= */
 
 /* =========================================================
   RESET + APP CONSTRAINTS
-  ========================================================= */
+========================================================= */
 *,
 *::before,
 *::after { box-sizing: border-box; }
@@ -17,42 +17,20 @@ html, body{
   height: 100%;
   width: 100%;
   margin: 0;
-  overflow: hidden;          /* NO SCROLL */
+
+  /* ✅ true “app-like” */
+  overflow: hidden;
   overflow-x: hidden;
 }
 
-body{
-  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
-  color: var(--text);
-  position: relative;
-
-  /* WALLPAPER = theme image (reliable on all browsers) */
-  background-color: var(--bg0);
-  background-image: var(--theme-image);
-  background-size: 10%;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-color: var(--bg0);
-
-  /* Slight “alive” drift without moving layout */
-  transform: translateZ(0);
-  animation: wallpaper-drift 26s ease-in-out infinite alternate;
-}
-
-#root{
-  height: 100%;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  isolation: isolate;        /* keeps overlays sane */
-  overflow: hidden;
-  position: relative;
-  z-index: 2;                /* above wallpaper overlays */
+:root{
+  --safeTop: env(safe-area-inset-top, 0px);
+  --safeBottom: env(safe-area-inset-bottom, 0px);
 }
 
 /* =========================================================
   TOKENS (BRAND FIRST)
-  ========================================================= */
+========================================================= */
 :root{
   /* Brand */
   --blue:#7ee0ff;
@@ -72,7 +50,7 @@ body{
   /* Theme wallpaper (single source) */
   --theme-image: none;
 
-  /* Readability overlay (sits above wallpaper, behind UI) */
+  /* Readability overlay (above wallpaper, behind UI) */
   --bgOverlayTop: rgba(2,4,10,.18);
   --bgOverlayBottom: rgba(2,4,10,.55);
 
@@ -88,22 +66,50 @@ body{
 
   --divider: rgba(255,255,255,.14);
 
-  /* NEW: default text shadows off */
+  /* Text system */
   --tileTextShadow: none;
   --heroTextShadow: none;
-
-  /* NEW: default tile title color (most themes keep gold) */
   --tileTitleColor: var(--gold);
 }
 
 /* =========================================================
-  THEMES
-  IMPORTANT: these assume your theme selector sets data-theme
-  on <html>. If it sets on <body>, you can duplicate selectors.
-  Images must be in /public/themes/
-  ========================================================= */
+  WALLPAPER (reliable everywhere)
+  NOTE: background-size FIXED here (no more 10%)
+========================================================= */
+body{
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+  color: var(--text);
+  position: relative;
 
-/* MIDNIGHT LUX (procedural / no image needed) */
+  background-color: var(--bg0);
+  background-image: var(--theme-image);
+  background-size: cover;          /* ✅ stretch-to-fit */
+  background-position: center;
+  background-repeat: no-repeat;
+
+  transform: translateZ(0);
+  animation: wallpaper-drift 26s ease-in-out infinite alternate;
+}
+
+/* UI sits above wallpaper overlay */
+#root{
+  height: 100dvh;                 /* ✅ better than 100vh on mobile */
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  isolation: isolate;
+  overflow: hidden;
+  position: relative;
+  z-index: 2;
+}
+
+/* =========================================================
+  THEMES
+  IMPORTANT: assumes data-theme is on <html>
+  Images must be in /public/themes/
+========================================================= */
+
+/* MIDNIGHT LUX */
 html[data-theme="midnight-lux"]{
   --bg0:#02040a;
   --bg1:#050912;
@@ -157,7 +163,7 @@ html[data-theme="velocity-red"]{
   --heroTextShadow: none;
 }
 
-/* PEARL LUXE — darker text + DARK GOLD titles + shadow */
+/* PEARL LUXE — premium readability */
 html[data-theme="pearl-luxe"]{
   --bg0:#0b1018;
   --bg1:#111a26;
@@ -167,104 +173,41 @@ html[data-theme="pearl-luxe"]{
   --muted2:#3a4657;
   --blackText:#0b1220;
 
-  /* Stronger overlay because wallpaper is lighter */
-  --bgOverlayTop: rgba(255,255,255,.12);
-  --bgOverlayBottom: rgba(255,255,255,.34);
+  --bgOverlayTop: rgba(255,255,255,.16);
+  --bgOverlayBottom: rgba(255,255,255,.40);
 
   --themeGlowA: rgba(180,197,216,.14);
   --themeGlowB: rgba(246,220,138,.12);
   --themeGlowC: rgba(111,143,176,.12);
 
-  --surface: rgba(255,255,255,.78);
-  --surface-strong: rgba(255,255,255,.92);
+  --surface: rgba(255,255,255,.86);
+  --surface-strong: rgba(255,255,255,.97);
   --surface-border: rgba(210,190,120,.55);
 
   --theme-image: url("/themes/pearl-luxe-bg.jpg");
 
-  /* === PREMIUM TEXT SYSTEM === */
-
-  /* Dark gold — luxury, not yellow */
+  /* Dark gold */
   --tileTitleColor: #7a5a18;
 
-  /* Micro-outline + depth (engraved look) */
+  /* ✅ deeper premium shadow to stop bleed */
   --tileTextShadow:
-    /* micro outline */
-    -1px 0   rgba(255,255,255,.65),
-     1px 0   rgba(255,255,255,.65),
-     0 -1px  rgba(255,255,255,.65),
-     0  1px  rgba(255,255,255,.65),
+    -1px 0 rgba(255,255,255,.82),
+     1px 0 rgba(255,255,255,.82),
+     0 -1px rgba(255,255,255,.82),
+     0  1px rgba(255,255,255,.82),
+     0  4px  12px rgba(0,0,0,.30),
+     0  22px 50px rgba(0,0,0,.36);
 
-    /* depth */
-     0  3px  8px rgba(0,0,0,.22),
-     0 18px  38px rgba(0,0,0,.28);
-
-  /* Hero / large text gets extra authority */
   --heroTextShadow:
-    -1px 0   rgba(255,255,255,.65),
-     1px 0   rgba(255,255,255,.65),
-     0 -1px  rgba(255,255,255,.65),
-     0  1px  rgba(255,255,255,.65),
-
-     0  4px  10px rgba(0,0,0,.24),
-     0 20px  42px rgba(0,0,0,.30);
-}
-/* =========================================================
-   PEARL LUXE — SUPER PREMIUM TEXT RENDERING
-   ========================================================= */
-
-html[data-theme="pearl-luxe"] .tile-title{
-  color: var(--tileTitleColor);
-  text-shadow: var(--tileTextShadow);
+    -1px 0 rgba(255,255,255,.86),
+     1px 0 rgba(255,255,255,.86),
+     0 -1px rgba(255,255,255,.86),
+     0  1px rgba(255,255,255,.86),
+     0  6px  16px rgba(0,0,0,.34),
+     0  26px 60px rgba(0,0,0,.40);
 }
 
-html[data-theme="pearl-luxe"] .h1{
-  color: var(--tileTitleColor);
-  text-shadow: var(--heroTextShadow);
-}
-
-html[data-theme="pearl-luxe"] .tile-desc,
-html[data-theme="pearl-luxe"] .sub,
-html[data-theme="pearl-luxe"] .small{
-  text-shadow:
-    0 1px 0 rgba(255,255,255,.55),
-    0 3px 8px rgba(0,0,0,.18);
-}
-
-/* =========================================================
-   PEARL LUXE — STOP TEXT BLEED (kicker/sub/desc)
-   ========================================================= */
-html[data-theme="pearl-luxe"] .kicker,
-html[data-theme="pearl-luxe"] .sub,
-html[data-theme="pearl-luxe"] .tile-desc,
-html[data-theme="pearl-luxe"] .small{
-  /* slightly darker base improves contrast */
-  color: rgba(20, 28, 40, .92);
-
-  /* premium “engraved” outline + deep shadow stack */
-  text-shadow:
-    /* micro-outline (keeps characters crisp) */
-    -1px 0 rgba(255,255,255,.78),
-     1px 0 rgba(255,255,255,.78),
-     0 -1px rgba(255,255,255,.78),
-     0  1px rgba(255,255,255,.78),
-
-    /* depth */
-     0  3px  8px rgba(0,0,0,.24),
-     0 18px  40px rgba(0,0,0,.30);
-}
-
-/* Make kicker a touch bolder so it doesn’t “thin out” on bright areas */
-html[data-theme="pearl-luxe"] .kicker{
-  font-weight: 900;
-  letter-spacing: .18em;
-}
-
-html[data-theme="pearl-luxe"]{
-  --surface: rgba(255,255,255,.84);
-  --surface-strong: rgba(255,255,255,.96);
-}
-
-/* RETRO FUSION — darker text + stronger shadow */
+/* RETRO FUSION — keep your current “perfect” feel */
 html[data-theme="retro-fusion"]{
   --bg0:#040610;
   --bg1:#070a18;
@@ -287,10 +230,7 @@ html[data-theme="retro-fusion"]{
 
   --theme-image: url("/themes/retro-fusion-bg.jpg");
 
-  /* keep gold but make it read clearly */
   --tileTitleColor: var(--gold);
-
-  /* NEW: stronger pop for busy retro wallpaper */
   --tileTextShadow:
     0 1px 0 rgba(255,255,255,.38),
     0 10px 24px rgba(0,0,0,.28);
@@ -301,9 +241,8 @@ html[data-theme="retro-fusion"]{
 }
 
 /* =========================================================
-  WALLPAPER OVERLAY LAYER (glows + readability)
-  Lives ABOVE wallpaper, BELOW app UI
-  ========================================================= */
+  WALLPAPER OVERLAY (glows + readability)
+========================================================= */
 body::before{
   content:"";
   position: fixed;
@@ -336,30 +275,17 @@ body::before{
   body{ animation: none !important; }
   body::before{ animation: none !important; }
 }
-/* Light themes: show full artwork */
-html[data-theme="pearl-luxe"] body,
-html[data-theme="retro-fusion"] body{
-  background-size: 10%;
-  background-position: center;
-  background-repeat: no-repeat;
-}
-
-/* Dark / cinematic themes: immersive fill */
-html[data-theme="velocity-red"] body,
-html[data-theme="midnight-lux"] body{
-  background-size: 10%;
-  background-position: center;
-}
 
 /* =========================================================
-  APP PAGE BANDS
-  ========================================================= */
+  APP PAGE BANDS (with safe areas)
+========================================================= */
 .page{
-  height: 100%;
+  height: 100dvh;
   width: 100%;
   display: grid;
-  grid-template-rows: auto 1fr auto; /* header/content/footer */
-  padding: 0;
+  grid-template-rows: auto 1fr auto;
+  padding-top: var(--safeTop);
+  padding-bottom: var(--safeBottom);
   min-height: 0;
   overflow: hidden;
 }
@@ -367,17 +293,18 @@ html[data-theme="midnight-lux"] body{
 /* Header removed per request */
 .brand-emblem{ display: none; }
 
-/* Content band */
+/* ✅ KEY FIX: internal scroll here, not body */
 .page-content{
   padding: 12px;
   display: grid;
   align-content: start;
   gap: 12px;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   min-height: 0;
+  -webkit-overflow-scrolling: touch;
 }
 
-/* Footer band */
 .page-footer{
   padding: 10px 12px 12px;
   border-top: 1px solid var(--divider);
@@ -388,14 +315,13 @@ html[data-theme="midnight-lux"] body{
 }
 
 /* =========================================================
-   HERO TILE SCRIM (premium readability)
-   ========================================================= */
+  HERO TILE SCRIM (premium readability)
+========================================================= */
 .tile-hero{
   position: relative;
   overflow: hidden;
 }
 
-/* scrim layer inside hero tile only */
 .tile-hero::before{
   content:"";
   position: absolute;
@@ -403,16 +329,25 @@ html[data-theme="midnight-lux"] body{
   pointer-events: none;
   z-index: 0;
 
-  /* premium scrim: gentle top/bottom control */
+  /* Dark themes scrim */
   background: linear-gradient(
     180deg,
-    rgba(255,255,255,.28) 0%,
-    rgba(255,255,255,.16) 45%,
-    rgba(255,255,255,.26) 100%
+    rgba(0,0,0,.22) 0%,
+    rgba(0,0,0,.10) 55%,
+    rgba(0,0,0,.22) 100%
   );
 }
 
-/* ensure hero content is above scrim */
+/* Pearl needs a lighter scrim instead */
+html[data-theme="pearl-luxe"] .tile-hero::before{
+  background: linear-gradient(
+    180deg,
+    rgba(255,255,255,.44) 0%,
+    rgba(255,255,255,.24) 55%,
+    rgba(255,255,255,.42) 100%
+  );
+}
+
 .tile-hero > *{
   position: relative;
   z-index: 1;
@@ -420,7 +355,7 @@ html[data-theme="midnight-lux"] body{
 
 /* =========================================================
   GRID (FENG SHUI)
-  ========================================================= */
+========================================================= */
 .fit-grid{
   display: grid;
   grid-template-columns: repeat(2, minmax(0,1fr));
@@ -431,12 +366,12 @@ html[data-theme="midnight-lux"] body{
 
 @media (max-width: 560px){
   .fit-grid{ grid-template-columns: 1fr; }
-  .page-content{ padding-left: 10px; padding-right: 10px; }
+  .page-content{ padding: 10px; gap: 10px; }
 }
 
 /* =========================================================
-  TILES (NO BLUR, WALLPAPER VISIBLE AROUND THEM)
-  ========================================================= */
+  TILES (NO BLUR)
+========================================================= */
 .tile{
   border-radius: 18px;
   border: 1px solid var(--surface-border);
@@ -468,7 +403,7 @@ html[data-theme="midnight-lux"] body{
 
 /* =========================================================
   TYPE
-  ========================================================= */
+========================================================= */
 .kicker{
   font-size: .70rem;
   letter-spacing: .18em;
@@ -476,26 +411,37 @@ html[data-theme="midnight-lux"] body{
   color: var(--blue);
   text-shadow: var(--heroTextShadow);
 }
+
 .h1{
   font-size: 1.55rem;
   font-weight: 900;
   margin-top: 2px;
   text-shadow: var(--heroTextShadow);
 }
+
 .sub{
   font-size: .92rem;
   color: var(--muted);
   text-shadow: var(--heroTextShadow);
 }
+
 .small{
   font-size: .82rem;
   color: var(--muted2);
   text-shadow: var(--tileTextShadow);
 }
 
+/* Pearl: stop “thin bleed” on subtext */
+html[data-theme="pearl-luxe"] .kicker,
+html[data-theme="pearl-luxe"] .sub,
+html[data-theme="pearl-luxe"] .tile-desc,
+html[data-theme="pearl-luxe"] .small{
+  color: rgba(20, 28, 40, .94);
+}
+
 /* =========================================================
   PILL (Mode)
-  ========================================================= */
+========================================================= */
 .pill,
 .mode-pill{
   display:inline-flex;
@@ -519,8 +465,8 @@ html[data-theme="midnight-lux"] body{
 .mode-pill strong{ color: var(--gold); }
 
 /* =========================================================
-  BUTTONS (CLEAN — no wallpaper on buttons)
-  ========================================================= */
+  BUTTONS
+========================================================= */
 .btn{
   display: inline-flex;
   align-items: center;
@@ -559,7 +505,7 @@ html[data-theme="midnight-lux"] body{
 
 /* =========================================================
   NO SIDE SCROLL — EVER
-  ========================================================= */
+========================================================= */
 html, body, #root,
 .page, .page-content, .fit-grid, .tile,
 .cc-panel, .cc-grid,
@@ -576,8 +522,30 @@ html, body, #root,
 }
 
 /* =========================================================
-  CONCIERGE OVERLAY (CRISP, NOT SEE-THROUGH)
-  ========================================================= */
+  MOBILE DENSITY (premium “tight”)
+========================================================= */
+@media (max-width: 560px){
+  .tile{ padding: 12px; border-radius: 16px; min-height: 76px; }
+  .h1{ font-size: 1.38rem; }
+  .sub{ font-size: .90rem; }
+  .tile-desc{ font-size: .84rem; }
+  .btn{ padding: .62rem .9rem; font-size: .72rem; }
+}
+
+/* =========================================================
+  LANDSCAPE TUNING
+========================================================= */
+@media (orientation: landscape) and (max-height: 520px){
+  .page-content{ padding: 8px 10px; gap: 10px; }
+  .h1{ font-size: 1.22rem; }
+  .sub{ font-size: .86rem; }
+  .tile{ min-height: 68px; }
+  .fit-grid{ grid-template-columns: repeat(2, minmax(0,1fr)); }
+}
+
+/* =========================================================
+  CONCIERGE OVERLAY (unchanged)
+========================================================= */
 .cc-overlay{
   position: fixed;
   inset: 0;
@@ -596,7 +564,7 @@ html, body, #root,
 .cc-panel{
   position: relative;
   width: min(980px, calc(100vw - 22px));
-  max-height: calc(100vh - 22px);
+  max-height: calc(100dvh - 22px);
   border-radius: 20px;
   border: 1px solid var(--surface-border);
   background: rgba(12, 16, 26, .94);
@@ -660,7 +628,7 @@ html, body, #root,
   padding: 14px;
   display: grid;
   gap: 12px;
-  overflow: auto; /* internal only */
+  overflow: auto;
 }
 
 .cc-grid{
@@ -740,12 +708,12 @@ html, body, #root,
 }
 
 /* =========================================================
-  GUIDED ASSIST OVERLAY (ga-*)
-  ========================================================= */
+  GUIDED ASSIST OVERLAY (unchanged)
+========================================================= */
 .ga-overlay{
   position: fixed;
   inset: 0;
-  z-index: 1400; /* above concierge + settings */
+  z-index: 1400;
   display: grid;
   place-items: center;
   pointer-events: auto;
@@ -760,7 +728,7 @@ html, body, #root,
 .ga-panel{
   position: relative;
   width: min(720px, calc(100vw - 22px));
-  max-height: calc(100vh - 22px);
+  max-height: calc(100dvh - 22px);
   border-radius: 20px;
   border: 1px solid rgba(255,255,255,.16);
   background: rgba(12, 16, 26, .96);
@@ -825,7 +793,7 @@ html, body, #root,
   padding: 14px;
   display: grid;
   gap: 12px;
-  overflow: auto; /* internal scroll only if needed */
+  overflow: auto;
 }
 
 .ga-actions{
@@ -857,8 +825,8 @@ html, body, #root,
 }
 
 /* =========================================================
-  MODAL (Settings pop-out) — internal scroll only
-  ========================================================= */
+  MODAL (Settings)
+========================================================= */
 .modal-overlay{
   position: fixed;
   inset: 0;
@@ -877,7 +845,7 @@ html, body, #root,
 .modal-panel{
   position: relative;
   width: min(980px, calc(100vw - 22px));
-  max-height: calc(100vh - 22px);
+  max-height: calc(100dvh - 22px);
   border-radius: 20px;
   border: 1px solid var(--surface-border);
   background: rgba(12, 16, 26, .96);
@@ -912,7 +880,7 @@ html, body, #root,
 
 .modal-body{
   padding: 14px;
-  overflow: auto; /* internal scroll only */
+  overflow: auto;
   display: grid;
   gap: 14px;
 }
