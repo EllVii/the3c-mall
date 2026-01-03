@@ -217,19 +217,6 @@ export default function DashboardPage() {
 
       {/* CONTENT */}
       <div className="page-content">
-        <div className="tile tile-hero">
-          <div className="kicker">Concierge · Cost · Community</div>
-          <div className="h1">How can we help today?</div>
-          <div className="sub">No scrolling. Pick your lane. If it doesn’t fit, it becomes a new screen.</div>
-
-          <div style={{ marginTop: ".6rem", display: "flex", justifyContent: "center" }}>
-            <div className="pill">
-              <span>Mode</span>
-              <strong>{prefs?.navMode === "full" ? "Full Mall" : "Focused"}</strong>
-            </div>
-          </div>
-        </div>
-
         {nudge.show && (
           <div className="tile tile-hero" style={{ borderColor: "rgba(246,220,138,.35)" }}>
             <div className="kicker">Quick Tip</div>
