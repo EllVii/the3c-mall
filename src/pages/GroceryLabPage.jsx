@@ -138,7 +138,7 @@ export default function GroceryLabPage() {
           <div
             className="gl-track"
             style={{
-              width: `${stepCount * 100}%`,
+              width: `${stepCount * 25}%`,
               transform: `translateX(-${stepIndex * 100}%)`,
             }}
           >
