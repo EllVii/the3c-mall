@@ -4,6 +4,7 @@ import { readJSON, writeJSON, nowISO } from "../utils/Storage";
 import "../styles/GroceryLabPage.css";
 import { useNavigate, useLocation } from "react-router-dom";
 
+const [appMsg, setAppMsg] = useState("");
 const nav = useNavigate();
 const location = useLocation();
 const cameFromMeal = location.state?.from === "meal";
@@ -59,6 +60,17 @@ export default function GroceryLabPage() {
   }
 
   // Never allow 0 stores (auto restore all)
+  useEffect(() => {
+  const cameFromMeal = readJSON("handoff.mealToGrocery.v1", null);
+
+  if (cameFromMeal?.at) {
+    setAppMsg("Loaded your saved grocery settings from Meal Plan.");
+    // clear so it shows only once
+    writeJSON("handoff.mealToGrocery.v1", null);
+    window.setTimeout(() => setAppMsg(""), 2600);
+  }
+}, []);
+
   useEffect(() => {
   // If user came from Meal Plan and already has a strategy,
   // jump them straight to Review
@@ -146,6 +158,12 @@ export default function GroceryLabPage() {
           </div>
           <span className="gl-tag">{steps[stepIndex]?.title}</span>
         </header>
+        
+{appMsg && (
+  <div className="gl-appmsg glass-inner" role="status" aria-live="polite">
+    {appMsg}
+  </div>
+)}
 
         <div className="gl-stage">
           <div

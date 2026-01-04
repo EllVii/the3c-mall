@@ -965,3 +965,21 @@ html, body, #root,
   visibility: hidden !important;
   pointer-events: none !important;
 }
+
+.app-toast{
+  position: fixed;
+  left: 50%;
+  bottom: 16px;
+  transform: translateX(-50%);
+  z-index: 2000;
+  padding: .8rem 1rem;
+  border-radius: 999px;
+  border: 1px solid rgba(246,220,138,.35);
+  background: rgba(12,16,26,.94);
+  color: #fff;
+  font-weight: 900;
+  letter-spacing: .02em;
+  box-shadow: 0 18px 44px rgba(0,0,0,.45);
+  max-width: calc(100vw - 24px);
+  text-align: center;
+}

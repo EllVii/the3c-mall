@@ -349,6 +349,14 @@ border-bottom: 1px solid rgba(126,224,255,.10);
   z-index: 5;
 }
 
+.gl-appmsg{
+  margin: .75rem 0 1rem;
+  padding: .9rem;
+  border-radius: 1.1rem;
+  font-weight: 900;
+  letter-spacing: .01em;
+}
+
 /* This becomes the scroll container */
 .gl-stage{
   min-height: 0;     /* critical */

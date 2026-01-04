@@ -13,6 +13,7 @@ const MEALS = [
   { id: "snack", label: "Snack", defaultTime: "15:00" },
   { id: "one-meal", label: "One Meal a Day (OMAD)", defaultTime: "17:00" },
 ];
+{toast && <div className="app-toast">{toast}</div>}
 
 function todayISO() {
   const d = new Date();
@@ -55,12 +56,27 @@ export default function MealPlannerPage() {
     };
     writeJSON(MP_KEY, plan);
     alert("Saved (MVP). Next: push ingredients into Grocery Lab.");
+    writeJSON("handoff.mealToGrocery.v1", {
+  at: nowISO(),
+  message: "Saved. Sent to Grocery Lab.",
+});
 nav("/app/grocery", {
   state: {
     from: "meal",
     quickReview: true
   }
 });  }
+const [toast, setToast] = useState("");
+
+useEffect(() => {
+  const handoff = readJSON("handoff.mealToGrocery.v1", null);
+  if (handoff?.message) {
+    setToast(handoff.message);
+    // clear it so it doesn't keep showing
+    writeJSON("handoff.mealToGrocery.v1", null);
+    window.setTimeout(() => setToast(""), 2200);
+  }
+}, []);
 
   return (
     <section className="page">
