@@ -55,8 +55,12 @@ export default function MealPlannerPage() {
     };
     writeJSON(MP_KEY, plan);
     alert("Saved (MVP). Next: push ingredients into Grocery Lab.");
-    nav("/app/grocery-lab");
+nav("/app/grocery", {
+  state: {
+    from: "meal",
+    quickReview: true
   }
+});  }
 
   return (
     <section className="page">

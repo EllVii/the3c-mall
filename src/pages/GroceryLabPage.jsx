@@ -2,7 +2,12 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { readJSON, writeJSON, nowISO } from "../utils/Storage";
 import "../styles/GroceryLabPage.css";
+import { useNavigate, useLocation } from "react-router-dom";
 
+const nav = useNavigate();
+const location = useLocation();
+const cameFromMeal = location.state?.from === "meal";
+const quickReview = location.state?.quickReview === true;
 const STRATEGY_KEY = "grocery.strategy.v1";
 const STORE_USAGE_KEY = "grocery.storeUsage.v1";
 
@@ -54,6 +59,14 @@ export default function GroceryLabPage() {
   }
 
   // Never allow 0 stores (auto restore all)
+  useEffect(() => {
+  // If user came from Meal Plan and already has a strategy,
+  // jump them straight to Review
+  if (cameFromMeal && quickReview && saved) {
+    setStepIndex(steps.length - 1);
+  }
+}, [cameFromMeal, quickReview, saved, steps.length]);
+
   useEffect(() => {
     if (!includedStoreIds.length) setIncludedStoreIds(STORES.map((s) => s.id));
     // eslint-disable-next-line react-hooks/exhaustive-deps
