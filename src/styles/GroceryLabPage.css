@@ -335,3 +335,23 @@ border-bottom: 1px solid rgba(126,224,255,.10);
 @media (max-width: 860px){
 .gl-top{ flex-direction: column; }
 }
+/* Make the wizard behave like concierge: fixed shell, internal scroll */
+.gl-wizard{
+  display: grid;
+  grid-template-rows: auto 1fr; /* header + body */
+  min-height: 0;
+}
+
+/* Keep header fixed */
+.gl-wiz-head{
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+/* This becomes the scroll container */
+.gl-stage{
+  min-height: 0;     /* critical */
+  overflow: auto;    /* internal scroll like concierge */
+  -webkit-overflow-scrolling: touch;
+}
