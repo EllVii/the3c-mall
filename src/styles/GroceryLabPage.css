@@ -119,8 +119,8 @@
 }
 
 .gl-panel{
-  flex: 0 0 fit;
-  width: fit;
+  flex: 0 0 25%;
+  width: fit-content%;
   padding: 1rem;
   min-height: 420px;
 }

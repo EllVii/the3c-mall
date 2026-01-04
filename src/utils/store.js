@@ -32,4 +32,4 @@ export function applyThemeToDom(theme) {
     document.documentElement.setAttribute("data-theme", theme || "midnight");
   } catch {
     // ignore
-  }
+  }}
