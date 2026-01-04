@@ -68,7 +68,7 @@ export default function GroceryLabPage() {
       deliveryPlan,
       updatedAt: nowISO(),
     });
-  }, [lane, includedStoreIds, fulfillment, deliveryPlan]);
+  }, [lane, includedStoreIds, fulfillment, deliveryPlan, deliveryPlan]);
 
   // Toggle store
   function toggleStore(id) {
@@ -78,13 +78,9 @@ export default function GroceryLabPage() {
   }
 
   // Usage model (for smart ordering + recommended)
-  // savedUsage example structure we’ll support:
-  // { total: {costco: 7, walmart: 2}, lastUsed: {costco: "2025-12-18T..." } }
-  const usageTotals = savedUsage?.total && typeof savedUsage.total === "object" ? savedUsage.total : {};
+  const usageTotals =
+    savedUsage?.total && typeof savedUsage.total === "object" ? savedUsage.total : {};
 
-  // Pick “recommended” store:
-  // 1) If lane is single-store → recommend most-used store
-  // 2) Else → recommend Costco (your “mall anchor”) unless usage data suggests another
   const mostUsedStoreId = useMemo(() => {
     const entries = Object.entries(usageTotals);
     if (!entries.length) return null;
@@ -143,7 +139,7 @@ export default function GroceryLabPage() {
             className="gl-track"
             style={{
               width: `${stepCount * 100}%`,
-              transform: `translateX(-${stepIndex * (100 / stepCount)}%)`,
+              transform: `translateX(-${stepIndex * 100}%)`,
             }}
           >
             {/* PANEL 1: LANE */}
@@ -187,7 +183,7 @@ export default function GroceryLabPage() {
               </div>
             </div>
 
-            {/* PANEL 2: STORES (TEXT “LOGO-LIKE” CHIPS) */}
+            {/* PANEL 2: STORES */}
             <div className="gl-panel">
               <h2 className="gl-h2">Which stores are in play?</h2>
               <p className="small">
@@ -220,7 +216,7 @@ export default function GroceryLabPage() {
                         {isRec ? (
                           <span className="gl-store-badge">Recommended</span>
                         ) : (
-                          <span className={`gl-store-badge ghost ${on ? "" : "off"}`}>
+                          <span className="gl-store-badge ghost">
                             {on ? "Included" : "Tap to include"}
                           </span>
                         )}
@@ -308,14 +304,7 @@ export default function GroceryLabPage() {
           </div>
         </div>
 
-        <div className="gl-bottom">
-          <button className="btn btn-secondary" type="button" onClick={() => setStepIndex(0)}>
-            Change Strategy
-          </button>
-          <button className="btn btn-secondary" type="button" onClick={() => nav("/app/settings")}>
-            Settings
-          </button>
-        </div>
+        {/* REMOVED: extra bottom buttons row (keeps UI clean & consistent) */}
       </div>
     </div>
   );
