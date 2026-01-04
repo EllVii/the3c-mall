@@ -290,6 +290,19 @@ body::before{
   overflow: hidden;
 }
 
+/* page layout modifiers */
+.page.page--flush{
+  padding: 0 !important;
+}
+
+.page.page--tight{
+  padding: 10px !important;
+}
+
+.page.page--ui{
+  padding: 12px !important; /* “matches ui.css” explicitly */
+}
+
 /* Header removed per request */
 .brand-emblem{ display: none; }
 

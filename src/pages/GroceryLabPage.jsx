@@ -29,7 +29,7 @@ export default function GroceryLabPage() {
       : STORES.map((s) => s.id)
   );
   const [fulfillment, setFulfillment] = useState(saved?.fulfillment || "pickup");
-  const [deliveryPlan, setDeliveryPlan] = useState(saved?.deliveryPlan || "self");
+  const [deliveryPlan, setDeliveryPlan] = useState(saved?.deliveryPlan || "self"); // reserved for later
 
   // Steps MUST match panels
   const steps = useMemo(
@@ -68,7 +68,7 @@ export default function GroceryLabPage() {
       deliveryPlan,
       updatedAt: nowISO(),
     });
-  }, [lane, includedStoreIds, fulfillment, deliveryPlan, deliveryPlan]);
+  }, [lane, includedStoreIds, fulfillment, deliveryPlan]);
 
   // Toggle store
   function toggleStore(id) {
@@ -167,9 +167,7 @@ export default function GroceryLabPage() {
                   onClick={() => pickAndAdvance(setLane, "single-store")}
                 >
                   <div className="gl-choice-title">Single Store</div>
-                  <div className="gl-choice-desc">
-                    Simplest trip. 3C selects the best one-store total.
-                  </div>
+                  <div className="gl-choice-desc">Simplest trip. 3C selects the best one-store total.</div>
                 </button>
               </div>
 
@@ -186,9 +184,7 @@ export default function GroceryLabPage() {
             {/* PANEL 2: STORES */}
             <div className="gl-panel">
               <h2 className="gl-h2">Which stores are in play?</h2>
-              <p className="small">
-                Tap to include/exclude. Recommended is highlighted. (Alpha: text-only, no logos.)
-              </p>
+              <p className="small">Tap to include/exclude. Recommended is highlighted.</p>
 
               <div className="gl-store-row">
                 {orderedStores.map((s) => {
@@ -216,9 +212,7 @@ export default function GroceryLabPage() {
                         {isRec ? (
                           <span className="gl-store-badge">Recommended</span>
                         ) : (
-                          <span className="gl-store-badge ghost">
-                            {on ? "Included" : "Tap to include"}
-                          </span>
+                          <span className="gl-store-badge ghost">{on ? "Included" : "Tap to include"}</span>
                         )}
                       </span>
 
@@ -304,7 +298,7 @@ export default function GroceryLabPage() {
           </div>
         </div>
 
-        {/* REMOVED: extra bottom buttons row (keeps UI clean & consistent) */}
+        {/* (intentionally no extra bottom row — keeps UI clean & consistent) */}
       </div>
     </div>
   );
