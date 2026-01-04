@@ -935,3 +935,20 @@ html, body, #root,
   font-size: .86rem;
   color: rgba(255,255,255,.72);
 }
+
+/* =========================================================
+  REMOVE VERTICAL UTILITY RAIL (Concierge / Settings / Help)
+  ========================================================= */
+.utility-rail,
+.side-rail,
+.vertical-actions,
+.vertical-buttons,
+.vertical-pill-stack,
+.vertical-nav,
+.rail-actions,
+.rail,
+.side-actions {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}

@@ -265,21 +265,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* FOOTER */}
-      <div className="page-footer">
-        <button className="btn btn-secondary" onClick={() => { setCcMin(false); setCcOpen(true); }}>
-          Concierge
-        </button>
-
-        <button className="btn btn-secondary" onClick={() => setSettingsOpen(true)}>
-          Settings
-        </button>
-
-        {/* Test + seniors friendly help */}
-        <button className="btn btn-ghost" onClick={() => setGaOpen(true)}>
-          Help ?
-        </button>
-      </div>
+    
 
       <FeedbackPanel
         open={feedbackOpen}
