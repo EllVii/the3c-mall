@@ -1,16 +1,12 @@
+// src/pages/GroceryLabPage.jsx
 import React, { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { readJSON, writeJSON, nowISO } from "../utils/Storage";
 import "../styles/GroceryLabPage.css";
-import { useNavigate, useLocation } from "react-router-dom";
 
-const [appMsg, setAppMsg] = useState("");
-const nav = useNavigate();
-const location = useLocation();
-const cameFromMeal = location.state?.from === "meal";
-const quickReview = location.state?.quickReview === true;
 const STRATEGY_KEY = "grocery.strategy.v1";
 const STORE_USAGE_KEY = "grocery.storeUsage.v1";
+const HANDOFF_KEY = "handoff.mealToGrocery.v1";
 
 const STORES = [
   { id: "costco", name: "Costco" },
@@ -22,6 +18,13 @@ const STORES = [
 
 export default function GroceryLabPage() {
   const nav = useNavigate();
+  const location = useLocation();
+
+  // ✅ one message state (declare ONCE)
+  const [appMsg, setAppMsg] = useState("");
+
+  const cameFromMeal = location.state?.from === "meal";
+  const quickReview = location.state?.quickReview === true;
 
   const saved = useMemo(() => readJSON(STRATEGY_KEY, null), []);
   const savedUsage = useMemo(() => readJSON(STORE_USAGE_KEY, null), []);
@@ -35,7 +38,7 @@ export default function GroceryLabPage() {
       : STORES.map((s) => s.id)
   );
   const [fulfillment, setFulfillment] = useState(saved?.fulfillment || "pickup");
-  const [deliveryPlan, setDeliveryPlan] = useState(saved?.deliveryPlan || "self"); // reserved for later
+  const [deliveryPlan] = useState(saved?.deliveryPlan || "self"); // reserved (no setter needed)
 
   // Steps MUST match panels
   const steps = useMemo(
@@ -59,26 +62,24 @@ export default function GroceryLabPage() {
     }, 160);
   }
 
-  // Never allow 0 stores (auto restore all)
+  // ✅ Show handoff message once (single effect)
   useEffect(() => {
-  const cameFromMeal = readJSON("handoff.mealToGrocery.v1", null);
+    const handoff = readJSON(HANDOFF_KEY, null);
+    if (handoff?.message) {
+      setAppMsg(handoff.message);
+      writeJSON(HANDOFF_KEY, null); // clear so it only shows once
+      window.setTimeout(() => setAppMsg(""), 2600);
+    }
+  }, []);
 
-  if (cameFromMeal?.at) {
-    setAppMsg("Loaded your saved grocery settings from Meal Plan.");
-    // clear so it shows only once
-    writeJSON("handoff.mealToGrocery.v1", null);
-    window.setTimeout(() => setAppMsg(""), 2600);
-  }
-}, []);
-
+  // ✅ Optional: jump to review when coming from Meal Plan
   useEffect(() => {
-  // If user came from Meal Plan and already has a strategy,
-  // jump them straight to Review
-  if (cameFromMeal && quickReview && saved) {
-    setStepIndex(steps.length - 1);
-  }
-}, [cameFromMeal, quickReview, saved, steps.length]);
+    if (cameFromMeal && quickReview && saved) {
+      setStepIndex(stepCount - 1);
+    }
+  }, [cameFromMeal, quickReview, saved, stepCount]);
 
+  // Never allow 0 stores
   useEffect(() => {
     if (!includedStoreIds.length) setIncludedStoreIds(STORES.map((s) => s.id));
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -102,7 +103,7 @@ export default function GroceryLabPage() {
     );
   }
 
-  // Usage model (for smart ordering + recommended)
+  // Usage model (recommended ordering)
   const usageTotals =
     savedUsage?.total && typeof savedUsage.total === "object" ? savedUsage.total : {};
 
@@ -118,9 +119,8 @@ export default function GroceryLabPage() {
     return mostUsedStoreId || "costco";
   }, [lane, mostUsedStoreId]);
 
-  // Smart ordering: recommended first, then included, then excluded
   const orderedStores = useMemo(() => {
-    const rec = STORES.find((s) => s.id === recommendedStoreId) ? recommendedStoreId : null;
+    const rec = STORES.some((s) => s.id === recommendedStoreId) ? recommendedStoreId : null;
 
     const score = (id) => {
       const isRec = rec && id === rec ? 100000 : 0;
@@ -158,22 +158,23 @@ export default function GroceryLabPage() {
           </div>
           <span className="gl-tag">{steps[stepIndex]?.title}</span>
         </header>
-        
-{appMsg && (
-  <div className="gl-appmsg glass-inner" role="status" aria-live="polite">
-    {appMsg}
-  </div>
-)}
+
+        {/* ✅ Render message ONCE */}
+        {appMsg && (
+          <div className="gl-appmsg glass-inner" role="status" aria-live="polite">
+            {appMsg}
+          </div>
+        )}
 
         <div className="gl-stage">
           <div
             className="gl-track"
             style={{
-              width: `${stepCount * 25}%`,
-              transform: `translateX(-${stepIndex * 100}%)`,
+              width: `${stepCount * 100}%`,
+              transform: `translateX(-${stepIndex * (100 / stepCount)}%)`,
             }}
           >
-            {/* PANEL 1: LANE */}
+            {/* PANEL 1 */}
             <div className="gl-panel">
               <h2 className="gl-h2">Choose your lane</h2>
               <p className="small">
@@ -198,7 +199,9 @@ export default function GroceryLabPage() {
                   onClick={() => pickAndAdvance(setLane, "single-store")}
                 >
                   <div className="gl-choice-title">Single Store</div>
-                  <div className="gl-choice-desc">Simplest trip. 3C selects the best one-store total.</div>
+                  <div className="gl-choice-desc">
+                    Simplest trip. 3C selects the best one-store total.
+                  </div>
                 </button>
               </div>
 
@@ -212,7 +215,7 @@ export default function GroceryLabPage() {
               </div>
             </div>
 
-            {/* PANEL 2: STORES */}
+            {/* PANEL 2 */}
             <div className="gl-panel">
               <h2 className="gl-h2">Which stores are in play?</h2>
               <p className="small">Tap to include/exclude. Recommended is highlighted.</p>
@@ -243,7 +246,9 @@ export default function GroceryLabPage() {
                         {isRec ? (
                           <span className="gl-store-badge">Recommended</span>
                         ) : (
-                          <span className="gl-store-badge ghost">{on ? "Included" : "Tap to include"}</span>
+                          <span className="gl-store-badge ghost">
+                            {on ? "Included" : "Tap to include"}
+                          </span>
                         )}
                       </span>
 
@@ -265,7 +270,7 @@ export default function GroceryLabPage() {
               </div>
             </div>
 
-            {/* PANEL 3: FULFILLMENT */}
+            {/* PANEL 3 */}
             <div className="gl-panel">
               <h2 className="gl-h2">How do you want to get groceries?</h2>
               <p className="small">Delivery is optional — you’re never forced into it.</p>
@@ -298,7 +303,7 @@ export default function GroceryLabPage() {
               </div>
             </div>
 
-            {/* PANEL 4: REVIEW */}
+            {/* PANEL 4 */}
             <div className="gl-panel">
               <h2 className="gl-h2">Final Review</h2>
 
@@ -329,7 +334,7 @@ export default function GroceryLabPage() {
           </div>
         </div>
 
-        {/* (intentionally no extra bottom row — keeps UI clean & consistent) */}
+        {/* no extra bottom row */}
       </div>
     </div>
   );

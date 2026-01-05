@@ -1,5 +1,5 @@
-import React from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import React, { useEffect } from "react";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 
 // Alpha helper (safe)
 import AlphaRouteChip from "./assets/components/AlphaRouteChip.jsx";
@@ -24,7 +24,7 @@ import ComingSoon from "./pages/ComingSoon.jsx";
 import PTModePage from "./pages/PTModePage.jsx";
 import SettingsPage from "./pages/SettingsPage.jsx";
 
-// ✅ ADD THESE IMPORTS
+// App pages (new)
 import CommunityPage from "./pages/CommunityPage.jsx";
 import FitnessZone from "./pages/FitnessZone.jsx";
 
@@ -33,7 +33,20 @@ import RecipesPage from "./pages/RecipesPage.jsx";
 import RecipeDetailPage from "./pages/RecipeDetailPage.jsx";
 
 export default function App() {
+  const { pathname } = useLocation();
   const showAlphaChip = import.meta.env.VITE_ALPHA_CHIP !== "0";
+
+  useEffect(() => {
+    const isAppRoute = pathname.startsWith("/app");
+    const html = document.documentElement;
+    const body = document.body;
+
+    html.classList.toggle("app-mode", isAppRoute);
+    body.classList.toggle("app-mode", isAppRoute);
+
+    // optional: always jump to top on marketing pages
+    if (!isAppRoute) window.scrollTo(0, 0);
+  }, [pathname]);
 
   return (
     <div className="app-shell">
@@ -56,7 +69,7 @@ export default function App() {
           <Route path="meal-plans" element={<MealPlannerPage />} />
           <Route path="grocery-lab" element={<GroceryLabPage />} />
 
-          {/* ✅ NEW ROUTES (fixes bypass) */}
+          {/* New routes */}
           <Route path="community" element={<CommunityPage />} />
           <Route path="fitness" element={<FitnessZone />} />
 
@@ -79,31 +92,3 @@ export default function App() {
     </div>
   );
 }
-// App.jsx (or wherever your Routes live)
-import React, { useEffect } from "react";
-import { Routes, Route, useLocation } from "react-router-dom";
-
-// ...your imports
-
-export default function App() {
-  const { pathname } = useLocation();
-
-  useEffect(() => {
-    const isAppRoute = pathname.startsWith("/app");
-    const html = document.documentElement;
-    const body = document.body;
-
-    html.classList.toggle("app-mode", isAppRoute);
-    body.classList.toggle("app-mode", isAppRoute);
-
-    // optional: always jump to top on page change for marketing pages
-    if (!isAppRoute) window.scrollTo(0, 0);
-  }, [pathname]);
-
-  return (
-    <Routes>
-      {/* your routes */}
-    </Routes>
-  );
-}
-

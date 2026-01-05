@@ -1,143 +1,206 @@
-import React, { useMemo, useState } from "react";
+// src/pages/Pricing.jsx
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import "../styles/PricingPage.css"; // keep if you already have it (optional)
+
 
 export default function Pricing() {
-  // MVP: delivery math sandbox (no payments yet)
-  const [plan, setPlan] = useState("credit"); // "credit" | "pay-your-own"
-  const [credit, setCredit] = useState(24.99); // your idea
-  const [avgFee, setAvgFee] = useState(7.99);  // typical delivery fee estimate
-  const [deliveries, setDeliveries] = useState(8); // your example “8 deliveries in a month”
-
-  const calc = useMemo(() => {
-    const totalFees = avgFee * deliveries;
-    const covered = plan === "credit" ? Math.min(totalFees, credit) : 0;
-    const overage = plan === "credit" ? Math.max(0, totalFees - credit) : totalFees;
-    return {
-      totalFees: totalFees.toFixed(2),
-      covered: covered.toFixed(2),
-      overage: overage.toFixed(2),
-    };
-  }, [avgFee, deliveries, credit, plan]);
+  const nav = useNavigate();
 
   const tiers = [
-    { name: "Basic", price: "$0", desc: "Explore the mall. Limited tools." },
-    { name: "Pro", price: "$19/mo", desc: "Full mall access + smarter workflows." },
-    { name: "Delivery Credit", price: "$24.99/mo", desc: "We cover delivery fees up to your monthly credit." },
+    {
+      name: "Basic",
+      price: "$0",
+      tagline: "Try the system. Build your first plan.",
+      features: [
+        "Meal Planner (MVP)",
+        "Grocery Lab strategy (MVP)",
+        "Saved settings + handoff (Meal → Grocery)",
+        "Limited tools / features during Alpha",
+      ],
+      cta: "Start Free",
+      onClick: () => nav("/login"),
+      kind: "secondary",
+    },
+    {
+      name: "Pro",
+      price: "$14.99",
+      period: "/mo",
+      tagline: "Full workflow. Best value for individuals.",
+      features: [
+        "Smart grocery routing (multi-store)",
+        "Advanced meal planning & templates",
+        "Grocery totals + store splits (MVP+)",
+        "Priority access to new features",
+      ],
+      cta: "Go Pro",
+      onClick: () => nav("/login"),
+      kind: "primary",
+    },
+    {
+      name: "Family",
+      price: "$24.99",
+      period: "/mo",
+      tagline: "Household mode. More planning power.",
+      features: [
+        "Multi-profile household planning",
+        "Shared grocery strategy + saved defaults",
+        "More templates + family workflow tools",
+        "Priority support during Beta",
+      ],
+      cta: "Get Family",
+      onClick: () => nav("/login"),
+      kind: "ghost",
+    },
   ];
 
   return (
-    <section className="page">
-      <p className="kicker">Pricing</p>
-      <h1 className="h1">Pick your lane</h1>
-      <p className="sub">
-        You can shop **in-store**, **pickup**, or **delivery**. The app does the work either way.
-        Delivery is optional — not required.
-      </p>
-
-      <div className="grid">
-        {tiers.map((t) => (
-          <div className="card" key={t.name}>
-            <h3 style={{ marginTop: 0, color: "var(--gold)" }}>{t.name}</h3>
-            <div style={{ fontSize: "1.8rem", fontWeight: 900, margin: ".25rem 0 .4rem" }}>
-              {t.price}
-            </div>
-            <p className="small" style={{ marginTop: 0 }}>{t.desc}</p>
-
-            <div className="nav-row">
-              <button className="btn btn-primary" onClick={() => alert("MVP: checkout later")}>
-                Choose
-              </button>
-              <button className="btn btn-secondary" onClick={() => alert("MVP: details later")}>
-                Learn
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="card" style={{ marginTop: "1rem" }}>
-        <h3 style={{ marginTop: 0 }}>Delivery Options (inside Grocery Lab)</h3>
-        <p className="small">
-          If you choose delivery, you’ll see two options:
-          <br />
-          <strong style={{ color: "var(--gold)" }}>A)</strong> Pay delivery fees yourself
-          <br />
-          <strong style={{ color: "var(--gold)" }}>B)</strong> Delivery Credit plan (we cover fees up to your monthly credit)
+<main className="page pricing-page" style={{ paddingBottom: "4rem" }}>
+      <header className="card" style={{ marginTop: "1rem" }}>
+        <p className="kicker">3C Mall • Pricing</p>
+        <h1 className="h1">Simple, honest pricing</h1>
+        <p className="sub">
+          You’ll always see what you pay. Delivery is optional — and when you use multi-store,
+          delivery is charged per store delivery (because each store is a separate delivery event).
         </p>
 
-        <div className="grid" style={{ marginTop: ".7rem" }}>
-          <div className="card" style={{ padding: ".95rem" }}>
-            <div style={{ fontWeight: 900, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--blue)" }}>
-              Delivery Simulator
-            </div>
+        <div className="nav-row" style={{ marginTop: "1rem" }}>
+          <button className="btn btn-secondary" onClick={() => nav("/features")}>
+            ← Features
+          </button>
+          <button className="btn btn-primary" onClick={() => nav("/login")}>
+            Login / Start →
+          </button>
+        </div>
+      </header>
 
-            <label className="label">Choose delivery plan</label>
-            <select className="select" value={plan} onChange={(e) => setPlan(e.target.value)}>
-              <option value="credit">Delivery Credit (we cover up to credit)</option>
-              <option value="pay-your-own">Pay Delivery Yourself</option>
-            </select>
-
-            <div className="grid" style={{ marginTop: ".6rem" }}>
+      {/* Tier cards */}
+      <section className="pricing-grid" style={{ marginTop: "1rem" }}>
+        {tiers.map((t) => (
+          <article key={t.name} className="card">
+            <div style={{ display: "flex", justifyContent: "space-between", gap: "1rem" }}>
               <div>
-                <label className="label">Monthly credit ($)</label>
-                <input className="input" type="number" step="0.01" value={credit}
-                  onChange={(e) => setCredit(Number(e.target.value || 0))}
-                  disabled={plan !== "credit"}
-                />
+                <div style={{ fontWeight: 900, letterSpacing: ".03em", fontSize: "1.1rem" }}>
+                  {t.name}
+                </div>
+                <div className="small" style={{ marginTop: ".25rem" }}>
+                  {t.tagline}
+                </div>
               </div>
 
-              <div>
-                <label className="label">Avg delivery fee ($)</label>
-                <input className="input" type="number" step="0.01" value={avgFee}
-                  onChange={(e) => setAvgFee(Number(e.target.value || 0))}
-                />
-              </div>
-
-              <div>
-                <label className="label">Deliveries / month</label>
-                <input className="input" type="number" value={deliveries}
-                  onChange={(e) => setDeliveries(Number(e.target.value || 0))}
-                />
+              <div style={{ textAlign: "right" }}>
+                <div style={{ fontWeight: 1000, fontSize: "1.55rem", color: "var(--gold)" }}>
+                  {t.price}
+                  {t.period ? <span style={{ fontSize: ".9rem", color: "var(--muted)" }}>{t.period}</span> : null}
+                </div>
               </div>
             </div>
+            <ul style={{ marginTop: "1rem", paddingLeft: "1.1rem", opacity: 0.92 }}>
+              {t.features.map((f) => (
+                <li key={f} style={{ marginBottom: ".5rem" }}>
+                  {f}
+                </li>
+              ))}
+            </ul>
 
-            <div className="card" style={{ marginTop: ".75rem", padding: ".85rem" }}>
-              <div className="small">
-                Total fees: <strong style={{ color: "var(--gold)" }}>${calc.totalFees}</strong>
-                <br />
-                Covered by 3C: <strong style={{ color: "var(--gold)" }}>${calc.covered}</strong>
-                <br />
-                You pay: <strong style={{ color: "var(--gold)" }}>${calc.overage}</strong>
-              </div>
-              <div className="small" style={{ marginTop: ".5rem" }}>
-                This is the “feels legit” part: you see the math, and you stay in control.
-              </div>
+            <div className="nav-row" style={{ marginTop: "1rem" }}>
+              <button
+                className={
+                  "btn " +
+                  (t.kind === "primary"
+                    ? "btn-primary"
+                    : t.kind === "ghost"
+                    ? "btn-ghost"
+                    : "btn-secondary")
+                }
+                onClick={t.onClick}
+              >
+                {t.cta}
+              </button>
+            </div>
+          </article>
+        ))}
+      </section>
+
+      {/* ✅ Delivery Pricing (added back) */}
+      <section className="card" style={{ marginTop: "1rem" }}>
+        <p className="kicker">Delivery Pricing</p>
+        <h2 className="h1" style={{ fontSize: "1.35rem" }}>
+          Optional delivery — pay only when you use it
+        </h2>
+
+        <div className="sub" style={{ maxWidth: "900px" }}>
+          If your cart routes to multiple stores, that can create multiple deliveries. We keep it transparent:
+          <strong style={{ color: "var(--gold)" }}> delivery is priced per delivery event</strong> (per store),
+          not hidden inside your subscription.
+        </div>
+
+        <div className="grid" style={{ marginTop: "1rem" }}>
+          <div className="card" style={{ background: "rgba(5,9,18,.75)" }}>
+            <div style={{ fontWeight: 900, color: "var(--gold)" }}>Self Pickup</div>
+            <div className="small" style={{ marginTop: ".35rem" }}>
+              $0 delivery fees. You pick up orders yourself.
+            </div>
+            <div className="pill" style={{ marginTop: ".9rem" }}>
+              <span>Delivery Fee</span>
+              <strong>$0</strong>
             </div>
           </div>
 
-          <div className="card" style={{ padding: ".95rem" }}>
-            <h4 style={{ marginTop: 0, color: "var(--gold)" }}>Key promise</h4>
-            <p className="small">
-              One workflow. Multiple fulfillment options.
-              <br />
-              The app selects items + stores automatically.
-              <br />
-              You can still compare prices if you want — but you don’t have to.
-            </p>
+          <div className="card" style={{ background: "rgba(5,9,18,.75)" }}>
+            <div style={{ fontWeight: 900, color: "var(--gold)" }}>Partner Delivery (Typical)</div>
+            <div className="small" style={{ marginTop: ".35rem" }}>
+              Example pricing model for Beta: each routed store delivery is charged separately.
+            </div>
 
-            <div className="nav-row">
-              <a className="btn btn-primary" href="/app/grocery-lab">Try Grocery Lab →</a>
-              <a className="btn btn-secondary" href="/app">Back to Dashboard →</a>
+            <div className="grid" style={{ marginTop: ".9rem" }}>
+              <div className="pill">
+                <span>Per Store Delivery</span>
+                <strong>$4.99–$9.99</strong>
+              </div>
+              <div className="pill">
+                <span>Multi-Store Example</span>
+                <strong>2 stores → 2 fees</strong>
+              </div>
+            </div>
+
+            <div className="small" style={{ marginTop: ".85rem" }}>
+              Final delivery fees depend on provider availability, store partner rules, and distance.
+            </div>
+          </div>
+
+          <div className="card" style={{ background: "rgba(5,9,18,.75)" }}>
+            <div style={{ fontWeight: 900, color: "var(--gold)" }}>Future: Delivery Bundles</div>
+            <div className="small" style={{ marginTop: ".35rem" }}>
+              We can add a “bundle” option later to cap delivery costs or include a monthly delivery allowance.
+            </div>
+            <div className="pill" style={{ marginTop: ".9rem" }}>
+              <span>Status</span>
+              <strong>Planned</strong>
             </div>
           </div>
         </div>
-      </div>
-    </section>
-  );
-}
-export default function PricingPage(){
-  return (
-    <div className="marketing-page">
-      {/* pricing content */}
-    </div>
+      </section>
+
+      {/* FAQ / clarity */}
+      <section className="card" style={{ marginTop: "1rem" }}>
+        <p className="kicker">FAQ</p>
+
+        <div style={{ marginTop: ".5rem" }}>
+          <div style={{ fontWeight: 900 }}>Why is delivery per store?</div>
+          <div className="small" style={{ marginTop: ".25rem" }}>
+            Because each store is its own fulfillment system. Multi-store routing saves money on groceries,
+            but can increase delivery events — we keep that transparent.
+          </div>
+        </div>
+
+        <div style={{ marginTop: "1rem" }}>
+          <div style={{ fontWeight: 900 }}>Can I avoid delivery?</div>
+          <div className="small" style={{ marginTop: ".25rem" }}>
+            Yes. Choose pickup or in-store shopping inside Grocery Lab.
+          </div>
+        </div>
+      </section>
+    </main>
   );
 }
