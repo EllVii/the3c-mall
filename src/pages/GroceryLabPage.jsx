@@ -1,23 +1,30 @@
 // src/pages/GroceryLabPage.jsx
 import React, { useEffect, useMemo, useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import "../styles/GroceryLabPage.css";
 import { readJSON, writeJSON, nowISO, safeId } from "../utils/Storage";
 
-import {
-  seedTestGroceries,
-  calcPricingSummary,
-  savePricingSummary,
-  GROCERY_KEY,
-  PRICING_SUMMARY_KEY,
-} from "../utils/groceryPricingTest";
+/**
+ * Goals for this page:
+ * - 5-panel wizard: Lane → Stores → Fulfillment → Grocery Shopping → Final Review
+ * - Cart split: protected Meal items + editable Extra items
+ * - Static/demo pricing (no utils dependency that can break imports)
+ * - If cart is empty, never start at Final Review; force Step 1
+ * - If cart becomes empty, clear pricing summary so "winner" doesn't linger
+ */
 
 const STRATEGY_KEY = "grocery.strategy.v1";
 const STORE_USAGE_KEY = "grocery.storeUsage.v1";
 const HANDOFF_KEY = "handoff.mealToGrocery.v1";
 
-// Locked items coming from meal/recipes (protected)
+// Protected items coming from meal/recipes
 const MEAL_ITEMS_KEY = "cart.mealItems.v1";
+
+// Editable grocery cart items (extras)
+const GROCERY_KEY = "grocery.items.v1";
+
+// Pricing summary persisted
+const PRICING_SUMMARY_KEY = "grocery.pricingSummary.v1";
 
 const STORES = [
   { id: "costco", name: "Costco" },
@@ -77,11 +84,12 @@ function money(n) {
 function normalizeCartItem(raw) {
   return {
     id: raw?.id || safeId("itm"),
-    name: raw?.name || raw?.canonicalName || "",
+    name: String(raw?.name || raw?.canonicalName || "").trim(),
     qty: Number(raw?.qty ?? raw?.quantity ?? 1),
     unit: raw?.unit || "each",
     substitute: raw?.substitute || "",
     substituteReason: raw?.substituteReason || "",
+    // optional if you later store per-store prices on the item itself
     pricesByStore: raw?.pricesByStore || raw?.prices || {},
   };
 }
@@ -89,13 +97,209 @@ function normalizeCartItem(raw) {
 function toItemFromName(name) {
   return {
     id: safeId("itm"),
-    name,
+    name: String(name || "").trim(),
     qty: 1,
     unit: "each",
     substitute: "",
     substituteReason: "",
     pricesByStore: {},
   };
+}
+
+/**
+ * Static demo pricing table (for Alpha/Beta UX).
+ * This is intentionally simple and resilient.
+ * Any item not found returns null price => shows the "testing mode" notice.
+ */
+const STATIC_PRICE_TABLE = {
+  // Dairy
+  milk: { walmart: 3.48, costco: 3.2, aldi: 3.19, target: 3.69, kroger: 3.79, safeway_albertsons: 3.99 },
+  eggs: { walmart: 3.12, costco: 3.0, aldi: 2.98, target: 3.39, kroger: 3.49, safeway_albertsons: 3.79 },
+  butter: { walmart: 4.68, costco: 4.4, aldi: 4.25, target: 4.89, kroger: 4.99, safeway_albertsons: 5.29 },
+  yogurt: { walmart: 1.08, costco: 1.0, aldi: 0.98, target: 1.19, kroger: 1.15, safeway_albertsons: 1.29 },
+
+  // Produce
+  bananas: { walmart: 0.62, costco: 0.59, aldi: 0.55, target: 0.69, kroger: 0.65, safeway_albertsons: 0.75 },
+  apples: { walmart: 1.48, costco: 1.35, aldi: 1.29, target: 1.65, kroger: 1.59, safeway_albertsons: 1.79 },
+  avocado: { walmart: 0.98, costco: 0.89, aldi: 0.85, target: 1.09, kroger: 1.05, safeway_albertsons: 1.25 },
+
+  // Meat
+  "ground beef": { walmart: 4.98, costco: 4.65, aldi: 4.75, target: 5.19, kroger: 5.29, safeway_albertsons: 5.49 },
+  "chicken breast": { walmart: 3.28, costco: 3.05, aldi: 3.19, target: 3.49, kroger: 3.59, safeway_albertsons: 3.79 },
+  steak: { walmart: 9.98, costco: 9.25, aldi: 9.75, target: 10.49, kroger: 10.29, safeway_albertsons: 10.99 },
+  salmon: { walmart: 9.48, costco: 8.95, aldi: 9.25, target: 9.99, kroger: 10.49, safeway_albertsons: 10.99 },
+
+  // Pantry
+  rice: { walmart: 2.98, costco: 2.75, aldi: 2.69, target: 3.19, kroger: 3.09, safeway_albertsons: 3.39 },
+  pasta: { walmart: 1.28, costco: 1.15, aldi: 1.09, target: 1.39, kroger: 1.49, safeway_albertsons: 1.59 },
+  "olive oil": { walmart: 8.98, costco: 8.25, aldi: 7.99, target: 9.49, kroger: 9.29, safeway_albertsons: 9.99 },
+  cereal: { walmart: 3.98, costco: 3.75, aldi: 3.59, target: 4.29, kroger: 4.49, safeway_albertsons: 4.79 },
+};
+
+function keyifyItemName(name) {
+  return String(name || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ");
+}
+
+function getStaticUnitPrice(itemName, storeId) {
+  const key = keyifyItemName(itemName);
+  const row = STATIC_PRICE_TABLE[key];
+  if (!row) return null;
+  const p = row[storeId];
+  return typeof p === "number" ? p : null;
+}
+
+function computePricingSummary({ items, lane, includedStoreIds, stores }) {
+  const safeItems = (Array.isArray(items) ? items : [])
+    .map(normalizeCartItem)
+    .filter((x) => x.name);
+
+  const included = (Array.isArray(includedStoreIds) && includedStoreIds.length
+    ? includedStoreIds
+    : stores.map((s) => s.id)
+  ).filter(Boolean);
+
+  // build per-item price list
+  const perItem = safeItems.map((it) => {
+    const storePrices = {};
+    for (const sid of included) {
+      const unit = getStaticUnitPrice(it.name, sid);
+      storePrices[sid] = unit; // can be null
+    }
+    return { ...it, storePrices };
+  });
+
+  // helper: ext for item at store (or null)
+  const extAt = (it, sid) => {
+    const unit = it.storePrices?.[sid];
+    if (typeof unit !== "number") return null;
+    const qty = Number(it.qty || 0);
+    return qty > 0 ? unit * qty : 0;
+  };
+
+  // SINGLE STORE: pick store with lowest total (ignoring null items => penalize)
+  if (lane === "single-store") {
+    const storeTotals = {};
+    for (const sid of included) {
+      let total = 0;
+      let missing = 0;
+      for (const it of perItem) {
+        const ext = extAt(it, sid);
+        if (ext == null) {
+          missing += 1;
+          continue;
+        }
+        total += ext;
+      }
+      // penalty for missing to avoid "winner" being a store with no prices
+      if (missing > 0) total += missing * 9999;
+      storeTotals[sid] = total;
+    }
+
+    let chosenStoreId = included[0] || null;
+    for (const sid of included) {
+      if (storeTotals[sid] < storeTotals[chosenStoreId]) chosenStoreId = sid;
+    }
+
+    const perItemAllocations = perItem.map((it) => {
+      const unit = it.storePrices?.[chosenStoreId];
+      const ext = extAt(it, chosenStoreId);
+      return {
+        itemId: it.id,
+        name: it.name,
+        qty: it.qty,
+        unit: it.unit,
+        chosenStoreId,
+        unitPrice: typeof unit === "number" ? unit : null,
+        ext: typeof ext === "number" ? ext : null,
+        hasPrice: typeof unit === "number",
+      };
+    });
+
+    // compute grand total WITHOUT penalties
+    const cleanGrand = perItemAllocations.reduce((sum, x) => sum + (typeof x.ext === "number" ? x.ext : 0), 0);
+
+    return {
+      mode: "single-store",
+      chosenStoreId,
+      storeTotals: Object.fromEntries(
+        included.map((sid) => [
+          sid,
+          perItem.reduce((sum, it) => sum + (extAt(it, sid) ?? 0), 0),
+        ])
+      ),
+      perItemAllocations,
+      grandTotal: cleanGrand,
+      missingCount: perItemAllocations.filter((x) => !x.hasPrice).length,
+      updatedAt: nowISO(),
+    };
+  }
+
+  // MULTI STORE: choose cheapest available per item among included stores
+  const perItemAllocations = perItem.map((it) => {
+    let bestSid = null;
+    let bestExt = null;
+    let bestUnit = null;
+
+    for (const sid of included) {
+      const unit = it.storePrices?.[sid];
+      const ext = extAt(it, sid);
+      if (typeof unit !== "number" || typeof ext !== "number") continue;
+
+      if (bestExt == null || ext < bestExt) {
+        bestExt = ext;
+        bestSid = sid;
+        bestUnit = unit;
+      }
+    }
+
+    return {
+      itemId: it.id,
+      name: it.name,
+      qty: it.qty,
+      unit: it.unit,
+      chosenStoreId: bestSid,
+      unitPrice: bestUnit,
+      ext: bestExt,
+      hasPrice: typeof bestUnit === "number",
+    };
+  });
+
+  const storeTotals = {};
+  for (const sid of included) storeTotals[sid] = 0;
+
+  for (const x of perItemAllocations) {
+    if (!x.chosenStoreId || typeof x.ext !== "number") continue;
+    storeTotals[x.chosenStoreId] += x.ext;
+  }
+
+  const grandTotal = Object.values(storeTotals).reduce((a, b) => a + (Number(b) || 0), 0);
+
+  return {
+    mode: "multi-store",
+    chosenStoreId: null,
+    storeTotals,
+    perItemAllocations,
+    grandTotal,
+    missingCount: perItemAllocations.filter((x) => !x.hasPrice).length,
+    updatedAt: nowISO(),
+  };
+}
+
+// Small demo cart loader (no external utils)
+function demoCartItems() {
+  const names = ["Milk", "Eggs", "Ground beef", "Bananas", "Olive oil", "Pasta", "Orange juice"];
+  return names.map((n) => ({
+    id: safeId("itm"),
+    name: n,
+    qty: n.toLowerCase() === "eggs" ? 2 : 1,
+    unit: "each",
+    substitute: "",
+    substituteReason: "",
+    pricesByStore: {},
+  }));
 }
 
 export default function GroceryLabPage() {
@@ -111,15 +315,13 @@ export default function GroceryLabPage() {
   const [appMsg, setAppMsg] = useState("");
   const [stepIndex, setStepIndex] = useState(0);
 
-  const [lane, setLane] = useState(savedStrategy?.lane || "auto-multi");
-  const [includedStoreIds, setIncludedStoreIds] = useState(
-    Array.isArray(savedStrategy?.includedStoreIds) && savedStrategy.includedStoreIds.length
-      ? savedStrategy.includedStoreIds
-      : STORES.map((s) => s.id)
-  );
-  const [fulfillment, setFulfillment] = useState(savedStrategy?.fulfillment || "pickup");
+  const [lane, setLane] = useState(savedStrategy?.lane || "auto-multi"); // auto-multi | single-store
+  const [includedStoreIds, setIncludedStoreIds] = useState(() => {
+    const arr = savedStrategy?.includedStoreIds;
+    return Array.isArray(arr) && arr.length ? arr : STORES.map((s) => s.id);
+  });
+  const [fulfillment, setFulfillment] = useState(savedStrategy?.fulfillment || "pickup"); // in-store | pickup | delivery
 
-  // Split cart into locked meal items + editable extra groceries
   const [mealItems, setMealItems] = useState(() => {
     const raw = readJSON(MEAL_ITEMS_KEY, []);
     return Array.isArray(raw) ? raw.map(normalizeCartItem) : [];
@@ -131,11 +333,11 @@ export default function GroceryLabPage() {
   });
 
   const allItems = useMemo(() => [...mealItems, ...extraItems], [mealItems, extraItems]);
-  const hasItems = allItems.length > 0;
+  const hasItems = allItems.some((x) => String(x?.name || "").trim().length);
 
   const [pricingSummary, setPricingSummary] = useState(() => readJSON(PRICING_SUMMARY_KEY, null));
 
-  // Panel 4 (shopping) state
+  // Panel 4
   const [shopQuery, setShopQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("dairy");
 
@@ -156,62 +358,61 @@ export default function GroceryLabPage() {
 
   function pickAndAdvance(setter, value) {
     setter(value);
-    window.setTimeout(() => setStepIndex((p) => Math.min(p + 1, stepCount - 1)), 160);
+    window.setTimeout(() => setStepIndex((p) => Math.min(p + 1, stepCount - 1)), 140);
   }
 
   const shopIdx = useMemo(() => steps.findIndex((s) => s.id === "shop"), [steps]);
   const reviewIdx = useMemo(() => steps.findIndex((s) => s.id === "review"), [steps]);
 
-  // show message once if handoff exists
+  // One-time handoff message
   useEffect(() => {
     const handoff = readJSON(HANDOFF_KEY, null);
     if (handoff?.message || handoff?.at) {
       setAppMsg(handoff?.message || "Loaded from Meal Plan ✅");
       writeJSON(HANDOFF_KEY, null);
-      window.setTimeout(() => setAppMsg(""), 2400);
+      window.setTimeout(() => setAppMsg(""), 2200);
     }
   }, []);
 
   // Start logic:
-  // - if no items: never start at review
-  // - if items: allow quickReview to jump to review
+  // - if no items: force step 0
+  // - if items + quickReview: jump to review
   useEffect(() => {
     if (!hasItems) {
       if (stepIndex !== 0) setStepIndex(0);
       return;
     }
-    if (cameFromMeal && quickReview && savedStrategy && reviewIdx >= 0) {
+    if (cameFromMeal && quickReview && reviewIdx >= 0) {
       setStepIndex(reviewIdx);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasItems, cameFromMeal, quickReview, reviewIdx]);
 
-  // never allow 0 stores
+  // Never allow 0 stores
   useEffect(() => {
     if (!includedStoreIds.length) setIncludedStoreIds(STORES.map((s) => s.id));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [includedStoreIds.length]);
 
-  // persist strategy
+  // Persist strategy
   useEffect(() => {
     writeJSON(STRATEGY_KEY, { lane, includedStoreIds, fulfillment, updatedAt: nowISO() });
   }, [lane, includedStoreIds, fulfillment]);
 
-  // persist carts
+  // Persist carts
   useEffect(() => writeJSON(MEAL_ITEMS_KEY, mealItems), [mealItems]);
   useEffect(() => writeJSON(GROCERY_KEY, extraItems), [extraItems]);
 
-  // if cart becomes empty, clear pricing (fixes “winner stays” bug)
+  // Clear pricing if cart empties (fix lingering "winner")
   useEffect(() => {
     if (!hasItems && pricingSummary) {
       setPricingSummary(null);
       writeJSON(PRICING_SUMMARY_KEY, null);
-      savePricingSummary(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasItems]);
 
-  // store ordering logic
+  // Store ordering logic
   const usageTotals =
     savedUsage?.total && typeof savedUsage.total === "object" ? savedUsage.total : {};
 
@@ -229,14 +430,12 @@ export default function GroceryLabPage() {
 
   const orderedStores = useMemo(() => {
     const rec = STORES.some((s) => s.id === recommendedStoreId) ? recommendedStoreId : null;
-
     const score = (id) => {
       const isRec = rec && id === rec ? 100000 : 0;
       const isIncluded = includedStoreIds.includes(id) ? 10000 : 0;
       const use = Number(usageTotals?.[id] || 0);
       return isRec + isIncluded + use;
     };
-
     return [...STORES].sort((a, b) => score(b.id) - score(a.id));
   }, [includedStoreIds, usageTotals, recommendedStoreId]);
 
@@ -246,9 +445,9 @@ export default function GroceryLabPage() {
     setIncludedStoreIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   }
 
-  // extra items editing
+  // Cart editing
   function addExtraItem(name = "") {
-    const n = (name || "").trim();
+    const n = String(name || "").trim();
     setExtraItems((prev) => [...prev, toItemFromName(n)]);
     if (n) setShopQuery("");
   }
@@ -267,47 +466,41 @@ export default function GroceryLabPage() {
     setMealItems((prev) => prev.filter((x) => x.id !== id));
   }
 
-  // demo loading
-  function loadDemoCart({ overwrite = false } = {}) {
-    const items = seedTestGroceries({ overwrite });
-    const normalized = (Array.isArray(items) ? items : []).map(normalizeCartItem);
-    setExtraItems(normalized);
+  function loadDemoCart() {
+    setExtraItems(demoCartItems().map(normalizeCartItem));
     setAppMsg("Demo groceries loaded into your cart ✅");
-    window.setTimeout(() => setAppMsg(""), 1800);
+    window.setTimeout(() => setAppMsg(""), 1700);
+    if (shopIdx >= 0) setStepIndex(shopIdx); // put them in the shopping experience
   }
 
-  // pricing
   function calculatePricing() {
     if (!hasItems) {
       setPricingSummary(null);
       writeJSON(PRICING_SUMMARY_KEY, null);
-      savePricingSummary(null);
       setAppMsg("Cart is empty — add items before pricing.");
-      window.setTimeout(() => setAppMsg(""), 2000);
+      window.setTimeout(() => setAppMsg(""), 1900);
       return;
     }
 
-    const summary = calcPricingSummary({
+    const summary = computePricingSummary({
       items: allItems,
       lane: lane === "single-store" ? "single-store" : "multi-store",
       includedStoreIds,
       stores: STORES,
     });
 
-    savePricingSummary(summary);
     setPricingSummary(summary);
+    writeJSON(PRICING_SUMMARY_KEY, summary);
 
     setAppMsg("Cart pricing calculated ✅");
-    window.setTimeout(() => setAppMsg(""), 2000);
+    window.setTimeout(() => setAppMsg(""), 1900);
   }
 
   function clearCartAll() {
     setMealItems([]);
     setExtraItems([]);
-
     setPricingSummary(null);
     writeJSON(PRICING_SUMMARY_KEY, null);
-    savePricingSummary(null);
 
     setAppMsg("Cart cleared ✅");
     window.setTimeout(() => setAppMsg(""), 1600);
@@ -316,11 +509,11 @@ export default function GroceryLabPage() {
   }
 
   const conciergeText = useMemo(() => {
-    if (mealItems.length > 0) {
+    if (mealItems.filter((x) => x.name).length > 0) {
       return "I already pulled items from your Meal Plan. Want to add anything else before we route prices?";
     }
-    return "Let’s build your cart. Type what you need or use categories to add the basics fast.";
-  }, [mealItems.length]);
+    return "Let’s build your cart. Type what you need or use categories to add basics fast.";
+  }, [mealItems]);
 
   const activeCat = useMemo(
     () => CATALOG.find((c) => c.id === activeCategory) || CATALOG[0],
@@ -334,22 +527,9 @@ export default function GroceryLabPage() {
     return flat.filter((x) => x.name.toLowerCase().includes(q)).slice(0, 12);
   }, [shopQuery]);
 
-  // ✅ Missing-price notice (testing mode)
-  const hasMissingPrices = useMemo(() => {
-    const rows = pricingSummary?.perItemAllocations;
-    if (!Array.isArray(rows) || rows.length === 0) return false;
-
-    // consider missing if ext is null/undefined OR unitPrice is null/0 OR ext is 0 while qty>0
-    return rows.some((x) => {
-      const qty = Number(x?.qty || 0);
-      const unitPrice = x?.unitPrice;
-      const ext = x?.ext;
-      return (
-        qty > 0 &&
-        (unitPrice == null || Number(unitPrice) === 0 || ext == null)
-      );
-    });
-  }, [pricingSummary]);
+  // “missing price” notice requirement
+  const missingPriceNotice =
+    pricingSummary && hasItems && Number(pricingSummary.missingCount || 0) > 0;
 
   return (
     <div className="gl-shell page gl-page">
@@ -370,7 +550,17 @@ export default function GroceryLabPage() {
         <header className="gl-wiz-head">
           <div className="gl-dots" aria-label="wizard progress">
             {steps.map((_, i) => (
-              <span key={i} className={`gl-dot ${i === stepIndex ? "on" : ""}`} />
+              <span
+                key={i}
+                className={`gl-dot ${i === stepIndex ? "on" : ""}`}
+                role="button"
+                tabIndex={0}
+                onClick={() => setStepIndex(i)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") setStepIndex(i);
+                }}
+                aria-label={`Go to step ${i + 1}`}
+              />
             ))}
           </div>
           <span className="gl-tag">{steps[stepIndex]?.title}</span>
@@ -387,10 +577,10 @@ export default function GroceryLabPage() {
             className="gl-track"
             style={{
               width: `${stepCount * 100}%`,
-              transform: `translateX(-${stepIndex * (100 / stepCount)}%)`,
+              transform: `translateX(-${stepIndex * 100}%)`,
             }}
           >
-            {/* PANEL 1 */}
+            {/* PANEL 1: Lane */}
             <div className="gl-panel">
               <h2 className="gl-h2">Choose your lane</h2>
               <p className="small">Multi-store routes items; single-store picks one winner total.</p>
@@ -425,7 +615,7 @@ export default function GroceryLabPage() {
               </div>
             </div>
 
-            {/* PANEL 2 */}
+            {/* PANEL 2: Stores */}
             <div className="gl-panel">
               <h2 className="gl-h2">Which stores are in play?</h2>
               <p className="small">Tap to include/exclude. Recommended is highlighted.</p>
@@ -476,7 +666,7 @@ export default function GroceryLabPage() {
               </div>
             </div>
 
-            {/* PANEL 3 */}
+            {/* PANEL 3: Fulfillment */}
             <div className="gl-panel">
               <h2 className="gl-h2">How do you want to get groceries?</h2>
               <p className="small">Delivery is optional — you’re never forced into it.</p>
@@ -509,13 +699,15 @@ export default function GroceryLabPage() {
               </div>
             </div>
 
-            {/* PANEL 4 */}
+            {/* PANEL 4: Grocery Shopping */}
             <div className="gl-panel">
               <h2 className="gl-h2">Grocery Shopping</h2>
 
               <div className="glass-inner" style={{ marginTop: ".75rem" }}>
                 <div style={{ fontWeight: 900, color: "var(--gold)" }}>Concierge</div>
-                <p className="small" style={{ marginTop: ".35rem" }}>{conciergeText}</p>
+                <p className="small" style={{ marginTop: ".35rem" }}>
+                  {conciergeText}
+                </p>
 
                 <div className="nav-row" style={{ marginTop: ".75rem" }}>
                   <input
@@ -536,7 +728,9 @@ export default function GroceryLabPage() {
 
                 {shopQuery.trim() && searchMatches.length > 0 && (
                   <div style={{ marginTop: ".75rem" }}>
-                    <div className="small" style={{ opacity: 0.9 }}>Suggestions</div>
+                    <div className="small" style={{ opacity: 0.9 }}>
+                      Suggestions
+                    </div>
                     <div className="nav-row" style={{ flexWrap: "wrap", marginTop: ".45rem" }}>
                       {searchMatches.map((x) => (
                         <button
@@ -556,7 +750,7 @@ export default function GroceryLabPage() {
               <div className="glass-inner" style={{ marginTop: ".9rem" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", gap: ".75rem", alignItems: "center" }}>
                   <div style={{ fontWeight: 900, color: "var(--gold)" }}>Categories</div>
-                  <button className="btn btn-ghost" type="button" onClick={() => loadDemoCart({ overwrite: true })}>
+                  <button className="btn btn-ghost" type="button" onClick={loadDemoCart}>
                     Load Demo Groceries
                   </button>
                 </div>
@@ -575,7 +769,9 @@ export default function GroceryLabPage() {
                 </div>
 
                 <div style={{ marginTop: ".9rem" }}>
-                  <div className="small" style={{ opacity: 0.9 }}>{activeCat.title}</div>
+                  <div className="small" style={{ opacity: 0.9 }}>
+                    {activeCat.title}
+                  </div>
                   <div className="nav-row" style={{ flexWrap: "wrap", marginTop: ".45rem" }}>
                     {activeCat.items.map((name) => (
                       <button key={name} className="btn btn-ghost" type="button" onClick={() => addExtraItem(name)}>
@@ -596,7 +792,7 @@ export default function GroceryLabPage() {
               </div>
             </div>
 
-            {/* PANEL 5 */}
+            {/* PANEL 5: Final Review */}
             <div className="gl-panel">
               <h2 className="gl-h2">Final Review</h2>
 
@@ -636,32 +832,46 @@ export default function GroceryLabPage() {
                 </div>
               )}
 
-              {/* Meal Plan Items */}
+              {/* Meal Plan Items (Protected) */}
               <div className="glass-inner" style={{ marginTop: "1rem" }}>
                 <div style={{ fontWeight: 900, color: "var(--gold)" }}>Meal Plan Items (Protected)</div>
                 <p className="small" style={{ marginTop: ".35rem" }}>
                   These are tied to your meal/recipes so you don’t delete them by accident.
                 </p>
 
-                {mealItems.length === 0 ? (
+                {mealItems.filter((x) => x.name).length === 0 ? (
                   <div className="small" style={{ opacity: 0.85, marginTop: ".6rem" }}>
                     None loaded from Meal Plan yet.
                   </div>
                 ) : (
-                  mealItems.map((it) => (
-                    <div key={it.id} className="gl-summary-line" style={{ marginTop: ".6rem" }}>
-                      <span>
-                        {it.name} · {it.qty} {it.unit}
-                      </span>
-                      <button className="btn btn-ghost" type="button" onClick={() => removeMealItemSafe(it.id)}>
-                        Remove
-                      </button>
-                    </div>
-                  ))
+                  mealItems
+                    .filter((x) => x.name)
+                    .map((it) => (
+                      <div
+                        key={it.id}
+                        style={{
+                          borderTop: "1px solid rgba(126,224,255,.12)",
+                          paddingTop: ".75rem",
+                          marginTop: ".75rem",
+                        }}
+                      >
+                        <div className="small" style={{ fontWeight: 800 }}>
+                          {it.name}
+                        </div>
+                        <div className="small" style={{ opacity: 0.9, marginTop: ".25rem" }}>
+                          Qty: <strong>{it.qty}</strong> · Unit: <strong>{it.unit}</strong>
+                        </div>
+                        <div className="nav-row" style={{ marginTop: ".5rem" }}>
+                          <button className="btn btn-ghost" type="button" onClick={() => removeMealItemSafe(it.id)}>
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+                    ))
                 )}
               </div>
 
-              {/* Extra Items (STACKED so it never clips) */}
+              {/* Extra Groceries (Editable) */}
               <div className="glass-inner" style={{ marginTop: "1rem" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", gap: ".75rem", alignItems: "center" }}>
                   <div style={{ fontWeight: 900, color: "var(--gold)" }}>Extra Groceries (Editable)</div>
@@ -670,7 +880,7 @@ export default function GroceryLabPage() {
                   </button>
                 </div>
 
-                {extraItems.length === 0 ? (
+                {extraItems.filter((x) => x.name).length === 0 ? (
                   <div className="small" style={{ opacity: 0.85, marginTop: ".6rem" }}>
                     No extra items yet. Add some in Grocery Shopping.
                   </div>
@@ -682,65 +892,64 @@ export default function GroceryLabPage() {
                         borderTop: "1px solid rgba(126,224,255,.12)",
                         paddingTop: ".75rem",
                         marginTop: ".75rem",
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: ".6rem",
                       }}
                     >
-                      <div>
-                        <label className="label">Item</label>
-                        <input
-                          className="input"
-                          value={it.name}
-                          onChange={(e) => updateExtraItem(it.id, { name: e.target.value })}
-                        />
-                      </div>
-
-                      <div className="nav-row">
-                        <div style={{ flex: 1 }}>
-                          <label className="label">Qty</label>
+                      <div className="grid" style={{ gridTemplateColumns: "1fr", gap: ".6rem" }}>
+                        <div>
+                          <label className="label">Item</label>
                           <input
                             className="input"
-                            type="number"
-                            value={it.qty}
-                            onChange={(e) => updateExtraItem(it.id, { qty: Number(e.target.value || 0) })}
+                            value={it.name}
+                            onChange={(e) => updateExtraItem(it.id, { name: e.target.value })}
                           />
                         </div>
 
-                        <div style={{ flex: 1 }}>
-                          <label className="label">Unit</label>
-                          <input
-                            className="input"
-                            value={it.unit}
-                            onChange={(e) => updateExtraItem(it.id, { unit: e.target.value })}
-                          />
+                        <div className="grid" style={{ gridTemplateColumns: "1fr 1fr", gap: ".6rem" }}>
+                          <div>
+                            <label className="label">Qty</label>
+                            <input
+                              className="input"
+                              type="number"
+                              value={it.qty}
+                              onChange={(e) => updateExtraItem(it.id, { qty: Number(e.target.value || 0) })}
+                            />
+                          </div>
+                          <div>
+                            <label className="label">Unit</label>
+                            <input
+                              className="input"
+                              value={it.unit}
+                              onChange={(e) => updateExtraItem(it.id, { unit: e.target.value })}
+                            />
+                          </div>
                         </div>
-                      </div>
 
-                      <div>
-                        <label className="label">Substitute (optional)</label>
-                        <input
-                          className="input"
-                          value={it.substitute}
-                          onChange={(e) => updateExtraItem(it.id, { substitute: e.target.value })}
-                          placeholder="e.g., lactose-free milk"
-                        />
-                      </div>
+                        <div className="grid" style={{ gridTemplateColumns: "1fr", gap: ".6rem" }}>
+                          <div>
+                            <label className="label">Substitute (optional)</label>
+                            <input
+                              className="input"
+                              value={it.substitute}
+                              onChange={(e) => updateExtraItem(it.id, { substitute: e.target.value })}
+                              placeholder="e.g., lactose-free milk"
+                            />
+                          </div>
+                          <div>
+                            <label className="label">Reason (optional)</label>
+                            <input
+                              className="input"
+                              value={it.substituteReason}
+                              onChange={(e) => updateExtraItem(it.id, { substituteReason: e.target.value })}
+                              placeholder="allergy / brand dislike / diet"
+                            />
+                          </div>
+                        </div>
 
-                      <div>
-                        <label className="label">Reason (optional)</label>
-                        <input
-                          className="input"
-                          value={it.substituteReason}
-                          onChange={(e) => updateExtraItem(it.id, { substituteReason: e.target.value })}
-                          placeholder="allergy / brand dislike / diet"
-                        />
-                      </div>
-
-                      <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                        <button className="btn btn-ghost" type="button" onClick={() => removeExtraItem(it.id)}>
-                          Remove Item
-                        </button>
+                        <div className="nav-row" style={{ justifyContent: "flex-end" }}>
+                          <button className="btn btn-ghost" type="button" onClick={() => removeExtraItem(it.id)}>
+                            Remove
+                          </button>
+                        </div>
                       </div>
                     </div>
                   ))
@@ -763,37 +972,26 @@ export default function GroceryLabPage() {
                   </button>
                 </div>
 
-                {/* ✅ Missing pricing notice */}
-                {pricingSummary && hasMissingPrices && (
-                  <div
-                    className="glass-inner"
-                    style={{
-                      marginTop: ".75rem",
-                      borderLeft: "4px solid var(--gold)",
-                      padding: ".75rem",
-                    }}
-                  >
-                    <div style={{ fontWeight: 800, color: "var(--gold)" }}>Pricing Notice</div>
-                    <p className="small" style={{ marginTop: ".35rem" }}>
-                      We’re sorry — one or more of your items do not have a price loaded in our system.
-                      <br />
-                      <br />
-                      You’re viewing the app in <strong>testing mode</strong>. Once live pricing is enabled,
-                      accurate prices will automatically appear.
-                      <br />
-                      <br />
-                      Sorry for the inconvenience, and thank you for helping us test 3C.
-                    </p>
-                  </div>
-                )}
-
                 <div style={{ marginTop: ".9rem" }}>
                   <div className="small">
-                    Total items in cart: <strong>{allItems.length}</strong>
+                    Total items in cart: <strong>{allItems.filter((x) => x.name).length}</strong>
                   </div>
 
                   {pricingSummary && hasItems && (
                     <div style={{ marginTop: ".75rem" }}>
+                      {missingPriceNotice && (
+                        <div className="glass-inner" style={{ marginBottom: ".8rem" }}>
+                          <div className="small" style={{ fontWeight: 900 }}>
+                            Pricing Notice
+                          </div>
+                          <div className="small" style={{ marginTop: ".35rem", opacity: 0.9 }}>
+                            We are sorry — one or more of your items do not have a price loaded in our system.
+                            We are in testing mode. Once we are live, pricing should be available.
+                            Sorry for the inconvenience.
+                          </div>
+                        </div>
+                      )}
+
                       <div className="small">
                         Mode:{" "}
                         <strong>{pricingSummary.mode === "single-store" ? "Single-store" : "Multi-store"}</strong>
@@ -822,6 +1020,43 @@ export default function GroceryLabPage() {
                           </div>
                         ))}
                       </div>
+
+                      <details style={{ marginTop: ".9rem" }}>
+                        <summary className="small" style={{ cursor: "pointer" }}>
+                          View item-by-item routing
+                        </summary>
+
+                        <div style={{ marginTop: ".6rem" }}>
+                          {(pricingSummary.perItemAllocations || []).map((x) => (
+                            <div
+                              key={x.itemId}
+                              style={{
+                                borderTop: "1px solid rgba(126,224,255,.12)",
+                                paddingTop: ".6rem",
+                                marginTop: ".6rem",
+                              }}
+                            >
+                              <div className="small" style={{ fontWeight: 800 }}>
+                                {x.name}
+                              </div>
+                              <div className="small" style={{ opacity: 0.9, marginTop: ".2rem" }}>
+                                Qty: <strong>{x.qty}</strong> · Unit: <strong>{x.unit}</strong>
+                              </div>
+                              <div className="small" style={{ opacity: 0.85, marginTop: ".2rem" }}>
+                                Store:{" "}
+                                <strong>
+                                  {x.chosenStoreId
+                                    ? STORES.find((s) => s.id === x.chosenStoreId)?.name || x.chosenStoreId
+                                    : "—"}
+                                </strong>{" "}
+                                · Unit:{" "}
+                                <strong>{typeof x.unitPrice === "number" ? money(x.unitPrice) : "—"}</strong>{" "}
+                                · Ext: <strong>{typeof x.ext === "number" ? money(x.ext) : "—"}</strong>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </details>
                     </div>
                   )}
                 </div>
@@ -838,10 +1073,8 @@ export default function GroceryLabPage() {
             </div>
           </div>
         </div>
-
-        {/* no extra bottom row */}
+        {/* end wizard */}
       </div>
     </div>
   );
 }
-
