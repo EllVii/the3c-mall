@@ -134,3 +134,10 @@ export default function Pricing() {
     </section>
   );
 }
+export default function PricingPage(){
+  return (
+    <div className="marketing-page">
+      {/* pricing content */}
+    </div>
+  );
+}

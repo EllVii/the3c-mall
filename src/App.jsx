@@ -79,3 +79,31 @@ export default function App() {
     </div>
   );
 }
+// App.jsx (or wherever your Routes live)
+import React, { useEffect } from "react";
+import { Routes, Route, useLocation } from "react-router-dom";
+
+// ...your imports
+
+export default function App() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    const isAppRoute = pathname.startsWith("/app");
+    const html = document.documentElement;
+    const body = document.body;
+
+    html.classList.toggle("app-mode", isAppRoute);
+    body.classList.toggle("app-mode", isAppRoute);
+
+    // optional: always jump to top on page change for marketing pages
+    if (!isAppRoute) window.scrollTo(0, 0);
+  }, [pathname]);
+
+  return (
+    <Routes>
+      {/* your routes */}
+    </Routes>
+  );
+}
+

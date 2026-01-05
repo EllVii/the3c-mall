@@ -345,3 +345,10 @@
     text-align: left;
   }
 }
+/* Pricing / marketing pages */
+.marketing-page{
+  min-height: 100vh;
+  width: 100%;
+  overflow: visible;
+  padding-bottom: 48px; /* space for footer */
+}

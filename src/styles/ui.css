@@ -28,6 +28,20 @@ html, body{
   --safeBottom: env(safe-area-inset-bottom, 0px);
 }
 
+/* DEFAULT = marketing site scrolls */
+html, body{
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  overflow-x: hidden;
+  overflow-y: auto; /* ✅ allow scroll by default */
+}
+
+/* ONLY /app routes get NO SCROLL */
+html.app-mode, body.app-mode{
+  overflow: hidden; /* ✅ app-like */
+}
+
 /* =========================================================
   TOKENS (BRAND FIRST)
 ========================================================= */
