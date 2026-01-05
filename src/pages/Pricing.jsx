@@ -121,7 +121,24 @@ export default function Pricing() {
           </article>
         ))}
       </section>
+<div style={{ textAlign: "center", marginTop: "2.5rem" }}>
+  <p className="small" style={{ opacity: 0.75 }}>
+    Already a member?
+  </p>
 
+  <a
+    href="/cancel"
+    style={{
+      display: "inline-block",
+      marginTop: ".5rem",
+      fontSize: ".85rem",
+      textDecoration: "underline",
+      color: "var(--muted)"
+    }}
+  >
+    Manage or cancel your subscription
+  </a>
+</div>
       {/* ✅ Delivery Pricing (added back) */}
       <section className="card" style={{ marginTop: "1rem" }}>
         <p className="kicker">Delivery Pricing</p>

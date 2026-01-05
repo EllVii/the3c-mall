@@ -1,3 +1,4 @@
+// src/App.jsx
 import React, { useEffect } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 
@@ -13,7 +14,6 @@ import LandingPage from "./pages/LandingPage.jsx";
 import Features from "./pages/Features.jsx";
 import Pricing from "./pages/Pricing.jsx";
 import Login from "./pages/Login.jsx";
-import Cancel from "./pages/Cancel.jsx";
 import CommentLimitModal from "./pages/CommentLimitModal.jsx";
 
 // App pages
@@ -23,6 +23,7 @@ import GroceryLabPage from "./pages/GroceryLabPage.jsx";
 import ComingSoon from "./pages/ComingSoon.jsx";
 import PTModePage from "./pages/PTModePage.jsx";
 import SettingsPage from "./pages/SettingsPage.jsx";
+import Cancel from "./pages/Cancel.jsx";
 
 // App pages (new)
 import CommunityPage from "./pages/CommunityPage.jsx";
@@ -59,7 +60,6 @@ export default function App() {
           <Route path="/features" element={<Features />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/cancel" element={<Cancel />} />
           <Route path="/comment-limit" element={<CommentLimitModal />} />
         </Route>
 
@@ -68,6 +68,9 @@ export default function App() {
           <Route index element={<DashboardPage />} />
           <Route path="meal-plans" element={<MealPlannerPage />} />
           <Route path="grocery-lab" element={<GroceryLabPage />} />
+
+          {/* ✅ Cancel inside app */}
+          <Route path="cancel" element={<Cancel />} />
 
           {/* New routes */}
           <Route path="community" element={<CommunityPage />} />

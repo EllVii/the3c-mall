@@ -1,8 +1,17 @@
 // src/pages/SettingsPage.jsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/SettingsPage.css";
 import { getPrefsSafe, setNavMode } from "../utils/prefs";
+
+/**
+ * OPTIONAL SETTINGS MODULES
+ * - If you have these components, keep imports ON.
+ * - If you don't have one yet, comment that import + the block below it.
+ */
+import ConciergeHub from "../assets/components/ConciergeHub.jsx";
+import FeedbackPanel from "../assets/components/FeedbackPanel.jsx";
+import FastingTimer from "../assets/components/FastingTimer.jsx";
 
 const THEMES = [
   { id: "midnight-lux", title: "Midnight Lux", desc: "Deep navy, gold, and neon blue. Premium default." },
@@ -22,19 +31,24 @@ function getThemeSafe() {
 function applyTheme(id) {
   try {
     localStorage.setItem("3c.theme", id);
-  } catch {}
+  } catch {
+    // ignore
+  }
   document.documentElement.setAttribute("data-theme", id);
 }
 
 export default function SettingsPage() {
   const nav = useNavigate();
+
   const [prefs, setPrefs] = useState(() => getPrefsSafe());
   const [theme, setTheme] = useState(() => getThemeSafe());
 
+  // Apply theme whenever it changes
   useEffect(() => {
     applyTheme(theme);
   }, [theme]);
 
+  // Ensure theme is applied on mount (covers refresh / first load)
   useEffect(() => {
     const t = getThemeSafe();
     setTheme(t);
@@ -43,34 +57,49 @@ export default function SettingsPage() {
 
   function toggleNavMode() {
     const next = prefs?.navMode === "full" ? "focused" : "full";
-    setPrefs(setNavMode(next));
+    const updated = setNavMode(next);
+    setPrefs(updated);
   }
+
+  const navModeLabel = useMemo(() => {
+    return prefs?.navMode === "full" ? "Full Mall" : "Focused";
+  }, [prefs?.navMode]);
 
   return (
     <section className="page settings-page">
-<header className="settings-header">
-  <div>
-    <div className="brand-emblem">
-      <img src="/brand/3c-emblem.png" alt="3C Mall" />
-    </div>
+      <header className="settings-header">
+        <div>
+          <div className="brand-emblem">
+            <img src="/brand/3c-emblem.png" alt="3C Mall" />
+          </div>
 
-    <p className="kicker">Settings</p>
-    <h1 className="h1">Appearance & Experience</h1>
-    <p className="sub">Choose how the entire app feels — background, glow, contrast, and mood.</p>
-  </div>
+          <p className="kicker">Settings</p>
+          <h1 className="h1">Appearance & Experience</h1>
+          <p className="sub">Choose how the entire app feels — background, glow, contrast, and mood.</p>
 
-  <div className="pill">
-    <span>Navigation</span>
-    <strong>{prefs?.navMode === "full" ? "Full Mall" : "Focused"}</strong>
-  </div>
-</header>
+          <div className="nav-row" style={{ marginTop: ".85rem" }}>
+            <button className="btn btn-secondary" onClick={() => nav("/app")}>
+              ← Dashboard
+            </button>
+            <button className="btn btn-secondary" onClick={() => nav("/app/meal-plans")}>
+              Meal Planner →
+            </button>
+            <button className="btn btn-secondary" onClick={() => nav("/app/grocery-lab")}>
+              Grocery Lab →
+            </button>
+          </div>
+        </div>
+
+        <div className="pill">
+          <span>Navigation</span>
+          <strong>{navModeLabel}</strong>
+        </div>
+      </header>
 
       {/* NAV MODE */}
       <div className="card glass settings-block">
         <h3 className="settings-h3">Navigation Mode</h3>
-        <p className="small">
-          Focused keeps the app minimal. Full Mall exposes all zones.
-        </p>
+        <p className="small">Focused keeps the app minimal. Full Mall exposes all zones.</p>
 
         <div className="nav-row">
           <button className="btn btn-primary" onClick={toggleNavMode}>
@@ -85,9 +114,7 @@ export default function SettingsPage() {
       {/* THEMES */}
       <div className="card glass settings-block">
         <h3 className="settings-h3">Theme</h3>
-        <p className="small">
-          Themes affect the entire application — not just buttons.
-        </p>
+        <p className="small">Themes affect the entire application — not just buttons.</p>
 
         <div className="theme-grid">
           {THEMES.map((t) => {
@@ -95,6 +122,7 @@ export default function SettingsPage() {
             return (
               <button
                 key={t.id}
+                type="button"
                 className={`theme-tile ${active ? "active" : ""}`}
                 onClick={() => setTheme(t.id)}
               >
@@ -104,6 +132,50 @@ export default function SettingsPage() {
               </button>
             );
           })}
+        </div>
+      </div>
+
+      {/* QUICK TOOLS (makes settings "live" beyond appearance) */}
+      <div className="card glass settings-block">
+        <h3 className="settings-h3">Quick Tools</h3>
+        <p className="small">
+          These are live modules that connect your concierge, feedback, and daily utilities.
+        </p>
+
+        {/* Concierge Hub */}
+        <div style={{ marginTop: ".9rem" }}>
+          <div style={{ fontWeight: 900, color: "var(--gold)" }}>Concierge</div>
+          <div className="small" style={{ marginTop: ".25rem" }}>
+            Help, shortcuts, and guided actions — without leaving your workflow.
+          </div>
+
+          <div style={{ marginTop: ".65rem" }}>
+            <ConciergeHub />
+          </div>
+        </div>
+
+        {/* Feedback */}
+        <div style={{ marginTop: "1.25rem", paddingTop: "1.1rem", borderTop: "1px solid rgba(126,224,255,.12)" }}>
+          <div style={{ fontWeight: 900, color: "var(--gold)" }}>Feedback</div>
+          <div className="small" style={{ marginTop: ".25rem" }}>
+            Capture alpha/beta issues fast (UI overflow, broken routes, grocery wizard, etc.).
+          </div>
+
+          <div style={{ marginTop: ".65rem" }}>
+            <FeedbackPanel />
+          </div>
+        </div>
+
+        {/* Fasting Timer */}
+        <div style={{ marginTop: "1.25rem", paddingTop: "1.1rem", borderTop: "1px solid rgba(126,224,255,.12)" }}>
+          <div style={{ fontWeight: 900, color: "var(--gold)" }}>Fasting Timer</div>
+          <div className="small" style={{ marginTop: ".25rem" }}>
+            Optional utility. Useful for meal timing + consistency.
+          </div>
+
+          <div style={{ marginTop: ".65rem" }}>
+            <FastingTimer />
+          </div>
         </div>
       </div>
 
@@ -117,4 +189,3 @@ export default function SettingsPage() {
     </section>
   );
 }
-

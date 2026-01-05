@@ -8,6 +8,7 @@ import { recipeToGroceryItems, mergeGroceryItems } from "../utils/recipeToGrocer
 const RECIPES_KEY = "recipes.v1";
 const RECIPE_PREFIX_KEY = (id) => `recipe.${id}.v1`;
 const GROCERY_KEY = "grocery.items.v1";
+const HANDOFF_KEY = "handoff.mealToGrocery.v1";
 
 function seedRecipe() {
   const id = safeId("rcp");
@@ -155,6 +156,7 @@ export default function RecipesPage() {
     }
   }
 
+  // ✅ UPDATED: Add to Grocery + navigate to Grocery Lab with handoff message
   function addRecipeToGrocery(id) {
     const recipe = loadRecipe(id);
     if (!recipe) return;
@@ -164,9 +166,22 @@ export default function RecipesPage() {
     const merged = mergeGroceryItems(current, add);
     writeJSON(GROCERY_KEY, merged);
 
-    // lightweight UX feedback without alerts
-    const stamp = nowISO();
-    writeJSON("toast.v1", { message: "Grocery list updated ✅", at: stamp });
+    // ✅ this is what GroceryLabPage will read + show once
+    writeJSON(HANDOFF_KEY, {
+      at: nowISO(),
+      message: `Added "${recipe.title}" → Grocery updated ✅`,
+      source: "recipes",
+      recipeId: recipe.id,
+      recipeTitle: recipe.title,
+    });
+
+    // ✅ go to Grocery Lab (optionally jump to review)
+    nav("/app/grocery-lab", {
+      state: {
+        from: "recipes",
+        quickReview: true,
+      },
+    });
   }
 
   function quickHealthier(id, preset) {
@@ -177,7 +192,9 @@ export default function RecipesPage() {
     saveRecipe(nextRecipe);
 
     const nextList = list.map((x) =>
-      x.id === id ? { ...x, title: nextRecipe.title, description: nextRecipe.description, updatedAt: nextRecipe.updatedAt } : x
+      x.id === id
+        ? { ...x, title: nextRecipe.title, description: nextRecipe.description, updatedAt: nextRecipe.updatedAt }
+        : x
     );
     persist(nextList);
 
@@ -226,7 +243,10 @@ export default function RecipesPage() {
                 <div className="small" style={{ marginTop: ".35rem" }}>{r.description}</div>
               </div>
 
-              <button className={"btn " + (r.favorites ? "btn-primary" : "btn-secondary")} onClick={() => toggleFavorite(r.id)}>
+              <button
+                className={"btn " + (r.favorites ? "btn-primary" : "btn-secondary")}
+                onClick={() => toggleFavorite(r.id)}
+              >
                 {r.favorites ? "★ Fav" : "☆ Fav"}
               </button>
             </div>
@@ -236,6 +256,7 @@ export default function RecipesPage() {
                 Open
               </button>
 
+              {/* ✅ this now links into Grocery Lab flow */}
               <button className="btn btn-primary" onClick={() => addRecipeToGrocery(r.id)}>
                 Add to Grocery
               </button>
@@ -265,7 +286,9 @@ export default function RecipesPage() {
 
       {filtered.length === 0 && (
         <div className="card" style={{ marginTop: "1rem" }}>
-          <p className="sub">No recipes yet. Tap <strong>Add Recipe</strong> to seed your first one.</p>
+          <p className="sub">
+            No recipes yet. Tap <strong>Add Recipe</strong> to seed your first one.
+          </p>
         </div>
       )}
     </section>

@@ -103,3 +103,27 @@
   font-size: 0.8rem;
   color: #f6dc8a;
 }
+/* Tile mode: page stays fixed, inner card scrolls */
+.mp-page {
+  height: calc(100vh - var(--appTopOffset, 0px));
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Let header take its space, card takes the rest */
+.mp-page > header {
+  flex: 0 0 auto;
+}
+
+.mp-card {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  min-height: 0; /* CRITICAL for flex scroll containers */
+}
+
+/* Keep buttons from stretching weirdly */
+.mp-card .nav-row {
+  flex-wrap: wrap;
+}
