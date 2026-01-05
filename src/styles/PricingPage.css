@@ -1,47 +1,5 @@
 /* src/styles/PricingPage.css */
-/* Pricing / marketing pages */
-.marketing-page{
-  min-height: 100vh;
-  width: 100%;
-  overflow: visible;
-  padding-bottom: 48px; /* space for footer */
-}/* src/styles/Pricing.css */
 
-/* Make sure marketing pages can grow and scroll */
-.marketing-page,
-.pricing-page {
-  min-height: auto;
-  height: auto;
-  overflow: scroll;
-}
-
-/* If you have a main shell wrapper, this prevents content from getting clipped */
-.app-shell,
-.app-shell-main,
-#root,
-body {
-  overflow-y: auto;
-}
-
-/* If your Pricing tiles are inside a grid, prevent weird compression */
-.pricing-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 1rem;
-  align-items: start; /* prevents “stretch” weirdness */
-}
-
-/* Cards shouldn’t be absolute-positioned unless intentional */
-.pricing-grid .card {
-  position: relative;
-}
-
-/* Mobile tightening (optional) */
-@media (max-width: 560px) {
-  .pricing-page .card {
-    padding: 1rem;
-  }
-}
 /* ========== PRICING PAGE – LUXURY THEME ========== */
 
 .page.pricing-page {
@@ -73,7 +31,7 @@ body {
 
 /* Grid layout for cards */
 .pricing-grid {
-  max-width: auto;
+  max-width: 1120px;
   margin: 0 auto 3.25rem;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -393,4 +351,80 @@ body {
   width: 100%;
   overflow: visible;
   padding-bottom: 48px; /* space for footer */
+}
+/* ==============================
+   SCROLL FIX – PRICING PAGE
+   ============================== */
+
+/* Let the browser handle vertical growth */
+html,
+body {
+  height: auto;
+  min-height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+/* Root containers must NOT clip content */
+#root,
+.app-shell,
+.app-shell-main {
+  min-height: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+/* Pricing page must be allowed to grow */
+.page.pricing-page,
+.marketing-page {
+  min-height: 100vh;
+  height: auto;
+  overflow-y: visible;   /* KEY FIX */
+  overflow-x: hidden;
+}
+
+/* Ensure the grid never forces overlap */
+.pricing-grid {
+  align-items: start;
+}
+
+/* Mobile safety: prevent accidental height lock */
+@media (max-width: 768px) {
+  .page.pricing-page {
+    min-height: auto;
+  }
+}
+/* =========================================
+   OVERRIDE ui.css ANTI-SCROLL (MARKETING)
+   ========================================= */
+
+/* Marketing pages MUST scroll */
+html:not(.app-mode),
+body:not(.app-mode) {
+  height: auto !important;
+  min-height: 100%;
+  overflow-y: auto !important;
+  overflow-x: hidden;
+}
+
+/* App shell should NOT trap scroll on marketing pages */
+html:not(.app-mode) .app-shell,
+html:not(.app-mode) .app-shell-main,
+html:not(.app-mode) #root {
+  height: auto !important;
+  min-height: 100%;
+  overflow: visible !important;
+}
+
+/* Pricing page specifically */
+html:not(.app-mode) .page.pricing-page,
+html:not(.app-mode) .marketing-page {
+  height: auto !important;
+  min-height: 100vh;
+  overflow-y: visible !important;
+}
+
+/* Prevent card overlap caused by height forcing */
+html:not(.app-mode) .pricing-grid {
+  align-items: start;
 }
