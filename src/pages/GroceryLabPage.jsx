@@ -89,7 +89,7 @@ function normalizeCartItem(raw) {
 function toItemFromName(name) {
   return {
     id: safeId("itm"),
-    name: (name || "").trim(),
+    name,
     qty: 1,
     unit: "each",
     substitute: "",
@@ -126,7 +126,6 @@ export default function GroceryLabPage() {
   });
 
   const [extraItems, setExtraItems] = useState(() => {
-    // legacy compatibility: old list stored in GROCERY_KEY becomes "extra"
     const raw = readJSON(GROCERY_KEY, []);
     return Array.isArray(raw) ? raw.map(normalizeCartItem) : [];
   });
@@ -163,7 +162,7 @@ export default function GroceryLabPage() {
   const shopIdx = useMemo(() => steps.findIndex((s) => s.id === "shop"), [steps]);
   const reviewIdx = useMemo(() => steps.findIndex((s) => s.id === "review"), [steps]);
 
-  // Show message once if handoff exists
+  // show message once if handoff exists
   useEffect(() => {
     const handoff = readJSON(HANDOFF_KEY, null);
     if (handoff?.message || handoff?.at) {
@@ -174,8 +173,8 @@ export default function GroceryLabPage() {
   }, []);
 
   // Start logic:
-  // - If no items, do NOT allow review.
-  // - If items, allow quickReview jump to review.
+  // - if no items: never start at review
+  // - if items: allow quickReview to jump to review
   useEffect(() => {
     if (!hasItems) {
       if (stepIndex !== 0) setStepIndex(0);
@@ -187,27 +186,22 @@ export default function GroceryLabPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasItems, cameFromMeal, quickReview, reviewIdx]);
 
-  // Never allow 0 stores
+  // never allow 0 stores
   useEffect(() => {
     if (!includedStoreIds.length) setIncludedStoreIds(STORES.map((s) => s.id));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [includedStoreIds.length]);
 
-  // Persist strategy (block body so effect returns undefined)
+  // persist strategy
   useEffect(() => {
     writeJSON(STRATEGY_KEY, { lane, includedStoreIds, fulfillment, updatedAt: nowISO() });
   }, [lane, includedStoreIds, fulfillment]);
 
-  // Persist carts (IMPORTANT: block body to avoid returning true)
-  useEffect(() => {
-    writeJSON(MEAL_ITEMS_KEY, mealItems);
-  }, [mealItems]);
+  // persist carts
+  useEffect(() => writeJSON(MEAL_ITEMS_KEY, mealItems), [mealItems]);
+  useEffect(() => writeJSON(GROCERY_KEY, extraItems), [extraItems]);
 
-  useEffect(() => {
-    writeJSON(GROCERY_KEY, extraItems);
-  }, [extraItems]);
-
-  // If cart becomes empty, clear pricing (fixes "winner stays" bug)
+  // if cart becomes empty, clear pricing (fixes “winner stays” bug)
   useEffect(() => {
     if (!hasItems && pricingSummary) {
       setPricingSummary(null);
@@ -217,7 +211,7 @@ export default function GroceryLabPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasItems]);
 
-  // Store ordering logic
+  // store ordering logic
   const usageTotals =
     savedUsage?.total && typeof savedUsage.total === "object" ? savedUsage.total : {};
 
@@ -235,12 +229,14 @@ export default function GroceryLabPage() {
 
   const orderedStores = useMemo(() => {
     const rec = STORES.some((s) => s.id === recommendedStoreId) ? recommendedStoreId : null;
+
     const score = (id) => {
       const isRec = rec && id === rec ? 100000 : 0;
       const isIncluded = includedStoreIds.includes(id) ? 10000 : 0;
       const use = Number(usageTotals?.[id] || 0);
       return isRec + isIncluded + use;
     };
+
     return [...STORES].sort((a, b) => score(b.id) - score(a.id));
   }, [includedStoreIds, usageTotals, recommendedStoreId]);
 
@@ -250,7 +246,7 @@ export default function GroceryLabPage() {
     setIncludedStoreIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   }
 
-  // Extra items editing
+  // extra items editing
   function addExtraItem(name = "") {
     const n = (name || "").trim();
     setExtraItems((prev) => [...prev, toItemFromName(n)]);
@@ -271,7 +267,7 @@ export default function GroceryLabPage() {
     setMealItems((prev) => prev.filter((x) => x.id !== id));
   }
 
-  // Demo loading
+  // demo loading
   function loadDemoCart({ overwrite = false } = {}) {
     const items = seedTestGroceries({ overwrite });
     const normalized = (Array.isArray(items) ? items : []).map(normalizeCartItem);
@@ -280,6 +276,7 @@ export default function GroceryLabPage() {
     window.setTimeout(() => setAppMsg(""), 1800);
   }
 
+  // pricing
   function calculatePricing() {
     if (!hasItems) {
       setPricingSummary(null);
@@ -336,6 +333,23 @@ export default function GroceryLabPage() {
     const flat = CATALOG.flatMap((c) => c.items.map((name) => ({ category: c.id, name })));
     return flat.filter((x) => x.name.toLowerCase().includes(q)).slice(0, 12);
   }, [shopQuery]);
+
+  // ✅ Missing-price notice (testing mode)
+  const hasMissingPrices = useMemo(() => {
+    const rows = pricingSummary?.perItemAllocations;
+    if (!Array.isArray(rows) || rows.length === 0) return false;
+
+    // consider missing if ext is null/undefined OR unitPrice is null/0 OR ext is 0 while qty>0
+    return rows.some((x) => {
+      const qty = Number(x?.qty || 0);
+      const unitPrice = x?.unitPrice;
+      const ext = x?.ext;
+      return (
+        qty > 0 &&
+        (unitPrice == null || Number(unitPrice) === 0 || ext == null)
+      );
+    });
+  }, [pricingSummary]);
 
   return (
     <div className="gl-shell page gl-page">
@@ -601,6 +615,7 @@ export default function GroceryLabPage() {
                 </div>
               </div>
 
+              {/* Start guard */}
               {!hasItems && (
                 <div className="glass-inner" style={{ marginTop: "1rem" }}>
                   <div className="small">
@@ -646,7 +661,7 @@ export default function GroceryLabPage() {
                 )}
               </div>
 
-              {/* Extra Items */}
+              {/* Extra Items (STACKED so it never clips) */}
               <div className="glass-inner" style={{ marginTop: "1rem" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", gap: ".75rem", alignItems: "center" }}>
                   <div style={{ fontWeight: 900, color: "var(--gold)" }}>Extra Groceries (Editable)</div>
@@ -667,18 +682,22 @@ export default function GroceryLabPage() {
                         borderTop: "1px solid rgba(126,224,255,.12)",
                         paddingTop: ".75rem",
                         marginTop: ".75rem",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: ".6rem",
                       }}
                     >
-                      <div className="grid" style={{ gridTemplateColumns: "1.6fr .6fr .7fr", gap: ".6rem" }}>
-                        <div>
-                          <label className="label">Item</label>
-                          <input
-                            className="input"
-                            value={it.name}
-                            onChange={(e) => updateExtraItem(it.id, { name: e.target.value })}
-                          />
-                        </div>
-                        <div>
+                      <div>
+                        <label className="label">Item</label>
+                        <input
+                          className="input"
+                          value={it.name}
+                          onChange={(e) => updateExtraItem(it.id, { name: e.target.value })}
+                        />
+                      </div>
+
+                      <div className="nav-row">
+                        <div style={{ flex: 1 }}>
                           <label className="label">Qty</label>
                           <input
                             className="input"
@@ -687,7 +706,8 @@ export default function GroceryLabPage() {
                             onChange={(e) => updateExtraItem(it.id, { qty: Number(e.target.value || 0) })}
                           />
                         </div>
-                        <div>
+
+                        <div style={{ flex: 1 }}>
                           <label className="label">Unit</label>
                           <input
                             className="input"
@@ -697,30 +717,30 @@ export default function GroceryLabPage() {
                         </div>
                       </div>
 
-                      <div className="grid" style={{ gridTemplateColumns: "1.2fr 1.2fr .7fr", gap: ".6rem", marginTop: ".6rem" }}>
-                        <div>
-                          <label className="label">Substitute (optional)</label>
-                          <input
-                            className="input"
-                            value={it.substitute}
-                            onChange={(e) => updateExtraItem(it.id, { substitute: e.target.value })}
-                            placeholder="e.g., lactose-free milk"
-                          />
-                        </div>
-                        <div>
-                          <label className="label">Reason (optional)</label>
-                          <input
-                            className="input"
-                            value={it.substituteReason}
-                            onChange={(e) => updateExtraItem(it.id, { substituteReason: e.target.value })}
-                            placeholder="allergy / brand dislike / diet"
-                          />
-                        </div>
-                        <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "flex-end" }}>
-                          <button className="btn btn-ghost" type="button" onClick={() => removeExtraItem(it.id)}>
-                            Remove
-                          </button>
-                        </div>
+                      <div>
+                        <label className="label">Substitute (optional)</label>
+                        <input
+                          className="input"
+                          value={it.substitute}
+                          onChange={(e) => updateExtraItem(it.id, { substitute: e.target.value })}
+                          placeholder="e.g., lactose-free milk"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="label">Reason (optional)</label>
+                        <input
+                          className="input"
+                          value={it.substituteReason}
+                          onChange={(e) => updateExtraItem(it.id, { substituteReason: e.target.value })}
+                          placeholder="allergy / brand dislike / diet"
+                        />
+                      </div>
+
+                      <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                        <button className="btn btn-ghost" type="button" onClick={() => removeExtraItem(it.id)}>
+                          Remove Item
+                        </button>
                       </div>
                     </div>
                   ))
@@ -743,6 +763,30 @@ export default function GroceryLabPage() {
                   </button>
                 </div>
 
+                {/* ✅ Missing pricing notice */}
+                {pricingSummary && hasMissingPrices && (
+                  <div
+                    className="glass-inner"
+                    style={{
+                      marginTop: ".75rem",
+                      borderLeft: "4px solid var(--gold)",
+                      padding: ".75rem",
+                    }}
+                  >
+                    <div style={{ fontWeight: 800, color: "var(--gold)" }}>Pricing Notice</div>
+                    <p className="small" style={{ marginTop: ".35rem" }}>
+                      We’re sorry — one or more of your items do not have a price loaded in our system.
+                      <br />
+                      <br />
+                      You’re viewing the app in <strong>testing mode</strong>. Once live pricing is enabled,
+                      accurate prices will automatically appear.
+                      <br />
+                      <br />
+                      Sorry for the inconvenience, and thank you for helping us test 3C.
+                    </p>
+                  </div>
+                )}
+
                 <div style={{ marginTop: ".9rem" }}>
                   <div className="small">
                     Total items in cart: <strong>{allItems.length}</strong>
@@ -755,9 +799,11 @@ export default function GroceryLabPage() {
                         <strong>{pricingSummary.mode === "single-store" ? "Single-store" : "Multi-store"}</strong>
                         {pricingSummary.chosenStoreId ? (
                           <>
-                            {" "}· Winner:{" "}
+                            {" "}
+                            · Winner:{" "}
                             <strong>
-                              {STORES.find((s) => s.id === pricingSummary.chosenStoreId)?.name || pricingSummary.chosenStoreId}
+                              {STORES.find((s) => s.id === pricingSummary.chosenStoreId)?.name ||
+                                pricingSummary.chosenStoreId}
                             </strong>
                           </>
                         ) : null}
@@ -798,3 +844,4 @@ export default function GroceryLabPage() {
     </div>
   );
 }
+
