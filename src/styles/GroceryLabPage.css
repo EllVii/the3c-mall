@@ -1,19 +1,60 @@
 /* src/styles/GroceryLabPage.css */
+/*
+  3C Mall Grocery Lab – locked 5-panel carousel
+  - Track = 500% (5 panels)
+  - Panel = 20% each
+  - NO horizontal scrolling (only via dots/buttons)
+  - Vertical scrolling happens INSIDE each panel
+*/
 
+:root{
+  --bg: #070B14;
+  --panel: rgba(255,255,255,.06);
+  --panel-2: rgba(255,255,255,.08);
+  --text: rgba(255,255,255,.92);
+  --muted: rgba(255,255,255,.66);
+  --stroke: rgba(255,255,255,.10);
+  --stroke-2: rgba(255,255,255,.16);
+  --gold: rgba(246, 220, 138, .92);
+  --blue: rgba(31, 93, 255, .85);
+  --danger: rgba(255, 83, 83, .92);
+  --shadow: 0 18px 60px rgba(0,0,0,.55);
+  --radius: 18px;
+  --radius-sm: 12px;
+  --blur: 14px;
+}
 
-/* -----------------------------------------
-   Base shell + watermark lighting
------------------------------------------- */
+*{ box-sizing: border-box; }
+html, body { width: 100%; height: 100%; overflow-x: hidden; }
+
+/* =========================================================
+   SHELL + BACKGROUND
+   ========================================================= */
 .gl-shell{
   position: relative;
   isolation: isolate;
-  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  overflow: hidden;          /* no scrollbars on shell */
 }
 
-
-/* SINGLE logo watermark centered */
 .gl-shell::before{
-  content:"";
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 22% 18%, rgba(31,93,255,.10), transparent 55%),
+    radial-gradient(circle at 82% 14%, rgba(246,220,138,.08), transparent 55%),
+    radial-gradient(circle at 60% 90%, rgba(31,93,255,.10), transparent 60%);
+  z-index: -2;
+  pointer-events: none;
+}
+
+.gl-shell::after{
+  content: "";
   position:absolute;
   inset: 0;
   background-image: url("/icons/3c-mall.png");
@@ -26,403 +67,364 @@
   pointer-events:none;
 }
 
-
-/* subtle lighting so watermark reads */
-.gl-shell::after{
-  content:"";
-  position:absolute;
-  inset: 0;
-  background:
-    radial-gradient(circle at 25% 18%, rgba(126,224,255,.10), transparent 55%),
-    radial-gradient(circle at 82% 14%, rgba(246,220,138,.08), transparent 55%),
-    radial-gradient(circle at 60% 90%, rgba(31,93,255,.10), transparent 60%);
-  z-index: -2;
-  pointer-events:none;
-}
-
-
-/* -----------------------------------------
-   Glass styling (match Dashboard glass 65%)
------------------------------------------- */
-.glass{
-  background: rgba(8, 12, 24, 0.65) !important;
-  border: 1px solid rgba(126,224,255,.16) !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-}
-
-
-.glass-inner{
-  background: rgba(8, 12, 24, 0.55);
-  border: 1px solid rgba(126,224,255,.12);
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-}
-
-
-/* -----------------------------------------
-   Page header row
------------------------------------------- */
-.gl-top{
+/* =========================================================
+   HEADER
+   ========================================================= */
+.gl-header{
   display:flex;
+  align-items:flex-end;
   justify-content: space-between;
-  gap: 1.25rem;
-  align-items:flex-start;
-  min-width: 0;
+  gap: 16px;
+  padding: 22px 18px 10px;
+  max-width: 1100px;
+  margin: 0 auto;
+  width: 100%;
 }
 
-
-.gl-pill{
-  align-self:flex-start;
-  border-radius: 999px;
-  padding: .75rem 1rem;
+.gl-title{
+  margin: 0;
+  font-size: 28px;
+  letter-spacing: .2px;
 }
 
-
-.gl-pill .gl-pill-text{
-  font-size: .82rem;
-  color: rgba(255,255,255,.86);
+.gl-subtitle{
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 14px;
 }
 
+.gl-header-right{ display:flex; gap: 10px; flex-wrap: wrap; }
 
-/* -----------------------------------------
-   Wizard container + header
------------------------------------------- */
-.gl-wizard{
-  padding: 1.1rem;
-  margin-top: 1rem;
-  border-radius: 1.4rem;
-  min-width: 0;
-}
-
-
-.gl-wiz-head{
+/* =========================================================
+   STEP NAV
+   ========================================================= */
+.gl-steps{
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 10px 18px 14px;
   display:flex;
-  justify-content: space-between;
-  align-items:center;
-  gap: .75rem;
-  margin-bottom: .75rem;
+  gap: 10px;
   flex-wrap: wrap;
+  width: 100%;
 }
 
-
-.gl-dots{ display:flex; gap:.45rem; align-items:center; }
-.gl-dot{
-  width: 9px;
-  height: 9px;
+.gl-step{
+  display:flex;
+  align-items:center;
+  gap: 10px;
+  padding: 10px 12px;
   border-radius: 999px;
-  border: 1px solid rgba(126,224,255,.35);
-  background: rgba(4,8,18,.55);
-}
-.gl-dot.on{
-  background: linear-gradient(135deg, var(--gold), var(--blue));
-  border-color: rgba(246,220,138,.35);
-}
-
-
-.gl-tag{
-  font-size: .72rem;
-  letter-spacing: .18em;
-  text-transform: uppercase;
-  color: var(--blue);
-  font-weight: 900;
+  background: rgba(255,255,255,.04);
+  border: 1px solid var(--stroke);
+  color: var(--text);
+  cursor: pointer;
+  transition: transform .14s ease, border-color .14s ease, background .14s ease;
 }
 
-
-.gl-appmsg{
-  margin: .75rem 0 1rem;
-  padding: .9rem;
-  border-radius: 1.1rem;
-  font-weight: 900;
-  letter-spacing: .01em;
+.gl-step:disabled{ opacity: .45; cursor: not-allowed; }
+.gl-step:hover:not(:disabled){
+  transform: translateY(-1px);
+  border-color: var(--stroke-2);
+  background: rgba(255,255,255,.06);
+}
+.gl-step.is-active{
+  border-color: rgba(246, 220, 138, .45);
+  background: rgba(246, 220, 138, .07);
 }
 
-
-/* -----------------------------------------
-   CAROUSEL + PER-PANEL SCROLL (FIXED)
-   - One panel per screen
-   - Scroll only inside the current panel
-   - No sideways scroll into other panels
------------------------------------------- */
-
-
-/* Stage = viewport only. NEVER scroll here. */
-.gl-stage{
-  border-radius: 1.1rem;
-  overflow: hidden;
-  min-height: 420px;
-  min-width: 0;
-
-
-  /* stop sideways scroll behavior */
-  overscroll-behavior-x: contain;
-  touch-action: pan-y; /* allow vertical scroll only */
+.gl-step-index{
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  display:grid;
+  place-items:center;
+  font-size: 12px;
+  border: 1px solid var(--stroke-2);
+  color: var(--gold);
 }
 
+.gl-step-label{ font-size: 13px; }
 
-/* Track = horizontal strip */
-.gl-track{
+/* =========================================================
+   BUTTONS
+   ========================================================= */
+.gl-btn{
+  border: 1px solid var(--stroke);
+  background: rgba(255,255,255,.05);
+  color: var(--text);
+  padding: 10px 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: transform .14s ease, background .14s ease, border-color .14s ease;
+}
+.gl-btn:hover{
+  transform: translateY(-1px);
+  border-color: var(--stroke-2);
+  background: rgba(255,255,255,.07);
+}
+.gl-btn:disabled{ opacity: .5; cursor: not-allowed; transform: none; }
+
+.gl-btn-primary{
+  border-color: rgba(31,93,255,.55);
+  background: rgba(31,93,255,.20);
+}
+.gl-btn-ghost{ background: rgba(255,255,255,.03); }
+.gl-btn-danger{
+  border-color: rgba(255, 83, 83, .55);
+  background: rgba(255, 83, 83, .16);
+}
+
+/* =========================================================
+   CAROUSEL (LOCKED) – NO HORIZONTAL SCROLL
+   ========================================================= */
+.gl-carousel{
+  width: 100%;
+  flex: 1;
+  overflow: hidden;          /* prevents any horizontal scroll */
   display: flex;
-  align-items: stretch;
-  transition: transform .28s ease;
-  will-change: transform;
-  min-width: 0;
-
-
-  /* lock overflow so nothing bleeds */
-  overflow: hidden;
+  flex-direction: column;
 }
 
+.gl-track{
+  display:flex;
+  width: 500%;               /* 5 panels */
+  height: 100%;
+  transition: transform .24s ease;
+  will-change: transform;
+  overflow: hidden;          /* no horizontal scroll */
+}
 
-/* Panel = exactly 1 screen wide */
+/* IMPORTANT: each panel is 20% of the 500% track */
 .gl-panel{
   flex: 0 0 20%;
-  width: 100%;
+  width: 20%;
+  max-width: 20%;
   min-width: 0;
 
+  padding: 14px 18px;
 
-  padding: clamp(.75rem, 2vw, 1rem);
-  min-height: 420px;
+  display: flex;
+  flex-direction: column;
 
-
-  /* IMPORTANT: panel is the scroll container */
+  /* vertical scroll lives here */
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
+
+  /* prevents “swipe” to next panel */
   overscroll-behavior: contain;
+  touch-action: pan-y;
 
+  height: 100%;
+}
 
-  /* keep bottom nav reachable */
-  display: flex;
+/* panel heading */
+.gl-panel-title{
+  margin: 0 0 12px;
+  font-size: 20px;
+  outline: none;
+}
+
+/* =========================================================
+   CARDS + LISTS
+   ========================================================= */
+.gl-card{
+  background: var(--panel);
+  border: 1px solid var(--stroke);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(var(--blur));
+  padding: 14px;
+  margin-bottom: 14px;
+}
+
+.gl-card-title{ margin: 0 0 10px; font-size: 15px; }
+
+.gl-card-head{
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.gl-muted{ color: var(--muted); margin: 0; }
+
+.gl-list{
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display:flex;
   flex-direction: column;
+  gap: 10px;
 }
 
-
-/* -----------------------------------------
-   Text
------------------------------------------- */
-.gl-h2{
-  margin: .35rem 0 .45rem;
-  font-size: 1.25rem;
-}
-
-
-/* -----------------------------------------
-   Choice grid
------------------------------------------- */
-.gl-choice-grid{
-  display:grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: .75rem;
-  margin-top: .9rem;
+.gl-row{
+  display:flex;
+  align-items:flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  background: rgba(255,255,255,.04);
+  border: 1px solid var(--stroke);
   min-width: 0;
 }
 
-
-@media (max-width: 720px){
-  .gl-choice-grid{ grid-template-columns: 1fr; }
-}
-
-
-.gl-choice{
-  text-align:left;
-  border-radius: 1.1rem;
-  padding: .95rem;
-  color: var(--text);
-  cursor:pointer;
-  transition: transform .16s ease, filter .16s ease, border-color .16s ease;
-  border: 1px solid rgba(126,224,255,.12);
-  min-width: 0;
-}
-
-
-.gl-choice:hover{
-  filter: brightness(1.05);
-  transform: translateY(-1px);
-}
-
-
-.gl-choice.on{
-  border-color: rgba(246,220,138,.45) !important;
-  box-shadow: 0 10px 26px rgba(0,0,0,.65);
-}
-
-
-.gl-choice-title{ font-weight: 900; letter-spacing: .02em; }
-.gl-choice-desc{ margin-top: .35rem; color: var(--muted); font-size: .86rem; }
-
-
-/* -----------------------------------------
-   Stores list grid
------------------------------------------- */
-.gl-store-row{
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: .75rem;
-  margin-top: .9rem;
-  min-width: 0;
-}
-
-
-@media (max-width: 560px){
-  .gl-store-row{ grid-template-columns: 1fr; }
-}
-
-
-.gl-store-btn{
-  display: flex;
-  align-items: center;
-  gap: .8rem;
-  width: 100%;
-  text-align: left;
-  padding: .9rem;
-  border-radius: 1.1rem;
-  cursor: pointer;
-  border: 1px solid rgba(126,224,255,.12);
-  min-width: 0;
-}
-
-
-.gl-store-btn.is-on{
-  border-color: rgba(126,224,255,.35);
-}
-
-
-.gl-store-btn.is-rec{
-  border-color: rgba(246,220,138,.45);
-  box-shadow: 0 10px 26px rgba(0,0,0,.65);
-}
-
-
-.gl-store-mark{
-  width: 42px;
-  height: 42px;
-  border-radius: 14px;
-  display: grid;
-  place-items: center;
-  font-weight: 1000;
-  letter-spacing: .08em;
-  background: linear-gradient(135deg, var(--gold), var(--blue));
-  color: var(--blackText);
-  box-shadow: 0 10px 20px rgba(0,0,0,.55);
-  flex: 0 0 auto;
-}
-
-
-.gl-store-meta{
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  flex: 1;
-}
-
-
-.gl-store-name{
-  font-weight: 900;
-  letter-spacing: .02em;
-  color: var(--text);
-  white-space: nowrap;
+.gl-row-main{ min-width: 0; }
+.gl-row-name{
+  font-weight: 650;
+  letter-spacing: .1px;
   overflow: hidden;
   text-overflow: ellipsis;
+  word-break: break-word;
+  max-width: 100%;
 }
+.gl-row-meta{ color: var(--muted); font-size: 12px; margin-top: 4px; }
+.gl-row-actions{ display:flex; align-items:center; gap: 8px; flex-shrink: 0; }
 
-
-.gl-store-badge{
-  margin-top: .25rem;
-  font-size: .70rem;
-  letter-spacing: .14em;
-  text-transform: uppercase;
-  font-weight: 900;
-  color: var(--blackText);
-  background: linear-gradient(135deg, var(--gold), var(--blue));
+.gl-pill{
+  display:inline-flex;
+  align-items:center;
+  gap: 6px;
+  padding: 6px 10px;
   border-radius: 999px;
-  padding: .25rem .6rem;
-  width: fit-content;
+  border: 1px solid var(--stroke-2);
+  background: rgba(255,255,255,.04);
+  font-size: 12px;
+  color: var(--gold);
 }
 
+.gl-inline-summary{ display:flex; align-items:center; gap: 6px; }
+.gl-header .gl-inline-summary{ justify-content: flex-start; gap: 6px; }
+.gl-link-edit{ font-size: 12px; color: var(--muted); background: transparent; border: 0; padding: 4px 6px; cursor: pointer; }
+.gl-link-edit:hover{ color: var(--gold); text-decoration: underline; }
 
-.gl-store-badge.ghost{
-  background: rgba(4,8,18,.45);
-  border: 1px solid rgba(126,224,255,.18);
-  color: var(--muted2);
+/* =========================================================
+   INPUTS
+   ========================================================= */
+.gl-row-fields{
+  display:grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  width: 100%;
 }
 
-
-.gl-store-check{
-  width: 28px;
-  height: 28px;
-  border-radius: 999px;
-  display: grid;
-  place-items: center;
-  border: 1px solid rgba(126,224,255,.22);
-  color: rgba(255,255,255,.35);
-  flex: 0 0 auto;
+@media (min-width: 600px){
+  .gl-row-fields{ grid-template-columns: 1fr 80px 100px; }
 }
 
-
-.gl-store-check.on{
-  color: var(--blackText);
-  background: linear-gradient(135deg, var(--gold), var(--blue));
-  border-color: rgba(246,220,138,.35);
-}
-
-
-/* -----------------------------------------
-   Prev/Next row
------------------------------------------- */
-.gl-nav{
-  display:flex;
-  justify-content: space-between;
-  gap: .6rem;
-
-
-  /* push to bottom of panel */
-  margin-top: auto;
-  padding-top: 1rem;
-}
-
-
-.gl-wide{ width: 100%; }
-
-
-/* -----------------------------------------
-   Review panel
------------------------------------------- */
-.gl-review{
-  border-radius: 1.1rem;
-  padding: 1rem;
-  margin-top: .75rem;
-}
-
-
-.gl-summary-line{
-  display:flex;
-  justify-content: space-between;
-  gap: .75rem;
-  padding: .45rem 0;
-  border-bottom: 1px solid rgba(126,224,255,.10);
-}
-.gl-summary-line:last-child{ border-bottom: none; }
-
-
-/* -----------------------------------------
-   Responsive adjustments
------------------------------------------- */
 @media (max-width: 560px){
-  .gl-wizard{ padding: .95rem; }
-  .gl-panel{ padding: .85rem; min-height: 360px; }
-  .gl-stage{ min-height: 360px; }
+  .gl-row-fields{ grid-template-columns: 1fr 80px; }
+  .gl-field-unit{ grid-column: 1 / -1; }
 }
 
+.gl-field{ display:flex; flex-direction: column; gap: 6px; }
+.gl-field-wide{ width: 100%; }
+.gl-label{ font-size: 12px; color: var(--muted); }
 
-/* Landscape phones: reduce tall dead space */
-@media (max-height: 520px){
-  .gl-panel{ min-height: 320px; }
-  .gl-stage{ min-height: 320px; }
+.gl-input{
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid var(--stroke);
+  background: rgba(0,0,0,.22);
+  color: var(--text);
+  padding: 10px 10px;
+  outline: none;
 }
 
-
-@media (max-width: 860px){
-  .gl-top{ flex-direction: column; }
+.gl-input:focus{
+  border-color: rgba(31,93,255,.55);
+  box-shadow: 0 0 0 3px rgba(31,93,255,.18);
 }
 
+/* =========================================================
+   STRATEGY GRID
+   ========================================================= */
+.gl-grid{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+@media (max-width: 760px){
+  .gl-grid{ grid-template-columns: 1fr; }
+}
+
+.gl-priority{ display:flex; flex-direction: column; gap: 10px; }
+
+.gl-priority-row{
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  background: rgba(255,255,255,.04);
+  border: 1px solid var(--stroke);
+}
+
+.gl-priority-name{ flex: 1; min-width: 0; }
+.gl-priority-actions{ display:flex; gap: 8px; }
+
+/* =========================================================
+   SUMMARY / RECEIPT
+   ========================================================= */
+.gl-summary{ display:flex; flex-direction: column; gap: 10px; }
+.gl-summary-row{ display:flex; justify-content: space-between; gap: 12px; }
+.gl-strong{ font-weight: 700; }
+
+.gl-summary-total{
+  padding-top: 10px;
+  border-top: 1px solid var(--stroke);
+  font-size: 16px;
+}
+
+.gl-note{ color: var(--muted); font-size: 12px; margin: 10px 0 0; }
+.gl-inline-summary{ display:flex; align-items:center; justify-content: space-between; gap: 10px; margin-top: 10px; }
+
+.gl-receipt{ display:flex; flex-direction: column; gap: 10px; }
+.gl-receipt-row{ display:flex; justify-content: space-between; gap: 12px; }
+.gl-divider{ height: 1px; background: var(--stroke); margin: 10px 0; }
+
+/* =========================================================
+   PANEL FOOTER (buttons always visible at bottom)
+   ========================================================= */
+.gl-panel-footer{
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  gap: 12px;
+
+  margin-top: auto;
+  padding: 12px 2px 0;
+
+  flex-shrink: 0;
+}
+
+.gl-hint{ color: var(--muted); font-size: 12px; }
+
+.gl-footer{
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 10px 18px 18px;
+  width: 100%;
+}
+
+/* =========================================================
+   ACCESSIBILITY
+   ========================================================= */
+.gl-btn:focus-visible,
+.gl-step:focus-visible{
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(246, 220, 138, .18);
+  border-color: rgba(246, 220, 138, .55);
+}
+
+/* Mobile tightening */
+@media (max-width: 420px){
+  .gl-header{ padding-left: 12px; padding-right: 12px; }
+  .gl-steps{ padding-left: 12px; padding-right: 12px; }
+  .gl-panel{ padding-left: 12px; padding-right: 12px; }
+  .gl-panel-footer{ flex-direction: column; align-items: stretch; }
+}

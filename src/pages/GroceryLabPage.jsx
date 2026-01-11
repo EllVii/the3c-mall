@@ -1,305 +1,167 @@
 // src/pages/GroceryLabPage.jsx
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import "../styles/GroceryLabPage.css";
 import { readJSON, writeJSON, nowISO, safeId } from "../utils/Storage";
+import ConciergeIntro from "../assets/components/ConciergeIntro";
 
 /**
- * Goals for this page:
- * - 5-panel wizard: Lane → Stores → Fulfillment → Grocery Shopping → Final Review
- * - Cart split: protected Meal items + editable Extra items
- * - Static/demo pricing (no utils dependency that can break imports)
- * - If cart is empty, never start at Final Review; force Step 1
- * - If cart becomes empty, clear pricing summary so "winner" doesn't linger
+ * GroceryLabPage (Phase 1)
+ * - 5-panel locked carousel
+ * - Each panel scrolls vertically inside itself
+ * - Protected Meal Plan items + Editable Extras
+ * - Deterministic daily demo pricing (rotates at 00:00 local)
  */
 
 const STRATEGY_KEY = "grocery.strategy.v1";
 const STORE_USAGE_KEY = "grocery.storeUsage.v1";
 const HANDOFF_KEY = "handoff.mealToGrocery.v1";
+const PROFILE_KEY = "concierge.profile.v1";
 
-// Protected items coming from meal/recipes
 const MEAL_ITEMS_KEY = "cart.mealItems.v1";
-
-// Editable grocery cart items (extras)
 const GROCERY_KEY = "grocery.items.v1";
-
-// Pricing summary persisted
 const PRICING_SUMMARY_KEY = "grocery.pricingSummary.v1";
+const SAVINGS_HISTORY_KEY = "grocery.savingsHistory.v1";
 
 const STORES = [
   { id: "costco", name: "Costco" },
   { id: "walmart", name: "Walmart" },
   { id: "aldi", name: "ALDI" },
   { id: "target", name: "Target" },
-  {
-    id: "kroger",
-    name: "Kroger",
-    brands: "Fry’s • Ralphs • Smith’s • King Soopers • Harris Teeter • Fred Meyer",
-  },
-  {
-    id: "safeway_albertsons",
-    name: "Safeway / Albertsons",
-    brands: "Safeway • Albertsons • Vons • Pavilions • Tom Thumb • Randall’s • Carrs",
-  },
+  { id: "sprouts", name: "Sprouts" },
 ];
 
-const CATALOG = [
-  {
-    id: "dairy",
-    title: "Dairy",
-    items: ["Milk", "Eggs", "Butter", "Yogurt", "Sour cream", "Cottage cheese", "Cheddar cheese", "Mozzarella"],
-  },
-  {
-    id: "produce",
-    title: "Produce",
-    items: ["Bananas", "Apples", "Oranges", "Spinach", "Romaine", "Avocado", "Tomatoes", "Onions"],
-  },
-  {
-    id: "beverages",
-    title: "Beverages",
-    items: ["Orange juice", "Coffee", "Tea", "Sparkling water", "Soda", "Protein shake"],
-  },
-  {
-    id: "meat",
-    title: "Meat / Protein",
-    items: ["Ground beef", "Chicken breast", "Salmon", "Turkey", "Bacon", "Egg whites", "Steak"],
-  },
-  {
-    id: "pantry",
-    title: "Pantry",
-    items: ["Rice", "Pasta", "Olive oil", "Salt", "Pepper", "Hot sauce", "Cereal", "Bread"],
-  },
-  {
-    id: "frozen",
-    title: "Frozen",
-    items: ["Frozen vegetables", "Ice cream", "Frozen fruit", "Pizza", "Chicken nuggets"],
-  },
-];
-
-function money(n) {
-  const v = Number(n || 0);
-  return v.toLocaleString(undefined, { style: "currency", currency: "USD" });
+function num(n, fallback = 0) {
+  const v = Number(n);
+  return Number.isFinite(v) ? v : fallback;
 }
 
-function normalizeCartItem(raw) {
+function money2(n) {
+  return num(n, 0).toFixed(2);
+}
+
+// Accept older/localStorage shapes safely.
+// If it doesn't contain required numbers, return null.
+function normalizePricingSummary(p) {
+  if (!p || typeof p !== "object") return null;
+
+  // support both old + new keys
+  const total = num(p.total ?? p.grandTotal ?? null, NaN);
+  const subtotal = num(p.subtotal ?? null, NaN);
+  const tax = num(p.tax ?? null, NaN);
+
+  // If at least total is valid, we can display it (subtotal/tax optional).
+  if (!Number.isFinite(total)) return null;
+
+  return {
+    ...p,
+    total,
+    subtotal: Number.isFinite(subtotal) ? subtotal : Math.max(0, total - num(tax, 0)),
+    tax: Number.isFinite(tax) ? tax : 0,
+    dailyMult: num(p.dailyMult ?? 1, 1),
+    itemCount: num(p.itemCount ?? p.itemsCount ?? 0, 0),
+    winnerStoreName: String(p.winnerStoreName ?? p.winner ?? p.chosenStoreName ?? "—"),
+    dayKey: String(p.dayKey ?? p.dateKey ?? dayKeyLocal()),
+    note: String(p.note ?? "Demo pricing rotates daily at local midnight."),
+  };
+}
+
+const PANELS = [
+  { id: "items", title: "Items" },
+  { id: "strategy", title: "Strategy" },
+  { id: "pricing", title: "Pricing" },
+  { id: "review", title: "Review" },
+  { id: "receipt", title: "Receipt" },
+];
+
+const clamp = (n, min, max) => Math.min(max, Math.max(min, n));
+
+function dayKeyLocal(d = new Date()) {
+  const yr = d.getFullYear();
+  const mo = String(d.getMonth() + 1).padStart(2, "0");
+  const da = String(d.getDate()).padStart(2, "0");
+  return `${yr}-${mo}-${da}`;
+}
+
+function monthKeyLocal(d = new Date()) {
+  const yr = d.getFullYear();
+  const mo = String(d.getMonth() + 1).padStart(2, "0");
+  return `${yr}-${mo}`;
+}
+
+function seededInt(seedStr) {
+  // deterministic hash -> 32-bit int
+  let h = 2166136261;
+  for (let i = 0; i < seedStr.length; i++) {
+    h ^= seedStr.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return (h >>> 0) | 0;
+}
+
+function defaultStrategy() {
+  return {
+    storeRules: {
+      costco: "Bulk meats & pantry staples",
+      walmart: "Everyday basics",
+      aldi: "Produce & value picks",
+      target: "Convenience add-ons",
+      sprouts: "Specialty / fresh",
+    },
+    priorityOrder: ["aldi", "walmart", "costco", "target", "sprouts"],
+    // Quick Mode: how to shop today
+    shoppingMode: "multi", // "multi" | "single"
+    // Allowed stores (used by pricing + routing). In single mode, first entry is chosen store.
+    selectedStores: ["aldi", "walmart", "costco", "target", "sprouts"],
+    lastUpdated: nowISO(),
+  };
+}
+
+function normalizeItem(raw, { locked = false } = {}) {
   return {
     id: raw?.id || safeId("itm"),
-    name: String(raw?.name || raw?.canonicalName || "").trim(),
-    qty: Number(raw?.qty ?? raw?.quantity ?? 1),
-    unit: raw?.unit || "each",
-    substitute: raw?.substitute || "",
-    substituteReason: raw?.substituteReason || "",
-    // optional if you later store per-store prices on the item itself
-    pricesByStore: raw?.pricesByStore || raw?.prices || {},
+    name: String(raw?.name || "").trim(),
+    qty: Number.isFinite(Number(raw?.qty)) ? Number(raw.qty) : 1,
+    unit: String(raw?.unit || "each"),
+    locked: !!(raw?.locked ?? locked),
+    substitute: String(raw?.substitute || ""),
+    substituteReason: String(raw?.substituteReason || ""),
   };
 }
 
-function toItemFromName(name) {
-  return {
-    id: safeId("itm"),
-    name: String(name || "").trim(),
-    qty: 1,
-    unit: "each",
-    substitute: "",
-    substituteReason: "",
-    pricesByStore: {},
-  };
+function isValidName(name) {
+  return String(name || "").trim().length >= 2;
 }
 
-/**
- * Static demo pricing table (for Alpha/Beta UX).
- * This is intentionally simple and resilient.
- * Any item not found returns null price => shows the "testing mode" notice.
- */
-const STATIC_PRICE_TABLE = {
-  // Dairy
-  milk: { walmart: 3.48, costco: 3.2, aldi: 3.19, target: 3.69, kroger: 3.79, safeway_albertsons: 3.99 },
-  eggs: { walmart: 3.12, costco: 3.0, aldi: 2.98, target: 3.39, kroger: 3.49, safeway_albertsons: 3.79 },
-  butter: { walmart: 4.68, costco: 4.4, aldi: 4.25, target: 4.89, kroger: 4.99, safeway_albertsons: 5.29 },
-  yogurt: { walmart: 1.08, costco: 1.0, aldi: 0.98, target: 1.19, kroger: 1.15, safeway_albertsons: 1.29 },
-
-  // Produce
-  bananas: { walmart: 0.62, costco: 0.59, aldi: 0.55, target: 0.69, kroger: 0.65, safeway_albertsons: 0.75 },
-  apples: { walmart: 1.48, costco: 1.35, aldi: 1.29, target: 1.65, kroger: 1.59, safeway_albertsons: 1.79 },
-  avocado: { walmart: 0.98, costco: 0.89, aldi: 0.85, target: 1.09, kroger: 1.05, safeway_albertsons: 1.25 },
-
-  // Meat
-  "ground beef": { walmart: 4.98, costco: 4.65, aldi: 4.75, target: 5.19, kroger: 5.29, safeway_albertsons: 5.49 },
-  "chicken breast": { walmart: 3.28, costco: 3.05, aldi: 3.19, target: 3.49, kroger: 3.59, safeway_albertsons: 3.79 },
-  steak: { walmart: 9.98, costco: 9.25, aldi: 9.75, target: 10.49, kroger: 10.29, safeway_albertsons: 10.99 },
-  salmon: { walmart: 9.48, costco: 8.95, aldi: 9.25, target: 9.99, kroger: 10.49, safeway_albertsons: 10.99 },
-
-  // Pantry
-  rice: { walmart: 2.98, costco: 2.75, aldi: 2.69, target: 3.19, kroger: 3.09, safeway_albertsons: 3.39 },
-  pasta: { walmart: 1.28, costco: 1.15, aldi: 1.09, target: 1.39, kroger: 1.49, safeway_albertsons: 1.59 },
-  "olive oil": { walmart: 8.98, costco: 8.25, aldi: 7.99, target: 9.49, kroger: 9.29, safeway_albertsons: 9.99 },
-  cereal: { walmart: 3.98, costco: 3.75, aldi: 3.59, target: 4.29, kroger: 4.49, safeway_albertsons: 4.79 },
-};
-
-function keyifyItemName(name) {
-  return String(name || "")
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, " ");
-}
-
-function getStaticUnitPrice(itemName, storeId) {
-  const key = keyifyItemName(itemName);
-  const row = STATIC_PRICE_TABLE[key];
-  if (!row) return null;
-  const p = row[storeId];
-  return typeof p === "number" ? p : null;
-}
-
-function computePricingSummary({ items, lane, includedStoreIds, stores }) {
-  const safeItems = (Array.isArray(items) ? items : [])
-    .map(normalizeCartItem)
-    .filter((x) => x.name);
-
-  const included = (Array.isArray(includedStoreIds) && includedStoreIds.length
-    ? includedStoreIds
-    : stores.map((s) => s.id)
-  ).filter(Boolean);
-
-  // build per-item price list
-  const perItem = safeItems.map((it) => {
-    const storePrices = {};
-    for (const sid of included) {
-      const unit = getStaticUnitPrice(it.name, sid);
-      storePrices[sid] = unit; // can be null
-    }
-    return { ...it, storePrices };
-  });
-
-  // helper: ext for item at store (or null)
-  const extAt = (it, sid) => {
-    const unit = it.storePrices?.[sid];
-    if (typeof unit !== "number") return null;
-    const qty = Number(it.qty || 0);
-    return qty > 0 ? unit * qty : 0;
-  };
-
-  // SINGLE STORE: pick store with lowest total (ignoring null items => penalize)
-  if (lane === "single-store") {
-    const storeTotals = {};
-    for (const sid of included) {
-      let total = 0;
-      let missing = 0;
-      for (const it of perItem) {
-        const ext = extAt(it, sid);
-        if (ext == null) {
-          missing += 1;
-          continue;
-        }
-        total += ext;
-      }
-      // penalty for missing to avoid "winner" being a store with no prices
-      if (missing > 0) total += missing * 9999;
-      storeTotals[sid] = total;
-    }
-
-    let chosenStoreId = included[0] || null;
-    for (const sid of included) {
-      if (storeTotals[sid] < storeTotals[chosenStoreId]) chosenStoreId = sid;
-    }
-
-    const perItemAllocations = perItem.map((it) => {
-      const unit = it.storePrices?.[chosenStoreId];
-      const ext = extAt(it, chosenStoreId);
-      return {
-        itemId: it.id,
-        name: it.name,
-        qty: it.qty,
-        unit: it.unit,
-        chosenStoreId,
-        unitPrice: typeof unit === "number" ? unit : null,
-        ext: typeof ext === "number" ? ext : null,
-        hasPrice: typeof unit === "number",
-      };
-    });
-
-    // compute grand total WITHOUT penalties
-    const cleanGrand = perItemAllocations.reduce((sum, x) => sum + (typeof x.ext === "number" ? x.ext : 0), 0);
-
-    return {
-      mode: "single-store",
-      chosenStoreId,
-      storeTotals: Object.fromEntries(
-        included.map((sid) => [
-          sid,
-          perItem.reduce((sum, it) => sum + (extAt(it, sid) ?? 0), 0),
-        ])
-      ),
-      perItemAllocations,
-      grandTotal: cleanGrand,
-      missingCount: perItemAllocations.filter((x) => !x.hasPrice).length,
-      updatedAt: nowISO(),
-    };
-  }
-
-  // MULTI STORE: choose cheapest available per item among included stores
-  const perItemAllocations = perItem.map((it) => {
-    let bestSid = null;
-    let bestExt = null;
-    let bestUnit = null;
-
-    for (const sid of included) {
-      const unit = it.storePrices?.[sid];
-      const ext = extAt(it, sid);
-      if (typeof unit !== "number" || typeof ext !== "number") continue;
-
-      if (bestExt == null || ext < bestExt) {
-        bestExt = ext;
-        bestSid = sid;
-        bestUnit = unit;
-      }
-    }
-
-    return {
-      itemId: it.id,
-      name: it.name,
-      qty: it.qty,
-      unit: it.unit,
-      chosenStoreId: bestSid,
-      unitPrice: bestUnit,
-      ext: bestExt,
-      hasPrice: typeof bestUnit === "number",
-    };
-  });
-
-  const storeTotals = {};
-  for (const sid of included) storeTotals[sid] = 0;
-
-  for (const x of perItemAllocations) {
-    if (!x.chosenStoreId || typeof x.ext !== "number") continue;
-    storeTotals[x.chosenStoreId] += x.ext;
-  }
-
-  const grandTotal = Object.values(storeTotals).reduce((a, b) => a + (Number(b) || 0), 0);
-
-  return {
-    mode: "multi-store",
-    chosenStoreId: null,
-    storeTotals,
-    perItemAllocations,
-    grandTotal,
-    missingCount: perItemAllocations.filter((x) => !x.hasPrice).length,
-    updatedAt: nowISO(),
-  };
-}
-
-// Small demo cart loader (no external utils)
-function demoCartItems() {
+// fallback only
+function itemsFromMealPlanFallback() {
   const names = ["Milk", "Eggs", "Ground beef", "Bananas", "Olive oil", "Pasta", "Orange juice"];
-  return names.map((n) => ({
-    id: safeId("itm"),
-    name: n,
-    qty: n.toLowerCase() === "eggs" ? 2 : 1,
-    unit: "each",
-    substitute: "",
-    substituteReason: "",
-    pricesByStore: {},
-  }));
+  return names.map((n) =>
+    normalizeItem(
+      { id: safeId("itm"), name: n, qty: n.toLowerCase() === "eggs" ? 2 : 1, unit: "each" },
+      { locked: true }
+    )
+  );
+}
+
+// -------------------------------
+// Daily Price Rotation (00:00 local time) — SAFE
+// -------------------------------
+function getDailyMultiplier(date = new Date()) {
+  const seed = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) {
+    hash = seed.charCodeAt(i) + ((hash << 5) - hash);
+    hash |= 0;
+  }
+  return 0.96 + (Math.abs(hash) % 9) / 100; // 0.96..1.04
+}
+
+function msUntilNextMidnightLocal() {
+  const now = new Date();
+  const next = new Date(now);
+  next.setHours(24, 0, 0, 0);
+  return Math.max(250, next.getTime() - now.getTime());
 }
 
 export default function GroceryLabPage() {
@@ -309,772 +171,806 @@ export default function GroceryLabPage() {
   const cameFromMeal = location.state?.from === "meal";
   const quickReview = location.state?.quickReview === true;
 
+  // persisted (read once)
   const savedStrategy = useMemo(() => readJSON(STRATEGY_KEY, null), []);
   const savedUsage = useMemo(() => readJSON(STORE_USAGE_KEY, null), []);
+  const savedMealItems = useMemo(() => readJSON(MEAL_ITEMS_KEY, null), []);
+  const savedGroceries = useMemo(() => readJSON(GROCERY_KEY, null), []);
+  const savedPricing = useMemo(() => readJSON(PRICING_SUMMARY_KEY, null), []);
+  const savedHandoff = useMemo(() => readJSON(HANDOFF_KEY, null), []);
+  const savedProfile = useMemo(() => readJSON(PROFILE_KEY, null), []);
+  const savedSavingsHistory = useMemo(() => readJSON(SAVINGS_HISTORY_KEY, []), []);
 
-  const [appMsg, setAppMsg] = useState("");
-  const [stepIndex, setStepIndex] = useState(0);
+  const [profile, setProfile] = useState(savedProfile || null);
+  const [introOpen, setIntroOpen] = useState(false);
 
-  const [lane, setLane] = useState(savedStrategy?.lane || "auto-multi"); // auto-multi | single-store
-  const [includedStoreIds, setIncludedStoreIds] = useState(() => {
-    const arr = savedStrategy?.includedStoreIds;
-    return Array.isArray(arr) && arr.length ? arr : STORES.map((s) => s.id);
-  });
-  const [fulfillment, setFulfillment] = useState(savedStrategy?.fulfillment || "pickup"); // in-store | pickup | delivery
+  // Daily rotation state (MUST be inside component)
+  const [rotationTick, setRotationTick] = useState(0);
 
-  const [mealItems, setMealItems] = useState(() => {
-    const raw = readJSON(MEAL_ITEMS_KEY, []);
-    return Array.isArray(raw) ? raw.map(normalizeCartItem) : [];
-  });
+  const dailyMult = useMemo(() => {
+    const v = getDailyMultiplier(new Date());
+    return Number.isFinite(v) ? v : 1;
+  }, [rotationTick]);
 
-  const [extraItems, setExtraItems] = useState(() => {
-    const raw = readJSON(GROCERY_KEY, []);
-    return Array.isArray(raw) ? raw.map(normalizeCartItem) : [];
-  });
+  const safeDailyMult = Number.isFinite(dailyMult) ? dailyMult : 1;
 
-  const allItems = useMemo(() => [...mealItems, ...extraItems], [mealItems, extraItems]);
-  const hasItems = allItems.some((x) => String(x?.name || "").trim().length);
-
-  const [pricingSummary, setPricingSummary] = useState(() => readJSON(PRICING_SUMMARY_KEY, null));
-
-  // Panel 4
-  const [shopQuery, setShopQuery] = useState("");
-  const [activeCategory, setActiveCategory] = useState("dairy");
-
-  const steps = useMemo(
-    () => [
-      { id: "lane", title: "Strategy Type" },
-      { id: "stores", title: "Select Stores" },
-      { id: "fulfillment", title: "Fulfillment Mode" },
-      { id: "shop", title: "Grocery Shopping" },
-      { id: "review", title: "Final Review" },
-    ],
-    []
-  );
-
-  const stepCount = steps.length;
-  const goNext = () => setStepIndex((p) => Math.min(p + 1, stepCount - 1));
-  const goPrev = () => setStepIndex((p) => Math.max(p - 1, 0));
-
-  function pickAndAdvance(setter, value) {
-    setter(value);
-    window.setTimeout(() => setStepIndex((p) => Math.min(p + 1, stepCount - 1)), 140);
-  }
-
-  const shopIdx = useMemo(() => steps.findIndex((s) => s.id === "shop"), [steps]);
-  const reviewIdx = useMemo(() => steps.findIndex((s) => s.id === "review"), [steps]);
-
-  // One-time handoff message
+  // midnight tick
   useEffect(() => {
-    const handoff = readJSON(HANDOFF_KEY, null);
-    if (handoff?.message || handoff?.at) {
-      setAppMsg(handoff?.message || "Loaded from Meal Plan ✅");
-      writeJSON(HANDOFF_KEY, null);
-      window.setTimeout(() => setAppMsg(""), 2200);
-    }
+    let t = null;
+
+    const schedule = () => {
+      const ms = msUntilNextMidnightLocal();
+      t = window.setTimeout(() => {
+        setRotationTick((x) => x + 1);
+        schedule();
+      }, ms);
+    };
+
+    schedule();
+
+    return () => {
+      if (t) window.clearTimeout(t);
+    };
   }, []);
 
-  // Start logic:
-  // - if no items: force step 0
-  // - if items + quickReview: jump to review
-  useEffect(() => {
-    if (!hasItems) {
-      if (stepIndex !== 0) setStepIndex(0);
-      return;
-    }
-    if (cameFromMeal && quickReview && reviewIdx >= 0) {
-      setStepIndex(reviewIdx);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasItems, cameFromMeal, quickReview, reviewIdx]);
+  // initial items
+  const initialMealItems = useMemo(() => {
+    const handoffItems = Array.isArray(savedHandoff?.items) ? savedHandoff.items : null;
+    const base = handoffItems || savedMealItems || null;
+    const src = Array.isArray(base) && base.length ? base : itemsFromMealPlanFallback();
+    return src.map((it) => normalizeItem(it, { locked: true })).filter((it) => isValidName(it.name));
+  }, [savedHandoff, savedMealItems]);
 
-  // Never allow 0 stores
-  useEffect(() => {
-    if (!includedStoreIds.length) setIncludedStoreIds(STORES.map((s) => s.id));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [includedStoreIds.length]);
+  const initialExtraItems = useMemo(() => {
+    const src = Array.isArray(savedGroceries) ? savedGroceries : [];
+    return src.map((it) => normalizeItem(it, { locked: false })).filter((it) => isValidName(it.name));
+  }, [savedGroceries]);
 
-  // Persist strategy
-  useEffect(() => {
-    writeJSON(STRATEGY_KEY, { lane, includedStoreIds, fulfillment, updatedAt: nowISO() });
-  }, [lane, includedStoreIds, fulfillment]);
-
-  // Persist carts
-  useEffect(() => writeJSON(MEAL_ITEMS_KEY, mealItems), [mealItems]);
-  useEffect(() => writeJSON(GROCERY_KEY, extraItems), [extraItems]);
-
-  // Clear pricing if cart empties (fix lingering "winner")
-  useEffect(() => {
-    if (!hasItems && pricingSummary) {
-      setPricingSummary(null);
-      writeJSON(PRICING_SUMMARY_KEY, null);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasItems]);
-
-  // Store ordering logic
-  const usageTotals =
-    savedUsage?.total && typeof savedUsage.total === "object" ? savedUsage.total : {};
-
-  const mostUsedStoreId = useMemo(() => {
-    const entries = Object.entries(usageTotals);
-    if (!entries.length) return null;
-    entries.sort((a, b) => (b[1] || 0) - (a[1] || 0));
-    return entries[0]?.[0] || null;
-  }, [usageTotals]);
-
-  const recommendedStoreId = useMemo(() => {
-    if (lane === "single-store") return mostUsedStoreId || "walmart";
-    return mostUsedStoreId || "costco";
-  }, [lane, mostUsedStoreId]);
-
-  const orderedStores = useMemo(() => {
-    const rec = STORES.some((s) => s.id === recommendedStoreId) ? recommendedStoreId : null;
-    const score = (id) => {
-      const isRec = rec && id === rec ? 100000 : 0;
-      const isIncluded = includedStoreIds.includes(id) ? 10000 : 0;
-      const use = Number(usageTotals?.[id] || 0);
-      return isRec + isIncluded + use;
+  const [strategy, setStrategy] = useState(() => {
+    const base = defaultStrategy();
+    const s = savedStrategy && typeof savedStrategy === "object" ? savedStrategy : {};
+    const validStoreIds = new Set(STORES.map((x) => x.id));
+    const selectedStores = Array.isArray(s.selectedStores) && s.selectedStores.length
+      ? s.selectedStores.filter((id) => validStoreIds.has(id))
+      : base.selectedStores;
+    const mode = s.shoppingMode === "single" ? "single" : "multi";
+    return {
+      ...base,
+      ...s,
+      shoppingMode: mode,
+      selectedStores,
+      lastUpdated: s.lastUpdated || base.lastUpdated,
     };
-    return [...STORES].sort((a, b) => score(b.id) - score(a.id));
-  }, [includedStoreIds, usageTotals, recommendedStoreId]);
+  });
+  const [storeUsage, setStoreUsage] = useState(() => savedUsage || {});
+  const [mealItems, setMealItems] = useState(initialMealItems);
+  const [extraItems, setExtraItems] = useState(initialExtraItems);
+  const [stepIndex, setStepIndex] = useState(0);
+const [pricingSummary, setPricingSummary] = useState(() => normalizePricingSummary(savedPricing));
+  const [savingsHistory, setSavingsHistory] = useState(() => (Array.isArray(savedSavingsHistory) ? savedSavingsHistory : []));
 
-  const statusLabel = `${lane === "auto-multi" ? "Multi-Store" : "Single Store"} · ${fulfillment}`;
+  // focus heading when step changes
+  const panelHeadingRef = useRef(null);
+  useEffect(() => {
+    panelHeadingRef.current?.focus?.();
+  }, [stepIndex]);
 
-  function toggleStore(id) {
-    setIncludedStoreIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
-  }
+  const allItems = useMemo(() => {
+    const merged = [...mealItems, ...extraItems].filter((it) => isValidName(it.name));
+    const seen = new Set();
+    const out = [];
+    for (const it of merged) {
+      const k = it.name.trim().toLowerCase();
+      if (seen.has(k)) continue;
+      seen.add(k);
+      out.push(it);
+    }
+    return out;
+  }, [mealItems, extraItems]);
 
-  // Cart editing
-  function addExtraItem(name = "") {
-    const n = String(name || "").trim();
-    setExtraItems((prev) => [...prev, toItemFromName(n)]);
-    if (n) setShopQuery("");
-  }
+  const cartIsEmpty = allItems.length === 0;
 
-  function updateExtraItem(id, patch) {
-    setExtraItems((prev) => prev.map((x) => (x.id === id ? { ...x, ...patch } : x)));
-  }
+  const monthlySavings = useMemo(() => {
+    const mk = monthKeyLocal();
+    const entries = Array.isArray(savingsHistory) ? savingsHistory.filter((e) => e.monthKey === mk) : [];
+    const preferredTotal = entries.reduce((acc, e) => acc + num(e.preferredTotal, 0), 0);
+    const actualTotal = entries.reduce((acc, e) => acc + num(e.actualTotal, 0), 0);
+    const savings = entries.reduce((acc, e) => acc + num(e.savings, 0), 0);
+    return {
+      entries,
+      trips: entries.length,
+      preferredTotal,
+      actualTotal,
+      savings,
+      preferredStoreName: entries[entries.length - 1]?.preferredStoreName || "—",
+    };
+  }, [savingsHistory]);
 
-  function removeExtraItem(id) {
-    setExtraItems((prev) => prev.filter((x) => x.id !== id));
-  }
+  const recentSavings = useMemo(() => {
+    const list = Array.isArray(savingsHistory) ? savingsHistory.slice(-8).reverse() : [];
+    return list;
+  }, [savingsHistory]);
 
-  function removeMealItemSafe(id) {
-    const ok = window.confirm("Remove this Meal Plan item from the protected list?");
-    if (!ok) return;
-    setMealItems((prev) => prev.filter((x) => x.id !== id));
-  }
+  const headerBadge = useMemo(() => {
+    const storeId = profile?.defaultStoreId || strategy?.selectedStores?.[0] || null;
+    const storeName = storeId ? (STORES.find((s) => s.id === storeId)?.name || "Store") : null;
+    const modeKey = profile?.shoppingMode || (strategy?.shoppingMode === "single" ? "fastest" : "best_price");
+    const modeLabel = modeKey === "fastest" ? "Fastest" : modeKey === "balanced" ? "Balanced" : "Best price";
+    return { storeName, modeLabel };
+  }, [profile, strategy]);
 
-  function loadDemoCart() {
-    setExtraItems(demoCartItems().map(normalizeCartItem));
-    setAppMsg("Demo groceries loaded into your cart ✅");
-    window.setTimeout(() => setAppMsg(""), 1700);
-    if (shopIdx >= 0) setStepIndex(shopIdx); // put them in the shopping experience
-  }
+  useEffect(() => {
+    if (profile) writeJSON(PROFILE_KEY, profile);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile]);
 
-  function calculatePricing() {
-    if (!hasItems) {
+  const handleIntroClose = () => {
+    setIntroOpen(false);
+    const latestProfile = readJSON(PROFILE_KEY, null);
+    if (latestProfile) setProfile(latestProfile);
+    const latestStrategy = readJSON(STRATEGY_KEY, null);
+    if (latestStrategy && typeof latestStrategy === "object") {
+      const validStoreIds = new Set(STORES.map((x) => x.id));
+      const selectedStores = Array.isArray(latestStrategy.selectedStores)
+        ? latestStrategy.selectedStores.filter((id) => validStoreIds.has(id))
+        : strategy.selectedStores;
+      const mode = latestStrategy.shoppingMode === "single" ? "single" : "multi";
+      setStrategy((prev) => ({
+        ...prev,
+        ...latestStrategy,
+        shoppingMode: mode,
+        selectedStores,
+        lastUpdated: latestStrategy.lastUpdated || prev.lastUpdated,
+      }));
+    }
+  };
+
+  // guard rails
+  useEffect(() => {
+    // if empty, never allow review/receipt
+    if (cartIsEmpty && stepIndex >= 3) setStepIndex(0);
+
+    // clear pricing if cart emptied
+    if (cartIsEmpty && pricingSummary) setPricingSummary(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cartIsEmpty]);
+
+  // quick review only if not empty
+  useEffect(() => {
+    if (quickReview && !cartIsEmpty) setStepIndex(3);
+    if (quickReview && cartIsEmpty) setStepIndex(0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [quickReview, cartIsEmpty]);
+
+  // persist state
+  useEffect(() => { writeJSON(STRATEGY_KEY, strategy); }, [strategy]);
+  useEffect(() => { writeJSON(STORE_USAGE_KEY, storeUsage); }, [storeUsage]);
+  useEffect(() => { writeJSON(MEAL_ITEMS_KEY, mealItems); }, [mealItems]);
+  useEffect(() => { writeJSON(GROCERY_KEY, extraItems); }, [extraItems]);
+  useEffect(() => { writeJSON(PRICING_SUMMARY_KEY, pricingSummary); }, [pricingSummary]);
+  useEffect(() => { writeJSON(SAVINGS_HISTORY_KEY, savingsHistory); }, [savingsHistory]);
+  useEffect(() => { writeJSON(SAVINGS_HISTORY_KEY, savingsHistory); }, [savingsHistory]);
+
+  // step helpers
+  const goStep = (idx) => setStepIndex(clamp(idx, 0, PANELS.length - 1));
+  const next = () => goStep(stepIndex + 1);
+  const prev = () => goStep(stepIndex - 1);
+
+  // extras
+  const addExtraItem = () => {
+    setExtraItems((prev) => [
+      ...prev,
+      normalizeItem({ id: safeId("itm"), name: "", qty: 1, unit: "each" }, { locked: false }),
+    ]);
+  };
+
+  const updateItem = (setFn, id, patch) => {
+    setFn((prev) =>
+      prev.map((it) => (it.id === id ? normalizeItem({ ...it, ...patch }, { locked: it.locked }) : it))
+    );
+  };
+
+  const removeItem = (setFn, id) => {
+    setFn((prev) => prev.filter((it) => it.id !== id));
+  };
+
+  // demo pricing
+  const runPricing = () => {
+    if (cartIsEmpty) {
       setPricingSummary(null);
-      writeJSON(PRICING_SUMMARY_KEY, null);
-      setAppMsg("Cart is empty — add items before pricing.");
-      window.setTimeout(() => setAppMsg(""), 1900);
       return;
     }
 
-    const summary = computePricingSummary({
-      items: allItems,
-      lane: lane === "single-store" ? "single-store" : "multi-store",
-      includedStoreIds,
-      stores: STORES,
+    const seed = `${dayKeyLocal()}|${safeDailyMult.toFixed(2)}|${strategy?.priorityOrder?.join(",") || ""}|${allItems
+      .map((i) => i.name.toLowerCase())
+      .sort()
+      .join("|")}`;
+
+    const h = seededInt(seed);
+    const allowedStores = (Array.isArray(strategy?.selectedStores) && strategy.selectedStores.length
+      ? STORES.filter((s) => strategy.selectedStores.includes(s.id))
+      : STORES) || STORES;
+
+    const itemCount = allItems.reduce((acc, it) => acc + (Number(it.qty) || 1), 0);
+
+    const computeTotalsForStore = (store) => {
+      const sh = seededInt(`${seed}|${store.id}`);
+      const base = 2.5 + ((Math.abs(sh) % 250) / 100); // 2.50–4.99 per store
+      const rotatedBase = base * safeDailyMult;
+      const subtotal = Number((rotatedBase * itemCount).toFixed(2));
+      const tax = Number((subtotal * 0.082).toFixed(2));
+      const total = Number((subtotal + tax).toFixed(2));
+      return {
+        storeId: store.id,
+        storeName: store.name,
+        subtotal,
+        tax,
+        total,
+      };
+    };
+
+    let storeBreakdown = [];
+    let winnerRow;
+    if (strategy?.shoppingMode === "single") {
+      const chosenId = allowedStores[0]?.id || strategy?.selectedStores?.[0];
+      const chosenStore = allowedStores.find((s) => s.id === chosenId) || allowedStores[0] || STORES[0];
+      const row = computeTotalsForStore(chosenStore);
+      storeBreakdown = [row];
+      winnerRow = row;
+    } else {
+      storeBreakdown = allowedStores.map((s) => computeTotalsForStore(s));
+      winnerRow = storeBreakdown.reduce((min, r) => (r.total < min.total ? r : min), storeBreakdown[0]);
+    }
+
+    // Savings vs next-best (only meaningful in multi-store with 2+ stores)
+    let savingsVsNext = 0;
+    let nextBestStoreName = null;
+    let nextBestTotal = null;
+    if (strategy?.shoppingMode === "multi" && storeBreakdown.length > 1) {
+      const sorted = [...storeBreakdown].sort((a, b) => a.total - b.total);
+      const nextBest = sorted.find((r) => r.storeId !== winnerRow.storeId) || sorted[1] || null;
+      if (nextBest) {
+        savingsVsNext = Number((nextBest.total - winnerRow.total).toFixed(2));
+        nextBestStoreName = nextBest.storeName;
+        nextBestTotal = nextBest.total;
+      }
+    }
+
+    const preferredStoreId = strategy?.selectedStores?.[0] || strategy?.priorityOrder?.[0] || STORES[0].id;
+    const preferredStore = STORES.find((s) => s.id === preferredStoreId) || STORES[0];
+    const preferredRow = computeTotalsForStore(preferredStore);
+
+    const summary = {
+      computedAt: nowISO(),
+      dayKey: dayKeyLocal(),
+      dailyMult: safeDailyMult,
+      winnerStoreId: winnerRow.storeId,
+      winnerStoreName: winnerRow.storeName,
+      itemCount,
+      subtotal: winnerRow.subtotal,
+      tax: winnerRow.tax,
+      total: winnerRow.total,
+      note: "Static demo pricing rotates daily at local midnight.",
+      mode: strategy?.shoppingMode || "multi",
+      allowedStores: allowedStores.map((s) => s.id),
+      storeBreakdown,
+      savingsVsNext,
+      nextBestStoreName,
+      nextBestTotal,
+      preferredStoreName: preferredStore?.name,
+      preferredTotal: preferredRow?.total,
+      actualTotal: winnerRow.total,
+    };
+
+setPricingSummary(normalizePricingSummary(summary));
+
+    // Persist savings entry for monthly rollups (demo only)
+    const savingsEntry = {
+      id: safeId("sav"),
+      dayKey: dayKeyLocal(),
+      monthKey: monthKeyLocal(),
+      preferredStoreId: preferredStore.id,
+      preferredStoreName: preferredStore.name,
+      preferredTotal: preferredRow.total,
+      actualStoreId: winnerRow.storeId,
+      actualStoreName: winnerRow.storeName,
+      actualTotal: winnerRow.total,
+      savings: Number((preferredRow.total - winnerRow.total).toFixed(2)),
+      mode: strategy?.shoppingMode || "multi",
+    };
+    setSavingsHistory((prev) => {
+      const next = [...(Array.isArray(prev) ? prev : []), savingsEntry];
+      return next.slice(-120);
     });
 
-    setPricingSummary(summary);
-    writeJSON(PRICING_SUMMARY_KEY, summary);
+    setStoreUsage((prev) => ({
+      ...prev,
+      [winnerRow.storeId]: {
+        count: (prev?.[winnerRow.storeId]?.count || 0) + 1,
+        lastUsedAt: nowISO(),
+      },
+    }));
+  };
 
-    setAppMsg("Cart pricing calculated ✅");
-    window.setTimeout(() => setAppMsg(""), 1900);
-  }
-
-  function clearCartAll() {
-    setMealItems([]);
-    setExtraItems([]);
-    setPricingSummary(null);
-    writeJSON(PRICING_SUMMARY_KEY, null);
-
-    setAppMsg("Cart cleared ✅");
-    window.setTimeout(() => setAppMsg(""), 1600);
-
-    setStepIndex(0);
-  }
-
-  const conciergeText = useMemo(() => {
-    if (mealItems.filter((x) => x.name).length > 0) {
-      return "I already pulled items from your Meal Plan. Want to add anything else before we route prices?";
-    }
-    return "Let’s build your cart. Type what you need or use categories to add basics fast.";
-  }, [mealItems]);
-
-  const activeCat = useMemo(
-    () => CATALOG.find((c) => c.id === activeCategory) || CATALOG[0],
-    [activeCategory]
+  const trackStyle = useMemo(
+    () => ({
+      transform: `translateX(-${stepIndex * 20}%)`,
+    }),
+    [stepIndex]
   );
 
-  const searchMatches = useMemo(() => {
-    const q = shopQuery.trim().toLowerCase();
-    if (!q) return [];
-    const flat = CATALOG.flatMap((c) => c.items.map((name) => ({ category: c.id, name })));
-    return flat.filter((x) => x.name.toLowerCase().includes(q)).slice(0, 12);
-  }, [shopQuery]);
-
-  // “missing price” notice requirement
-  const missingPriceNotice =
-    pricingSummary && hasItems && Number(pricingSummary.missingCount || 0) > 0;
-
   return (
-    <div className="gl-shell page gl-page">
-      <section className="gl-top">
-        <div>
-          <p className="kicker">Lab · Grocery Routing</p>
-          <h1 className="h1">Grocery Lab</h1>
-          <p className="sub">Set how you shop, build your cart, then let 3C route pricing.</p>
+    <div className="gl-shell">
+      <header className="gl-header">
+        <div className="gl-header-left">
+          <h1 className="gl-title">Grocery Lab</h1>
+          <p className="gl-subtitle">Route your cart like a logistics pro.</p>
+          {headerBadge.storeName || headerBadge.modeLabel ? (
+            <div className="gl-inline-summary" style={{ marginTop: 6 }}>
+              {headerBadge.storeName ? <span className="gl-pill">{headerBadge.storeName}</span> : null}
+              {headerBadge.modeLabel ? <span className="gl-pill">{headerBadge.modeLabel}</span> : null}
+              <button className="gl-link-edit" type="button" onClick={() => setIntroOpen(true)}>Edit</button>
+            </div>
+          ) : null}
         </div>
 
-        <div className="gl-pill glass" aria-label="grocery lab status">
-          <span className="gl-tag">Status</span>
-          <div className="gl-pill-text">{statusLabel}</div>
+        <div className="gl-header-right">
+          {cameFromMeal && (
+            <button className="gl-btn gl-btn-ghost" onClick={() => nav(-1)} type="button">
+              ← Back
+            </button>
+          )}
+
+          <button className="gl-btn gl-btn-primary" onClick={() => nav("/app")} type="button">
+            Dashboard
+          </button>
         </div>
-      </section>
+      </header>
 
-      <div className="gl-wizard glass">
-        <header className="gl-wiz-head">
-          <div className="gl-dots" aria-label="wizard progress">
-            {steps.map((_, i) => (
-              <span
-                key={i}
-                className={`gl-dot ${i === stepIndex ? "on" : ""}`}
-                role="button"
-                tabIndex={0}
-                onClick={() => setStepIndex(i)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") setStepIndex(i);
-                }}
-                aria-label={`Go to step ${i + 1}`}
-              />
-            ))}
-          </div>
-          <span className="gl-tag">{steps[stepIndex]?.title}</span>
-        </header>
+      <nav className="gl-steps" aria-label="Grocery Lab steps">
+        {PANELS.map((p, idx) => {
+          const disabled = cartIsEmpty && idx >= 3;
+          const active = idx === stepIndex;
+          return (
+            <button
+              key={p.id}
+              type="button"
+              className={`gl-step ${active ? "is-active" : ""}`}
+              onClick={() => !disabled && goStep(idx)}
+              disabled={disabled}
+              aria-current={active ? "step" : undefined}
+              title={disabled ? "Add items to continue" : p.title}
+            >
+              <span className="gl-step-index">{idx + 1}</span>
+              <span className="gl-step-label">{p.title}</span>
+            </button>
+          );
+        })}
+      </nav>
 
-        {appMsg && (
-          <div className="gl-appmsg glass-inner" role="status" aria-live="polite">
-            {appMsg}
-          </div>
-        )}
+      <section className="gl-carousel" aria-live="polite">
+        <div className="gl-track" style={trackStyle}>
+          {/* Panel 1: Items */}
+          <div className="gl-panel" role="group" aria-label="Items panel">
+            <h2 className="gl-panel-title" tabIndex={-1} ref={panelHeadingRef}>
+              Items
+            </h2>
 
-        <div className="gl-stage">
-          <div
-            className="gl-track"
-            style={{
-              width: `${stepCount * 100}%`,
-              transform: `translateX(-${stepIndex * 100}%)`,
-            }}
-          >
-            {/* PANEL 1: Lane */}
-            <div className="gl-panel">
-              <h2 className="gl-h2">Choose your lane</h2>
-              <p className="small">Multi-store routes items; single-store picks one winner total.</p>
+            <div className="gl-card">
+              <h3 className="gl-card-title">Meal Plan (Locked)</h3>
+              {mealItems.length === 0 ? (
+                <p className="gl-muted">No meal plan items yet.</p>
+              ) : (
+                <ul className="gl-list">
+                  {mealItems.map((it) => (
+                    <li key={it.id} className="gl-row">
+                      <div className="gl-row-main">
+                        <div className="gl-row-name">{it.name}</div>
+                        <div className="gl-row-meta">
+                          Qty: {it.qty} {it.unit}
+                        </div>
+                      </div>
+                      <div className="gl-row-actions">
+                        <span className="gl-pill">Locked</span>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
 
-              <div className="gl-choice-grid">
-                <button
-                  type="button"
-                  className={`gl-choice glass-inner ${lane === "auto-multi" ? "on" : ""}`}
-                  onClick={() => pickAndAdvance(setLane, "auto-multi")}
-                >
-                  <div className="gl-choice-title">Multiple Stores</div>
-                  <div className="gl-choice-desc">Best overall value. Routes each item to the best store.</div>
-                </button>
-
-                <button
-                  type="button"
-                  className={`gl-choice glass-inner ${lane === "single-store" ? "on" : ""}`}
-                  onClick={() => pickAndAdvance(setLane, "single-store")}
-                >
-                  <div className="gl-choice-title">Single Store</div>
-                  <div className="gl-choice-desc">Simplest trip. Picks the best one-store total.</div>
+            <div className="gl-card">
+              <div className="gl-card-head">
+                <h3 className="gl-card-title">Extras (Editable)</h3>
+                <button className="gl-btn gl-btn-ghost" type="button" onClick={addExtraItem}>
+                  + Add
                 </button>
               </div>
 
-              <div className="gl-nav">
-                <button className="btn btn-ghost" type="button" disabled>
-                  Back
-                </button>
-                <button className="btn btn-secondary" type="button" onClick={goNext}>
-                  Next
-                </button>
+              {extraItems.length === 0 ? (
+                <p className="gl-muted">Add anything else you need (snacks, toiletries, etc.).</p>
+              ) : (
+                <ul className="gl-list">
+                  {extraItems.map((it) => (
+                    <li key={it.id} className="gl-row gl-row-edit">
+                      <div className="gl-row-fields">
+                        <label className="gl-field">
+                          <span className="gl-label">Item</span>
+                          <input
+                            className="gl-input"
+                            value={it.name}
+                            onChange={(e) => updateItem(setExtraItems, it.id, { name: e.target.value })}
+                            placeholder="e.g., Coffee"
+                          />
+                        </label>
+
+                        <label className="gl-field gl-field-qty">
+                          <span className="gl-label">Qty</span>
+                          <input
+                            className="gl-input"
+                            inputMode="numeric"
+                            value={String(it.qty ?? 1)}
+                            onChange={(e) =>
+                              updateItem(setExtraItems, it.id, { qty: Math.max(1, Number(e.target.value || 1)) })
+                            }
+                          />
+                        </label>
+
+                        <label className="gl-field gl-field-unit">
+                          <span className="gl-label">Unit</span>
+                          <select
+                            className="gl-input"
+                            value={it.unit}
+                            onChange={(e) => updateItem(setExtraItems, it.id, { unit: e.target.value })}
+                          >
+                            <option value="each">each</option>
+                            <option value="lb">lb</option>
+                            <option value="oz">oz</option>
+                            <option value="gal">gal</option>
+                            <option value="box">box</option>
+                          </select>
+                        </label>
+                      </div>
+
+                      <div className="gl-row-actions">
+                        <button className="gl-btn gl-btn-danger" type="button" onClick={() => removeItem(setExtraItems, it.id)}>
+                          Remove
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            <div className="gl-panel-footer">
+              <button className="gl-btn gl-btn-primary" type="button" onClick={next} disabled={cartIsEmpty}>
+                Next →
+              </button>
+              {cartIsEmpty && <span className="gl-hint">Add at least one item to continue.</span>}
+            </div>
+          </div>
+
+          {/* Panel 2: Strategy */}
+          <div className="gl-panel" role="group" aria-label="Strategy panel">
+            <h2 className="gl-panel-title" tabIndex={-1}>Strategy</h2>
+
+            <div className="gl-card">
+              <h3 className="gl-card-title">Shopping Mode</h3>
+              <p className="gl-muted">How do you want to shop today?</p>
+              <div className="gl-list">
+                <label className="gl-row">
+                  <div className="gl-row-main">
+                    <div className="gl-row-name">Multi-Store Optimization</div>
+                    <div className="gl-row-meta">Find the best price across allowed stores.</div>
+                  </div>
+                  <div className="gl-row-actions">
+                    <input
+                      type="radio"
+                      name="shopping-mode"
+                      checked={strategy.shoppingMode === "multi"}
+                      onChange={() =>
+                        setStrategy((prev) => ({
+                          ...prev,
+                          shoppingMode: "multi",
+                          lastUpdated: nowISO(),
+                        }))
+                      }
+                    />
+                  </div>
+                </label>
+
+                <label className="gl-row">
+                  <div className="gl-row-main">
+                    <div className="gl-row-name">Single-Store Shopping</div>
+                    <div className="gl-row-meta">Lock pricing to one chosen store.</div>
+                  </div>
+                  <div className="gl-row-actions">
+                    <input
+                      type="radio"
+                      name="shopping-mode"
+                      checked={strategy.shoppingMode === "single"}
+                      onChange={() =>
+                        setStrategy((prev) => ({
+                          ...prev,
+                          shoppingMode: "single",
+                          // ensure one store remains selected
+                          selectedStores:
+                            Array.isArray(prev.selectedStores) && prev.selectedStores.length
+                              ? [prev.selectedStores[0]]
+                              : [STORES[0].id],
+                          lastUpdated: nowISO(),
+                        }))
+                      }
+                    />
+                  </div>
+                </label>
               </div>
             </div>
 
-            {/* PANEL 2: Stores */}
-            <div className="gl-panel">
-              <h2 className="gl-h2">Which stores are in play?</h2>
-              <p className="small">Tap to include/exclude. Recommended is highlighted.</p>
-
-              <div className="gl-store-row">
-                {orderedStores.map((s) => {
-                  const on = includedStoreIds.includes(s.id);
-                  const isRec = s.id === recommendedStoreId;
-
+            <div className="gl-card">
+              <h3 className="gl-card-title">Store Selector</h3>
+              <p className="gl-muted">Choose which stores to include.</p>
+              <div className="gl-list">
+                {STORES.map((s) => {
+                  const isSelected = Array.isArray(strategy.selectedStores)
+                    ? strategy.selectedStores.includes(s.id)
+                    : false;
+                  const toggle = () => {
+                    setStrategy((prev) => {
+                      const cur = Array.isArray(prev.selectedStores) ? prev.selectedStores : [];
+                      if (prev.shoppingMode === "single") {
+                        // single mode: only one store at a time
+                        return {
+                          ...prev,
+                          selectedStores: [s.id],
+                          lastUpdated: nowISO(),
+                        };
+                      }
+                      // multi mode: toggle checkbox
+                      const next = isSelected ? cur.filter((id) => id !== s.id) : [...cur, s.id];
+                      // never allow empty selection; fallback to all
+                      const valid = next.length ? next : STORES.map((x) => x.id);
+                      return {
+                        ...prev,
+                        selectedStores: valid,
+                        lastUpdated: nowISO(),
+                      };
+                    });
+                  };
                   return (
-                    <button
-                      key={s.id}
-                      type="button"
-                      className={["gl-store-btn", "glass-inner", on ? "is-on" : "", isRec ? "is-rec" : ""].join(" ")}
-                      onClick={() => toggleStore(s.id)}
-                    >
-                      <span className="gl-store-mark" aria-hidden="true">
-                        {s.name.slice(0, 1).toUpperCase()}
-                      </span>
-
-                      <span className="gl-store-meta">
-                        <span className="gl-store-name">{s.name}</span>
-
-                        {s.brands ? (
-                          <span className="gl-store-badge ghost">{s.brands}</span>
-                        ) : isRec ? (
-                          <span className="gl-store-badge">Recommended</span>
+                    <label key={s.id} className="gl-row">
+                      <div className="gl-row-main">
+                        <div className="gl-row-name">{s.name}</div>
+                        <div className="gl-row-meta">
+                          {strategy.shoppingMode === "single" ? "Pick one store" : "Allow in optimization"}
+                        </div>
+                      </div>
+                      <div className="gl-row-actions">
+                        {strategy.shoppingMode === "single" ? (
+                          <input type="radio" name="single-store" checked={isSelected} onChange={toggle} />
                         ) : (
-                          <span className="gl-store-badge ghost">{on ? "Included" : "Tap to include"}</span>
+                          <input type="checkbox" checked={isSelected} onChange={toggle} />
                         )}
-                      </span>
-
-                      <span className={"gl-store-check " + (on ? "on" : "")} aria-hidden="true">
-                        ✓
-                      </span>
-                    </button>
+                      </div>
+                    </label>
                   );
                 })}
               </div>
-
-              <div className="gl-nav">
-                <button className="btn btn-ghost" type="button" onClick={goPrev}>
-                  Back
-                </button>
-                <button className="btn btn-secondary gl-wide" type="button" onClick={goNext}>
-                  Confirm Stores →
-                </button>
-              </div>
             </div>
 
-            {/* PANEL 3: Fulfillment */}
-            <div className="gl-panel">
-              <h2 className="gl-h2">How do you want to get groceries?</h2>
-              <p className="small">Delivery is optional — you’re never forced into it.</p>
+            <div className="gl-card">
+              <h3 className="gl-card-title">Store Rules</h3>
+              <p className="gl-muted">Write one sentence per store (used later for smart routing).</p>
 
-              <div className="gl-choice-grid">
-                {[
-                  { id: "in-store", title: "In-Store", desc: "You shop. 3C does the math." },
-                  { id: "pickup", title: "Pickup", desc: "Fast and controlled." },
-                  { id: "delivery", title: "Delivery", desc: "Convenience day." },
-                ].map((x) => (
-                  <button
-                    key={x.id}
-                    type="button"
-                    className={`gl-choice glass-inner ${fulfillment === x.id ? "on" : ""}`}
-                    onClick={() => pickAndAdvance(setFulfillment, x.id)}
-                  >
-                    <div className="gl-choice-title">{x.title}</div>
-                    <div className="gl-choice-desc">{x.desc}</div>
-                  </button>
+              <div className="gl-grid">
+                {STORES.map((s) => (
+                  <label key={s.id} className="gl-field gl-field-wide">
+                    <span className="gl-label">{s.name}</span>
+                    <input
+                      className="gl-input"
+                      value={strategy?.storeRules?.[s.id] || ""}
+                      onChange={(e) =>
+                        setStrategy((prev) => ({
+                          ...prev,
+                          storeRules: { ...(prev.storeRules || {}), [s.id]: e.target.value },
+                          lastUpdated: nowISO(),
+                        }))
+                      }
+                      placeholder={`What do you usually buy at ${s.name}?`}
+                    />
+                  </label>
                 ))}
               </div>
-
-              <div className="gl-nav">
-                <button className="btn btn-ghost" type="button" onClick={goPrev}>
-                  Back
-                </button>
-                <button className="btn btn-secondary" type="button" onClick={goNext}>
-                  Next
-                </button>
-              </div>
             </div>
 
-            {/* PANEL 4: Grocery Shopping */}
-            <div className="gl-panel">
-              <h2 className="gl-h2">Grocery Shopping</h2>
+            <div className="gl-panel-footer">
+              <button className="gl-btn gl-btn-ghost" type="button" onClick={prev}>← Back</button>
+              <button className="gl-btn gl-btn-primary" type="button" onClick={next} disabled={cartIsEmpty}>Next →</button>
+            </div>
+          </div>
 
-              <div className="glass-inner" style={{ marginTop: ".75rem" }}>
-                <div style={{ fontWeight: 900, color: "var(--gold)" }}>Concierge</div>
-                <p className="small" style={{ marginTop: ".35rem" }}>
-                  {conciergeText}
-                </p>
+          {/* Panel 3: Pricing */}
+          <div className="gl-panel" role="group" aria-label="Pricing panel">
+            <h2 className="gl-panel-title" tabIndex={-1}>Pricing</h2>
 
-                <div className="nav-row" style={{ marginTop: ".75rem" }}>
-                  <input
-                    className="input"
-                    value={shopQuery}
-                    onChange={(e) => setShopQuery(e.target.value)}
-                    placeholder='Type what you want (ex: "milk", "eggs", "orange juice")'
-                  />
-                  <button
-                    className="btn btn-secondary"
-                    type="button"
-                    onClick={() => addExtraItem(shopQuery)}
-                    disabled={!shopQuery.trim()}
-                  >
-                    Add typed item
-                  </button>
-                </div>
+            <div className="gl-card">
+              <div className="gl-card-head">
+                <h3 className="gl-card-title">Daily Best Store (Demo)</h3>
+                <button className="gl-btn gl-btn-primary" type="button" onClick={runPricing} disabled={cartIsEmpty}>
+                  Run Pricing
+                </button>
+              </div>
 
-                {shopQuery.trim() && searchMatches.length > 0 && (
-                  <div style={{ marginTop: ".75rem" }}>
-                    <div className="small" style={{ opacity: 0.9 }}>
-                      Suggestions
-                    </div>
-                    <div className="nav-row" style={{ flexWrap: "wrap", marginTop: ".45rem" }}>
-                      {searchMatches.map((x) => (
-                        <button
-                          key={`${x.category}:${x.name}`}
-                          className="btn btn-ghost"
-                          type="button"
-                          onClick={() => addExtraItem(x.name)}
-                        >
-                          + {x.name}
-                        </button>
+              {!pricingSummary ? (
+                <p className="gl-muted">Run pricing to see today’s best store + totals.</p>
+              ) : (
+                <div className="gl-summary">
+                  <div className="gl-summary-row"><span className="gl-muted">Winner</span><span className="gl-strong">{pricingSummary.winnerStoreName}</span></div>
+                  <div className="gl-summary-row"><span className="gl-muted">Items</span><span>{pricingSummary.itemCount}</span></div>
+                  <div className="gl-summary-row"><span className="gl-muted">Daily rotation</span><span>{Number(num(pricingSummary?.dailyMult,1).toFixed(2))}×</span></div>
+                  <div className="gl-summary-row"><span className="gl-muted">Subtotal</span><span>${money2(pricingSummary?.subtotal)}</span></div>
+                  <div className="gl-summary-row"><span className="gl-muted">Subtotal</span><span>${money2(pricingSummary?.subtotal)}</span></div>
+                  <div className="gl-summary-row"><span className="gl-muted">Tax</span><span>${money2(pricingSummary?.tax)}</span></div>
+                  <div className="gl-summary-row gl-summary-total"><span>Total</span><span>${money2(pricingSummary?.total)}</span></div>
+                  {pricingSummary?.mode === "multi" && Array.isArray(pricingSummary?.storeBreakdown) && pricingSummary.storeBreakdown.length > 1 ? (
+                    <div className="gl-summary" style={{ marginTop: 10 }}>
+                      <div className="gl-summary-row"><span className="gl-muted">Per-Store Totals</span><span /></div>
+                      {pricingSummary.storeBreakdown.map((row) => (
+                        <div key={row.storeId} className="gl-summary-row">
+                          <span className={row.storeId === pricingSummary.winnerStoreId ? "gl-strong" : undefined}>{row.storeName}</span>
+                          <span>
+                            <span className="gl-muted" style={{ marginRight: 6 }}>Sub:</span>${money2(row.subtotal)}
+                            <span className="gl-muted" style={{ margin: "0 6px 0 10px" }}>Total:</span>${money2(row.total)}
+                          </span>
+                        </div>
                       ))}
+                      {Number(pricingSummary.savingsVsNext || 0) > 0 ? (
+                        <p className="gl-note">
+                          Saves ${money2(pricingSummary.savingsVsNext)} vs {pricingSummary.nextBestStoreName}
+                        </p>
+                      ) : (
+                        <p className="gl-note">Reason: Best total among allowed stores today.</p>
+                      )}
                     </div>
-                  </div>
-                )}
-              </div>
-
-              <div className="glass-inner" style={{ marginTop: ".9rem" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", gap: ".75rem", alignItems: "center" }}>
-                  <div style={{ fontWeight: 900, color: "var(--gold)" }}>Categories</div>
-                  <button className="btn btn-ghost" type="button" onClick={loadDemoCart}>
-                    Load Demo Groceries
-                  </button>
-                </div>
-
-                <div className="nav-row" style={{ flexWrap: "wrap", marginTop: ".75rem" }}>
-                  {CATALOG.map((c) => (
-                    <button
-                      key={c.id}
-                      className={"btn " + (activeCategory === c.id ? "btn-primary" : "btn-secondary")}
-                      type="button"
-                      onClick={() => setActiveCategory(c.id)}
-                    >
-                      {c.title}
-                    </button>
-                  ))}
-                </div>
-
-                <div style={{ marginTop: ".9rem" }}>
-                  <div className="small" style={{ opacity: 0.9 }}>
-                    {activeCat.title}
-                  </div>
-                  <div className="nav-row" style={{ flexWrap: "wrap", marginTop: ".45rem" }}>
-                    {activeCat.items.map((name) => (
-                      <button key={name} className="btn btn-ghost" type="button" onClick={() => addExtraItem(name)}>
-                        + {name}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <div className="gl-nav">
-                <button className="btn btn-ghost" type="button" onClick={goPrev}>
-                  Back
-                </button>
-                <button className="btn btn-secondary" type="button" onClick={goNext}>
-                  Next
-                </button>
-              </div>
-            </div>
-
-            {/* PANEL 5: Final Review */}
-            <div className="gl-panel">
-              <h2 className="gl-h2">Final Review</h2>
-
-              <div className="glass-inner gl-review">
-                <div className="gl-summary-line">
-                  <span>Lane</span>
-                  <strong>{lane === "auto-multi" ? "Multi-store optimized" : "Single-store total"}</strong>
-                </div>
-                <div className="gl-summary-line">
-                  <span>Fulfillment</span>
-                  <strong style={{ textTransform: "capitalize" }}>{fulfillment}</strong>
-                </div>
-                <div className="gl-summary-line">
-                  <span>Stores included</span>
-                  <strong>{includedStoreIds.length}</strong>
-                </div>
-              </div>
-
-              {/* Start guard */}
-              {!hasItems && (
-                <div className="glass-inner" style={{ marginTop: "1rem" }}>
-                  <div className="small">
-                    Your cart is empty. Start from the beginning or add items in Grocery Shopping.
-                  </div>
-                  <div className="nav-row" style={{ marginTop: ".75rem" }}>
-                    <button className="btn btn-primary" type="button" onClick={() => setStepIndex(0)}>
-                      Start at Step 1 →
-                    </button>
-                    <button
-                      className="btn btn-secondary"
-                      type="button"
-                      onClick={() => setStepIndex(shopIdx >= 0 ? shopIdx : 0)}
-                    >
-                      Go to Grocery Shopping →
-                    </button>
-                  </div>
+                  ) : null}
                 </div>
               )}
+            </div>
 
-              {/* Meal Plan Items (Protected) */}
-              <div className="glass-inner" style={{ marginTop: "1rem" }}>
-                <div style={{ fontWeight: 900, color: "var(--gold)" }}>Meal Plan Items (Protected)</div>
-                <p className="small" style={{ marginTop: ".35rem" }}>
-                  These are tied to your meal/recipes so you don’t delete them by accident.
-                </p>
-
-                {mealItems.filter((x) => x.name).length === 0 ? (
-                  <div className="small" style={{ opacity: 0.85, marginTop: ".6rem" }}>
-                    None loaded from Meal Plan yet.
-                  </div>
-                ) : (
-                  mealItems
-                    .filter((x) => x.name)
-                    .map((it) => (
-                      <div
-                        key={it.id}
-                        style={{
-                          borderTop: "1px solid rgba(126,224,255,.12)",
-                          paddingTop: ".75rem",
-                          marginTop: ".75rem",
-                        }}
-                      >
-                        <div className="small" style={{ fontWeight: 800 }}>
-                          {it.name}
-                        </div>
-                        <div className="small" style={{ opacity: 0.9, marginTop: ".25rem" }}>
-                          Qty: <strong>{it.qty}</strong> · Unit: <strong>{it.unit}</strong>
-                        </div>
-                        <div className="nav-row" style={{ marginTop: ".5rem" }}>
-                          <button className="btn btn-ghost" type="button" onClick={() => removeMealItemSafe(it.id)}>
-                            Remove
-                          </button>
-                        </div>
-                      </div>
-                    ))
-                )}
+            <div className="gl-card">
+              <div className="gl-card-head">
+                <h3 className="gl-card-title">Month-to-Date Savings (Demo)</h3>
+                <span className="gl-pill">{monthKeyLocal()}</span>
               </div>
-
-              {/* Extra Groceries (Editable) */}
-              <div className="glass-inner" style={{ marginTop: "1rem" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", gap: ".75rem", alignItems: "center" }}>
-                  <div style={{ fontWeight: 900, color: "var(--gold)" }}>Extra Groceries (Editable)</div>
-                  <button className="btn btn-primary" type="button" onClick={() => addExtraItem("")}>
-                    + Add Item
-                  </button>
+              {monthlySavings.trips === 0 ? (
+                <p className="gl-muted">No runs yet this month. Run pricing to start tracking savings.</p>
+              ) : (
+                <div className="gl-summary">
+                  <div className="gl-summary-row"><span className="gl-muted">Trips</span><span>{monthlySavings.trips}</span></div>
+                  <div className="gl-summary-row"><span className="gl-muted">Preferred store</span><span>{monthlySavings.preferredStoreName}</span></div>
+                  <div className="gl-summary-row"><span className="gl-muted">If always preferred</span><span>${money2(monthlySavings.preferredTotal)}</span></div>
+                  <div className="gl-summary-row"><span className="gl-muted">With app choices</span><span>${money2(monthlySavings.actualTotal)}</span></div>
+                  <div className="gl-summary-row gl-summary-total"><span>Savings</span><span>${money2(monthlySavings.savings)}</span></div>
+                  <p className="gl-note">Demo math: compares your preferred store to the best store per run.</p>
                 </div>
+              )}
+            </div>
 
-                {extraItems.filter((x) => x.name).length === 0 ? (
-                  <div className="small" style={{ opacity: 0.85, marginTop: ".6rem" }}>
-                    No extra items yet. Add some in Grocery Shopping.
-                  </div>
-                ) : (
-                  extraItems.map((it) => (
-                    <div
-                      key={it.id}
-                      style={{
-                        borderTop: "1px solid rgba(126,224,255,.12)",
-                        paddingTop: ".75rem",
-                        marginTop: ".75rem",
-                      }}
-                    >
-                      <div className="grid" style={{ gridTemplateColumns: "1fr", gap: ".6rem" }}>
-                        <div>
-                          <label className="label">Item</label>
-                          <input
-                            className="input"
-                            value={it.name}
-                            onChange={(e) => updateExtraItem(it.id, { name: e.target.value })}
-                          />
-                        </div>
-
-                        <div className="grid" style={{ gridTemplateColumns: "1fr 1fr", gap: ".6rem" }}>
-                          <div>
-                            <label className="label">Qty</label>
-                            <input
-                              className="input"
-                              type="number"
-                              value={it.qty}
-                              onChange={(e) => updateExtraItem(it.id, { qty: Number(e.target.value || 0) })}
-                            />
-                          </div>
-                          <div>
-                            <label className="label">Unit</label>
-                            <input
-                              className="input"
-                              value={it.unit}
-                              onChange={(e) => updateExtraItem(it.id, { unit: e.target.value })}
-                            />
-                          </div>
-                        </div>
-
-                        <div className="grid" style={{ gridTemplateColumns: "1fr", gap: ".6rem" }}>
-                          <div>
-                            <label className="label">Substitute (optional)</label>
-                            <input
-                              className="input"
-                              value={it.substitute}
-                              onChange={(e) => updateExtraItem(it.id, { substitute: e.target.value })}
-                              placeholder="e.g., lactose-free milk"
-                            />
-                          </div>
-                          <div>
-                            <label className="label">Reason (optional)</label>
-                            <input
-                              className="input"
-                              value={it.substituteReason}
-                              onChange={(e) => updateExtraItem(it.id, { substituteReason: e.target.value })}
-                              placeholder="allergy / brand dislike / diet"
-                            />
-                          </div>
-                        </div>
-
-                        <div className="nav-row" style={{ justifyContent: "flex-end" }}>
-                          <button className="btn btn-ghost" type="button" onClick={() => removeExtraItem(it.id)}>
-                            Remove
-                          </button>
-                        </div>
+            <div className="gl-card">
+              <div className="gl-card-head">
+                <h3 className="gl-card-title">Savings History</h3>
+                <span className="gl-muted">Last {recentSavings.length || 0} runs</span>
+              </div>
+              {recentSavings.length === 0 ? (
+                <p className="gl-muted">No history yet. Run pricing to see history here.</p>
+              ) : (
+                <div className="gl-list">
+                  {recentSavings.map((e) => (
+                    <div key={e.id} className="gl-row">
+                      <div className="gl-row-main">
+                        <div className="gl-row-name">{e.dayKey}</div>
+                        <div className="gl-row-meta">Preferred: {e.preferredStoreName} • Actual: {e.actualStoreName}</div>
+                      </div>
+                      <div className="gl-row-actions">
+                        <span className="gl-pill">Save ${money2(e.savings)}</span>
                       </div>
                     </div>
-                  ))
-                )}
-              </div>
-
-              {/* Pricing */}
-              <div className="glass-inner" style={{ marginTop: "1rem" }}>
-                <div style={{ fontWeight: 900, color: "var(--gold)" }}>Cart Pricing (Static / Demo)</div>
-                <p className="small" style={{ marginTop: ".35rem" }}>
-                  Alpha-safe pricing engine. Live prices later via approved APIs + backend.
-                </p>
-
-                <div className="nav-row" style={{ marginTop: ".75rem" }}>
-                  <button className="btn btn-primary" type="button" onClick={calculatePricing} disabled={!hasItems}>
-                    Calculate Pricing
-                  </button>
-                  <button className="btn btn-ghost" type="button" onClick={clearCartAll}>
-                    Clear Cart
-                  </button>
+                  ))}
                 </div>
+              )}
+            </div>
 
-                <div style={{ marginTop: ".9rem" }}>
-                  <div className="small">
-                    Total items in cart: <strong>{allItems.filter((x) => x.name).length}</strong>
-                  </div>
+            <div className="gl-panel-footer">
+              <button className="gl-btn gl-btn-ghost" type="button" onClick={prev}>← Back</button>
+              <button className="gl-btn gl-btn-primary" type="button" onClick={next} disabled={cartIsEmpty}>Next →</button>
+            </div>
+          </div>
 
-                  {pricingSummary && hasItems && (
-                    <div style={{ marginTop: ".75rem" }}>
-                      {missingPriceNotice && (
-                        <div className="glass-inner" style={{ marginBottom: ".8rem" }}>
-                          <div className="small" style={{ fontWeight: 900 }}>
-                            Pricing Notice
-                          </div>
-                          <div className="small" style={{ marginTop: ".35rem", opacity: 0.9 }}>
-                            We are sorry — one or more of your items do not have a price loaded in our system.
-                            We are in testing mode. Once we are live, pricing should be available.
-                            Sorry for the inconvenience.
-                          </div>
-                        </div>
-                      )}
+          {/* Panel 4: Review */}
+          <div className="gl-panel" role="group" aria-label="Review panel">
+            <h2 className="gl-panel-title" tabIndex={-1}>Review</h2>
 
-                      <div className="small">
-                        Mode:{" "}
-                        <strong>{pricingSummary.mode === "single-store" ? "Single-store" : "Multi-store"}</strong>
-                        {pricingSummary.chosenStoreId ? (
-                          <>
-                            {" "}
-                            · Winner:{" "}
-                            <strong>
-                              {STORES.find((s) => s.id === pricingSummary.chosenStoreId)?.name ||
-                                pricingSummary.chosenStoreId}
-                            </strong>
-                          </>
-                        ) : null}
-                      </div>
-
-                      <div className="small" style={{ marginTop: ".5rem" }}>
-                        Grand total:{" "}
-                        <strong style={{ color: "var(--gold)" }}>{money(pricingSummary.grandTotal)}</strong>
-                      </div>
-
-                      <div style={{ marginTop: ".75rem" }}>
-                        {Object.entries(pricingSummary.storeTotals || {}).map(([sid, total]) => (
-                          <div key={sid} className="gl-summary-line">
-                            <span>{STORES.find((s) => s.id === sid)?.name || sid}</span>
-                            <strong>{money(total)}</strong>
-                          </div>
-                        ))}
-                      </div>
-
-                      <details style={{ marginTop: ".9rem" }}>
-                        <summary className="small" style={{ cursor: "pointer" }}>
-                          View item-by-item routing
-                        </summary>
-
-                        <div style={{ marginTop: ".6rem" }}>
-                          {(pricingSummary.perItemAllocations || []).map((x) => (
-                            <div
-                              key={x.itemId}
-                              style={{
-                                borderTop: "1px solid rgba(126,224,255,.12)",
-                                paddingTop: ".6rem",
-                                marginTop: ".6rem",
-                              }}
-                            >
-                              <div className="small" style={{ fontWeight: 800 }}>
-                                {x.name}
-                              </div>
-                              <div className="small" style={{ opacity: 0.9, marginTop: ".2rem" }}>
-                                Qty: <strong>{x.qty}</strong> · Unit: <strong>{x.unit}</strong>
-                              </div>
-                              <div className="small" style={{ opacity: 0.85, marginTop: ".2rem" }}>
-                                Store:{" "}
-                                <strong>
-                                  {x.chosenStoreId
-                                    ? STORES.find((s) => s.id === x.chosenStoreId)?.name || x.chosenStoreId
-                                    : "—"}
-                                </strong>{" "}
-                                · Unit:{" "}
-                                <strong>{typeof x.unitPrice === "number" ? money(x.unitPrice) : "—"}</strong>{" "}
-                                · Ext: <strong>{typeof x.ext === "number" ? money(x.ext) : "—"}</strong>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </details>
+            <div className="gl-card">
+              <h3 className="gl-card-title">Your Cart</h3>
+              <ul className="gl-list">
+                {allItems.map((it) => (
+                  <li key={it.id} className="gl-row">
+                    <div className="gl-row-main">
+                      <div className="gl-row-name">{it.name}</div>
+                      <div className="gl-row-meta">Qty: {it.qty} {it.unit}{it.locked ? " • Meal Plan" : " • Extra"}</div>
                     </div>
-                  )}
-                </div>
-              </div>
+                    <div className="gl-row-actions">{it.locked ? <span className="gl-pill">Locked</span> : null}</div>
+                  </li>
+                ))}
+              </ul>
 
-              <div className="gl-nav" style={{ marginTop: "1rem" }}>
-                <button className="btn btn-ghost" type="button" onClick={goPrev}>
-                  Back
-                </button>
-                <button className="btn btn-primary" type="button" onClick={() => nav("/app")}>
-                  Save & Return to Dashboard
-                </button>
-              </div>
+              {!pricingSummary ? (
+                <p className="gl-muted">Tip: Run pricing first to generate totals.</p>
+              ) : (
+                <div className="gl-inline-summary">
+                  <span className="gl-pill">{pricingSummary.winnerStoreName}</span>
+                  <span className="gl-strong">${money2(pricingSummary?.total)}</span>
+                </div>
+              )}
+            </div>
+
+            <div className="gl-panel-footer">
+              <button className="gl-btn gl-btn-ghost" type="button" onClick={prev}>← Back</button>
+              <button className="gl-btn gl-btn-primary" type="button" onClick={next} disabled={cartIsEmpty}>Next →</button>
+            </div>
+          </div>
+
+          {/* Panel 5: Receipt */}
+          <div className="gl-panel" role="group" aria-label="Receipt panel">
+            <h2 className="gl-panel-title" tabIndex={-1}>Receipt</h2>
+
+            <div className="gl-card">
+              <h3 className="gl-card-title">Today’s Summary</h3>
+
+              {!pricingSummary ? (
+                <p className="gl-muted">No pricing summary yet. Go back and run pricing.</p>
+              ) : (
+                <div className="gl-receipt">
+                  <div className="gl-receipt-row"><span>Date</span><span>{pricingSummary.dayKey}</span></div>
+                  <div className="gl-receipt-row"><span>Store</span><span>{pricingSummary.winnerStoreName}</span></div>
+                  <div className="gl-receipt-row"><span>Items</span><span>{pricingSummary.itemCount}</span></div>
+                  <div className="gl-receipt-row"><span>Rotation</span><span>{Number(num(pricingSummary?.dailyMult, 1).toFixed(2))}×</span></div>
+                  <div className="gl-receipt-row"><span>Total</span><span className="gl-strong">${money2(pricingSummary?.total)}</span></div>
+                  {pricingSummary?.mode === "multi" && Number(pricingSummary?.savingsVsNext || 0) > 0 ? (
+                    <div className="gl-receipt-row"><span>Saves vs next best</span><span>${money2(pricingSummary.savingsVsNext)} vs {pricingSummary.nextBestStoreName}</span></div>
+                  ) : null}
+                  {pricingSummary?.savings !== undefined ? null : null}
+                  {Number(pricingSummary?.savingsVsNext || 0) === 0 && pricingSummary?.nextBestStoreName ? (
+                    <div className="gl-receipt-row"><span>Reason</span><span>Best total among allowed stores</span></div>
+                  ) : null}
+                  {pricingSummary?.preferredStoreName && pricingSummary?.preferredTotal !== undefined && pricingSummary?.actualTotal !== undefined ? (
+                    <>
+                      <div className="gl-divider" />
+                      <div className="gl-receipt-row"><span>Preferred store baseline</span><span>${money2(pricingSummary.preferredTotal)}</span></div>
+                      <div className="gl-receipt-row"><span>App choice</span><span>${money2(pricingSummary.actualTotal)}</span></div>
+                      <div className="gl-receipt-row gl-summary-total"><span>Trip savings</span><span>${money2(pricingSummary.preferredTotal - pricingSummary.actualTotal)}</span></div>
+                    </>
+                  ) : null}
+                  <div className="gl-divider" />
+                  <p className="gl-muted">Next phase: connect real store pricing APIs + routing rules.</p>
+                </div>
+              )}
+            </div>
+
+            <div className="gl-panel-footer">
+              <button className="gl-btn gl-btn-ghost" type="button" onClick={prev}>← Back</button>
+              <button className="gl-btn gl-btn-primary" type="button" onClick={() => nav("/app")}>Done</button>
             </div>
           </div>
         </div>
-        {/* end wizard */}
-      </div>
+      </section>
+
+      <footer className="gl-footer">
+        <span className="gl-muted">Saved automatically • {allItems.length} unique items</span>
+      </footer>
+
+      <ConciergeIntro open={introOpen} onClose={handleIntroClose} />
     </div>
   );
 }
