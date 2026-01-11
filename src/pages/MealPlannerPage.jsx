@@ -310,15 +310,15 @@ export default function MealPlannerPage() {
 
             <div className="card" style={{ marginTop: ".9rem", padding: ".9rem" }}>
               <MealSummaryPanel
-                value={{
+                meal={{
                   dateISO,
                   time24,
                   mealId,
                   mealLabel: chosenMeal.label,
-                  diet: dietMeta,
-                  fasting: fastingMeta,
-                  spice: spiceMeta,
                 }}
+                diet={dietMeta}
+                fasting={fastingMeta}
+                spice={spiceMeta}
               />
 
               <div className="nav-row" style={{ marginTop: ".9rem" }}>
