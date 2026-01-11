@@ -95,7 +95,7 @@ export function calcPricingSummary({ items, lane, includedStoreIds, stores } = {
   const mode = lane === "single-store" ? "single-store" : "multi-store";
 
   if (mode === "single-store") {
-    // sum totals per store, choose cheapest
+    // sum totals per store, choose lowest price
     for (const sid of included) {
       let total = 0;
       for (const it of list) {
@@ -136,7 +136,7 @@ export function calcPricingSummary({ items, lane, includedStoreIds, stores } = {
     };
   }
 
-  // multi-store: allocate each item to the cheapest store for that item
+  // multi-store: allocate each item to the lowest-priced store for that item
   for (const it of list) {
     let bestStore = null;
     let bestUnit = null;

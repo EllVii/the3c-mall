@@ -279,7 +279,7 @@ export default function GroceryCartEditor({
                               className="input"
                               value={s.reason || ""}
                               onChange={(e) => updateSub(it.id, s.id, { reason: e.target.value })}
-                              placeholder="Allergy / dislike / keto swap / cheaper..."
+                              placeholder="Allergy / dislike / keto swap / budget swap..."
                             />
                           </div>
                         </div>

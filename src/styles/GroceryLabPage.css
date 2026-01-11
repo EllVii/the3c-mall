@@ -293,6 +293,26 @@ html, body { width: 100%; height: 100%; overflow-x: hidden; }
   background: rgba(255,255,255,.04);
   font-size: 12px;
   color: var(--gold);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.gl-pill:hover{
+  background: rgba(255,255,255,.08);
+  border-color: var(--gold);
+}
+.gl-pill-active{
+  display:inline-flex;
+  align-items:center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--gold);
+  background: linear-gradient(135deg, rgba(246,220,138,.18), rgba(246,220,138,.08));
+  font-size: 12px;
+  color: var(--gold);
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 0 8px rgba(246,220,138,.3);
 }
 
 .gl-inline-summary{ display:flex; align-items:center; gap: 6px; }

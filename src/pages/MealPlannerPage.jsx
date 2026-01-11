@@ -2,6 +2,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { readJSON, writeJSON, nowISO } from "../utils/Storage";
+import { BASE_RECIPES } from "../utils/recipes";
 import "../styles/MealPlannerPage.css";
 
 // ✅ IMPORTANT: match your folder EXACTLY (Meal-Planner) + exact filenames
@@ -10,8 +11,7 @@ import FastingSettings from "../assets/components/Meal-Planner/FastingSettings.j
 import FastingandTimer from "../assets/components/Meal-Planner/FastingandTimer.jsx";
 import SpicePreferences from "../assets/components/Meal-Planner/SpicePreferences.jsx";
 import MealSummaryPanel from "../assets/components/Meal-Planner/MealSummaryPanel.jsx";
-// Optional / later:
-// import RecipeDeck from "../assets/components/Meal-Planner/RecipeDeck.jsx";
+import RecipeDeck from "../assets/components/Meal-Planner/RecipeDeck.jsx";
 // import RecipeCard from "../assets/components/Meal-Planner/RecipeCard.jsx";
 
 const MP_KEY = "mp.plan.v1";
@@ -51,6 +51,33 @@ export default function MealPlannerPage() {
   const [dietMeta, setDietMeta] = useState(savedMeta?.diet || { diet: "balanced", mealStyle: "standard", notes: "" });
   const [fastingMeta, setFastingMeta] = useState(savedMeta?.fasting || {});
   const [spiceMeta, setSpiceMeta] = useState(savedMeta?.spice || {});
+
+  // Deck filters
+  const [deckFocus, setDeckFocus] = useState("no-restrictions");
+  const [deckMethods, setDeckMethods] = useState([]);
+  const deckSpiceLevel = (spiceMeta?.level || spiceMeta?.spiceLevel || "mild");
+  const [deckIndex, setDeckIndex] = useState(0);
+
+  const filteredRecipes = useMemo(() => {
+    const byFocus = BASE_RECIPES.filter((r) => r.focus.includes(deckFocus));
+    const byMethods = deckMethods.length
+      ? byFocus.filter((r) => deckMethods.every((m) => r.methods.join(" ").includes(m)))
+      : byFocus;
+    return byMethods;
+  }, [deckFocus, deckMethods]);
+
+  const currentRecipe = filteredRecipes[deckIndex] || null;
+  const totalRecipes = filteredRecipes.length;
+
+  function onNextDeck() {
+    setDeckIndex((i) => (totalRecipes ? (i + 1) % totalRecipes : 0));
+  }
+  function onPrevDeck() {
+    setDeckIndex((i) => (totalRecipes ? (i - 1 + totalRecipes) % totalRecipes : 0));
+  }
+  function toggleDeckMethod(m) {
+    setDeckMethods((prev) => (prev.includes(m) ? prev.filter((x) => x !== m) : [...prev, m]));
+  }
 
   // Persist meta whenever it changes
   useEffect(() => {
@@ -102,11 +129,17 @@ export default function MealPlannerPage() {
 
     writeJSON(MP_KEY, plan);
 
-    // ✅ handoff message that GroceryLabPage can display once
+    // ✅ handoff with meals for Grocery Lab display
     writeJSON(HANDOFF_KEY, {
       at: nowISO(),
       message: "Saved. Sent to Grocery Lab.",
       from: "meal",
+      mealContext: {
+        dateISO,
+        mealId,
+        mealLabel: chosenMeal.label,
+        time24,
+      },
     });
 
     showToast("Saved ✓ Sending to Grocery Lab…");
@@ -247,6 +280,22 @@ export default function MealPlannerPage() {
               <div className="card" style={{ padding: "0.9rem" }}>
                 <SpicePreferences value={spiceMeta} onChange={setSpiceMeta} />
               </div>
+            </div>
+
+            {/* Curated Recipe Deck (beta) */}
+            <div className="card" style={{ padding: "0.9rem", marginTop: "1rem" }}>
+              <RecipeDeck
+                focus={deckFocus}
+                setFocus={setDeckFocus}
+                cookingMethods={deckMethods}
+                onToggleCookingMethod={toggleDeckMethod}
+                spiceLevel={deckSpiceLevel}
+                setSpiceLevel={(lvl) => setSpiceMeta((prev) => ({ ...prev, level: lvl }))}
+                currentRecipe={currentRecipe}
+                totalRecipes={totalRecipes}
+                onNext={onNextDeck}
+                onPrev={onPrevDeck}
+              />
             </div>
           </>
         )}

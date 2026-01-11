@@ -135,6 +135,69 @@ export default function SettingsPage() {
         </div>
       </div>
 
+      {/* DATE & TIME FORMAT */}
+      <div className="card glass settings-block">
+        <h3 className="settings-h3">Date & Time Format</h3>
+        <p className="small">Choose how dates and times are displayed throughout the app.</p>
+
+        <div style={{ marginTop: "1rem" }}>
+          <div style={{ fontWeight: 900, color: "var(--gold)", marginBottom: ".5rem" }}>Date Format</div>
+          <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+            <button
+              className={`btn ${(localStorage.getItem("3c.dateFormat") || "MM/DD/YYYY") === "MM/DD/YYYY" ? "btn-primary" : "btn-secondary"}`}
+              onClick={() => {
+                localStorage.setItem("3c.dateFormat", "MM/DD/YYYY");
+                window.location.reload();
+              }}
+            >
+              MM/DD/YYYY
+            </button>
+            <button
+              className={`btn ${localStorage.getItem("3c.dateFormat") === "DD/MM/YYYY" ? "btn-primary" : "btn-secondary"}`}
+              onClick={() => {
+                localStorage.setItem("3c.dateFormat", "DD/MM/YYYY");
+                window.location.reload();
+              }}
+            >
+              DD/MM/YYYY
+            </button>
+            <button
+              className={`btn ${localStorage.getItem("3c.dateFormat") === "YYYY/MM/DD" ? "btn-primary" : "btn-secondary"}`}
+              onClick={() => {
+                localStorage.setItem("3c.dateFormat", "YYYY/MM/DD");
+                window.location.reload();
+              }}
+            >
+              YYYY/MM/DD
+            </button>
+          </div>
+        </div>
+
+        <div style={{ marginTop: "1.25rem" }}>
+          <div style={{ fontWeight: 900, color: "var(--gold)", marginBottom: ".5rem" }}>Time Format</div>
+          <div style={{ display: "flex", gap: "10px" }}>
+            <button
+              className={`btn ${(localStorage.getItem("3c.timeFormat") || "12") === "12" ? "btn-primary" : "btn-secondary"}`}
+              onClick={() => {
+                localStorage.setItem("3c.timeFormat", "12");
+                window.location.reload();
+              }}
+            >
+              12-hour
+            </button>
+            <button
+              className={`btn ${localStorage.getItem("3c.timeFormat") === "24" ? "btn-primary" : "btn-secondary"}`}
+              onClick={() => {
+                localStorage.setItem("3c.timeFormat", "24");
+                window.location.reload();
+              }}
+            >
+              24-hour
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* QUICK TOOLS (makes settings "live" beyond appearance) */}
       <div className="card glass settings-block">
         <h3 className="settings-h3">Quick Tools</h3>

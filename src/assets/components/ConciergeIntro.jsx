@@ -45,14 +45,16 @@ function updateStrategyFromProfile(profile) {
   const existing = readJSON(STRATEGY_KEY, null) || {};
   const shoppingMode = profile.shoppingMode === "fastest" ? "single" : "multi";
   const chosenStore = profile.defaultStoreId && profile.defaultStoreId !== "not_sure" ? profile.defaultStoreId : null;
+  const allKnown = (existing.selectedStores && Array.isArray(existing.selectedStores)) ? existing.selectedStores : [];
+  const baseMulti = chosenStore ? Array.from(new Set([chosenStore, ...allKnown])) : (allKnown.length ? allKnown : []);
   const selectedStores = shoppingMode === "single"
-    ? (chosenStore ? [chosenStore] : existing.selectedStores || [])
-    : existing.selectedStores || (chosenStore ? [chosenStore] : []);
+    ? (chosenStore ? [chosenStore] : (allKnown.length ? [allKnown[0]] : []))
+    : (baseMulti.length ? baseMulti : []);
 
   writeJSON(STRATEGY_KEY, {
     ...existing,
     shoppingMode,
-    selectedStores: Array.isArray(selectedStores) && selectedStores.length ? selectedStores : existing.selectedStores || [],
+    selectedStores: Array.isArray(selectedStores) && selectedStores.length ? selectedStores : (existing.selectedStores || []),
     lastUpdated: nowISO(),
   });
 }
@@ -126,7 +128,15 @@ export default function ConciergeIntro({ open, onClose }) {
                   onClick={() => setDefaultStoreId(s.id)}
                   type="button"
                 >
-                  <div className="cc-choice-title">{s.name}</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <img
+                      src={`/icons/stores/${s.id}.png`}
+                      alt={`${s.name} logo`}
+                      className="cc-choice-icon"
+                      onError={(e) => { e.currentTarget.style.display = "none"; }}
+                    />
+                    <div className="cc-choice-title">{s.name}</div>
+                  </div>
                 </button>
               ))}
             </div>
@@ -173,12 +183,25 @@ export default function ConciergeIntro({ open, onClose }) {
           {/* Step 4b: Optional birth month */}
           <div className="cc-card">
             <div className="cc-card-title">Birth month (optional)</div>
-            <input
+            <select
               className="input"
               value={birthMonth}
               onChange={(e) => setBirthMonth(e.target.value)}
-              placeholder="July"
-            />
+            >
+              <option value="">Select month...</option>
+              <option value="January">January</option>
+              <option value="February">February</option>
+              <option value="March">March</option>
+              <option value="April">April</option>
+              <option value="May">May</option>
+              <option value="June">June</option>
+              <option value="July">July</option>
+              <option value="August">August</option>
+              <option value="September">September</option>
+              <option value="October">October</option>
+              <option value="November">November</option>
+              <option value="December">December</option>
+            </select>
             <div className="small cc-copy">For perks later. You can skip.</div>
           </div>
 

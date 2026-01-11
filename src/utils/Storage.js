@@ -1,11 +1,8 @@
 // src/utils/Storage.js
 
-export function safeId(prefix = "id") {
-  try {
-    return `${prefix}_${Math.random().toString(16).slice(2)}_${Date.now().toString(16)}`;
-  } catch {
-    return `${prefix}_${Date.now()}`;
-  }
+export function safeId(input) {
+  // React key helper, stable enough for animations
+  return String(input).replace(/\s+/g, "-").toLowerCase();
 }
 
 export function nowISO() {

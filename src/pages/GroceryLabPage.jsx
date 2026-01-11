@@ -5,6 +5,43 @@ import "../styles/GroceryLabPage.css";
 import { readJSON, writeJSON, nowISO, safeId } from "../utils/Storage";
 import ConciergeIntro from "../assets/components/ConciergeIntro";
 
+// Date/Time formatting helper
+function formatDateTime() {
+  const now = new Date();
+  const dateFormat = localStorage.getItem("3c.dateFormat") || "MM/DD/YYYY";
+  const timeFormat = localStorage.getItem("3c.timeFormat") || "12";
+
+  let dateStr = "";
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  const year = now.getFullYear();
+
+  switch (dateFormat) {
+    case "DD/MM/YYYY":
+      dateStr = `${day}/${month}/${year}`;
+      break;
+    case "YYYY/MM/DD":
+      dateStr = `${year}/${month}/${day}`;
+      break;
+    default:
+      dateStr = `${month}/${day}/${year}`;
+  }
+
+  let hours = now.getHours();
+  const minutes = String(now.getMinutes()).padStart(2, "0");
+  let timeStr = "";
+
+  if (timeFormat === "24") {
+    timeStr = `${String(hours).padStart(2, "0")}:${minutes}`;
+  } else {
+    const ampm = hours >= 12 ? "PM" : "AM";
+    hours = hours % 12 || 12;
+    timeStr = `${hours}:${minutes} ${ampm}`;
+  }
+
+  return { date: dateStr, time: timeStr };
+}
+
 /**
  * GroceryLabPage (Phase 1)
  * - 5-panel locked carousel
@@ -30,6 +67,54 @@ const STORES = [
   { id: "target", name: "Target" },
   { id: "sprouts", name: "Sprouts" },
 ];
+
+const AISLE_ORDER = [
+  "Produce",
+  "Bakery",
+  "Deli",
+  "Meat",
+  "Seafood",
+  "Dairy",
+  "Frozen",
+  "Beverages",
+  "Snacks",
+  "Pantry",
+  "Household",
+  "Personal Care",
+  "Pharmacy",
+  "Baby",
+  "Other",
+];
+
+function aisleForItem(name) {
+  const n = (name || "").toLowerCase();
+  if (/apple|banana|lettuce|spinach|tomato|onion|garlic|pepper|berry|cucumber|carrot/.test(n)) return "Produce";
+  if (/bread|bagel|tortilla|bun|bakery|croissant|pita|loaf/.test(n)) return "Bakery";
+  if (/ham|turkey|salami|deli|prosciutto/.test(n)) return "Deli";
+  if (/beef|chicken|pork|steak|sausage|lamb|ground/.test(n)) return "Meat";
+  if (/salmon|shrimp|tuna|cod|seafood|fish/.test(n)) return "Seafood";
+  if (/milk|cheese|yogurt|butter|cream|egg/.test(n)) return "Dairy";
+  if (/frozen|ice cream|pizza|veggies|waffles|fries/.test(n)) return "Frozen";
+  if (/water|juice|soda|coffee|tea|kombucha|beer|wine/.test(n)) return "Beverages";
+  if (/chips|cookie|cracker|snack|candy|popcorn|nuts/.test(n)) return "Snacks";
+  if (/rice|pasta|flour|sugar|oil|spice|sauce|cereal|oats|vinegar|can|jar/.test(n)) return "Pantry";
+  if (/paper|towel|toilet|trash|cleaner|detergent|soap|foil|wrap/.test(n)) return "Household";
+  if (/shampoo|conditioner|lotion|toothpaste|toothbrush|deodorant|razor|body wash/.test(n)) return "Personal Care";
+  if (/vitamin|medicine|aspirin|pain|cough|pharmacy/.test(n)) return "Pharmacy";
+  if (/diaper|wipes|formula|baby/.test(n)) return "Baby";
+  return "Other";
+}
+
+function groupItemsByAisle(items) {
+  const groups = new Map();
+  for (const it of items) {
+    const aisle = aisleForItem(it.name);
+    if (!groups.has(aisle)) groups.set(aisle, []);
+    groups.get(aisle).push(it);
+  }
+  const ordered = AISLE_ORDER.filter((a) => groups.has(a)).map((a) => ({ aisle: a, items: groups.get(a) }));
+  return ordered;
+}
 
 function num(n, fallback = 0) {
   const v = Number(n);
@@ -70,7 +155,7 @@ const PANELS = [
   { id: "items", title: "Items" },
   { id: "strategy", title: "Strategy" },
   { id: "pricing", title: "Pricing" },
-  { id: "review", title: "Review" },
+  { id: "review", title: "Confirm & Route" },
   { id: "receipt", title: "Receipt" },
 ];
 
@@ -183,8 +268,17 @@ export default function GroceryLabPage() {
 
   const [profile, setProfile] = useState(savedProfile || null);
   const [introOpen, setIntroOpen] = useState(false);
+  const [pricingItemsOpen, setPricingItemsOpen] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+  const [sortDesc, setSortDesc] = useState(() => {
+    const saved = readJSON("groceryLabSortDesc", true);
+    return saved;
+  });
+  const [expOpen, setExpOpen] = useState(false);
+  const [aisleOpen, setAisleOpen] = useState(false);
+  const [showRecipeDetail, setShowRecipeDetail] = useState(null);
 
-  // Daily rotation state (MUST be inside component)
+  // Extract meal info from handoff if available
   const [rotationTick, setRotationTick] = useState(0);
 
   const dailyMult = useMemo(() => {
@@ -220,6 +314,10 @@ export default function GroceryLabPage() {
     const src = Array.isArray(base) && base.length ? base : itemsFromMealPlanFallback();
     return src.map((it) => normalizeItem(it, { locked: true })).filter((it) => isValidName(it.name));
   }, [savedHandoff, savedMealItems]);
+
+  const mealContext = useMemo(() => {
+    return savedHandoff?.mealContext || null;
+  }, [savedHandoff]);
 
   const initialExtraItems = useMemo(() => {
     const src = Array.isArray(savedGroceries) ? savedGroceries : [];
@@ -296,7 +394,9 @@ const [pricingSummary, setPricingSummary] = useState(() => normalizePricingSumma
     const storeName = storeId ? (STORES.find((s) => s.id === storeId)?.name || "Store") : null;
     const modeKey = profile?.shoppingMode || (strategy?.shoppingMode === "single" ? "fastest" : "best_price");
     const modeLabel = modeKey === "fastest" ? "Fastest" : modeKey === "balanced" ? "Balanced" : "Best price";
-    return { storeName, modeLabel };
+    const firstName = (profile?.firstName || "").trim();
+    const birthMonth = (profile?.birthMonth || "").trim();
+    return { storeName, modeLabel, firstName, birthMonth };
   }, [profile, strategy]);
 
   useEffect(() => {
@@ -440,6 +540,7 @@ const [pricingSummary, setPricingSummary] = useState(() => normalizePricingSumma
     const preferredStore = STORES.find((s) => s.id === preferredStoreId) || STORES[0];
     const preferredRow = computeTotalsForStore(preferredStore);
 
+    const storeBreakdownSorted = [...storeBreakdown].sort((a, b) => b.total - a.total);
     const summary = {
       computedAt: nowISO(),
       dayKey: dayKeyLocal(),
@@ -453,7 +554,7 @@ const [pricingSummary, setPricingSummary] = useState(() => normalizePricingSumma
       note: "Static demo pricing rotates daily at local midnight.",
       mode: strategy?.shoppingMode || "multi",
       allowedStores: allowedStores.map((s) => s.id),
-      storeBreakdown,
+      storeBreakdown: storeBreakdownSorted,
       savingsVsNext,
       nextBestStoreName,
       nextBestTotal,
@@ -477,6 +578,10 @@ setPricingSummary(normalizePricingSummary(summary));
       actualTotal: winnerRow.total,
       savings: Number((preferredRow.total - winnerRow.total).toFixed(2)),
       mode: strategy?.shoppingMode || "multi",
+      fulfillmentMode: strategy.fulfillmentMode || "walkthrough",
+      shopByAisle: Boolean(strategy.shopByAisle),
+      missingPriceCount: 0,
+      note: "",
     };
     setSavingsHistory((prev) => {
       const next = [...(Array.isArray(prev) ? prev : []), savingsEntry];
@@ -509,6 +614,8 @@ setPricingSummary(normalizePricingSummary(summary));
             <div className="gl-inline-summary" style={{ marginTop: 6 }}>
               {headerBadge.storeName ? <span className="gl-pill">{headerBadge.storeName}</span> : null}
               {headerBadge.modeLabel ? <span className="gl-pill">{headerBadge.modeLabel}</span> : null}
+              {headerBadge.firstName ? <span className="gl-pill">Hi, {headerBadge.firstName}</span> : null}
+              {headerBadge.birthMonth ? <span className="gl-pill">Perks: {headerBadge.birthMonth}</span> : null}
               <button className="gl-link-edit" type="button" onClick={() => setIntroOpen(true)}>Edit</button>
             </div>
           ) : null}
@@ -556,92 +663,124 @@ setPricingSummary(normalizePricingSummary(summary));
               Items
             </h2>
 
-            <div className="gl-card">
-              <h3 className="gl-card-title">Meal Plan (Locked)</h3>
-              {mealItems.length === 0 ? (
-                <p className="gl-muted">No meal plan items yet.</p>
-              ) : (
-                <ul className="gl-list">
-                  {mealItems.map((it) => (
-                    <li key={it.id} className="gl-row">
-                      <div className="gl-row-main">
-                        <div className="gl-row-name">{it.name}</div>
-                        <div className="gl-row-meta">
-                          Qty: {it.qty} {it.unit}
-                        </div>
+            {Boolean(strategy.shopByAisle || strategy.fulfillmentMode === "walkthrough") ? (
+              <div className="gl-card">
+                <div className="gl-card-head">
+                  <h3 className="gl-card-title">Aisle View</h3>
+                  <span className="gl-muted">Guided in-store</span>
+                </div>
+                <div className="gl-summary">
+                  {groupItemsByAisle([...mealItems, ...extraItems]).map((grp) => (
+                    <div key={grp.aisle} className="gl-card" style={{ padding: 10 }}>
+                      <div className="gl-card-head">
+                        <h4 className="gl-card-title">{grp.aisle}</h4>
+                        <span className="gl-muted">{grp.items.length} {grp.items.length === 1 ? "item" : "items"}</span>
                       </div>
-                      <div className="gl-row-actions">
-                        <span className="gl-pill">Locked</span>
-                      </div>
-                    </li>
+                      <ul className="gl-list">
+                        {grp.items.map((it) => (
+                          <li key={it.id} className="gl-row">
+                            <div className="gl-row-main">
+                              <div className="gl-row-name">{it.name}</div>
+                              <div className="gl-row-meta">Qty: {it.qty} {it.unit}{it.locked ? " • Meal Plan" : " • Extra"}</div>
+                            </div>
+                            <div className="gl-row-actions">{it.locked ? <span className="gl-pill">Locked</span> : null}</div>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
                   ))}
-                </ul>
-              )}
-            </div>
-
-            <div className="gl-card">
-              <div className="gl-card-head">
-                <h3 className="gl-card-title">Extras (Editable)</h3>
-                <button className="gl-btn gl-btn-ghost" type="button" onClick={addExtraItem}>
-                  + Add
-                </button>
+                </div>
               </div>
+            ) : (
+              <>
+                <div className="gl-card">
+                  <h3 className="gl-card-title">Meal Plan (Locked)</h3>
+                  {mealItems.length === 0 ? (
+                    <p className="gl-muted">No meal plan items yet.</p>
+                  ) : (
+                    <ul className="gl-list">
+                      {mealItems.map((it) => (
+                        <li key={it.id} className="gl-row">
+                          <div className="gl-row-main">
+                            <div className="gl-row-name">{it.name}</div>
+                            <div className="gl-row-meta">
+                              Qty: {it.qty} {it.unit}
+                            </div>
+                          </div>
+                          <div className="gl-row-actions">
+                            <span className="gl-pill">Locked</span>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
 
-              {extraItems.length === 0 ? (
-                <p className="gl-muted">Add anything else you need (snacks, toiletries, etc.).</p>
-              ) : (
-                <ul className="gl-list">
-                  {extraItems.map((it) => (
-                    <li key={it.id} className="gl-row gl-row-edit">
-                      <div className="gl-row-fields">
-                        <label className="gl-field">
-                          <span className="gl-label">Item</span>
-                          <input
-                            className="gl-input"
-                            value={it.name}
-                            onChange={(e) => updateItem(setExtraItems, it.id, { name: e.target.value })}
-                            placeholder="e.g., Coffee"
-                          />
-                        </label>
+                <div className="gl-card">
+                  <div className="gl-card-head">
+                    <h3 className="gl-card-title">Extras (Editable)</h3>
+                    <button className="gl-btn gl-btn-ghost" type="button" onClick={addExtraItem}>
+                      + Add
+                    </button>
+                  </div>
 
-                        <label className="gl-field gl-field-qty">
-                          <span className="gl-label">Qty</span>
-                          <input
-                            className="gl-input"
-                            inputMode="numeric"
-                            value={String(it.qty ?? 1)}
-                            onChange={(e) =>
-                              updateItem(setExtraItems, it.id, { qty: Math.max(1, Number(e.target.value || 1)) })
-                            }
-                          />
-                        </label>
+                  {extraItems.length === 0 ? (
+                    <p className="gl-muted">Add anything else you need (snacks, toiletries, etc.).</p>
+                  ) : (
+                    <ul className="gl-list">
+                      {extraItems.map((it) => (
+                        <li key={it.id} className="gl-row gl-row-edit">
+                          <div className="gl-row-fields">
+                            <label className="gl-field">
+                              <span className="gl-label">Item</span>
+                              <input
+                                className="gl-input"
+                                value={it.name}
+                                onChange={(e) => updateItem(setExtraItems, it.id, { name: e.target.value })}
+                                placeholder="e.g., Coffee"
+                              />
+                            </label>
 
-                        <label className="gl-field gl-field-unit">
-                          <span className="gl-label">Unit</span>
-                          <select
-                            className="gl-input"
-                            value={it.unit}
-                            onChange={(e) => updateItem(setExtraItems, it.id, { unit: e.target.value })}
-                          >
-                            <option value="each">each</option>
-                            <option value="lb">lb</option>
-                            <option value="oz">oz</option>
-                            <option value="gal">gal</option>
-                            <option value="box">box</option>
-                          </select>
-                        </label>
-                      </div>
+                            <label className="gl-field gl-field-qty">
+                              <span className="gl-label">Qty</span>
+                              <input
+                                className="gl-input"
+                                inputMode="numeric"
+                                value={String(it.qty ?? 1)}
+                                onChange={(e) =>
+                                  updateItem(setExtraItems, it.id, { qty: Math.max(1, Number(e.target.value || 1)) })
+                                }
+                              />
+                            </label>
 
-                      <div className="gl-row-actions">
-                        <button className="gl-btn gl-btn-danger" type="button" onClick={() => removeItem(setExtraItems, it.id)}>
-                          Remove
-                        </button>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
+                            <label className="gl-field gl-field-unit">
+                              <span className="gl-label">Unit</span>
+                              <select
+                                className="gl-input"
+                                value={it.unit}
+                                onChange={(e) => updateItem(setExtraItems, it.id, { unit: e.target.value })}
+                              >
+                                <option value="each">each</option>
+                                <option value="lb">lb</option>
+                                <option value="oz">oz</option>
+                                <option value="gal">gal</option>
+                                <option value="box">box</option>
+                              </select>
+                            </label>
+                          </div>
+
+                          <div className="gl-row-actions">
+                            <button className="gl-btn gl-btn-danger" type="button" onClick={() => removeItem(setExtraItems, it.id)}>
+                              Remove
+                            </button>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </>
+            )}
 
             <div className="gl-panel-footer">
               <button className="gl-btn gl-btn-primary" type="button" onClick={next} disabled={cartIsEmpty}>
@@ -711,6 +850,27 @@ setPricingSummary(normalizePricingSummary(summary));
             <div className="gl-card">
               <h3 className="gl-card-title">Store Selector</h3>
               <p className="gl-muted">Choose which stores to include.</p>
+              <label className="gl-row">
+                <div className="gl-row-main">
+                  <div className="gl-row-name">Select all stores</div>
+                  <div className="gl-row-meta">Quick toggle</div>
+                </div>
+                <div className="gl-row-actions">
+                  <input
+                    type="checkbox"
+                    checked={Array.isArray(strategy.selectedStores) && strategy.selectedStores.length === STORES.length}
+                    onChange={(e) => {
+                      const allIds = STORES.map((x) => x.id);
+                      setStrategy((prev) => ({
+                        ...prev,
+                        selectedStores: e.target.checked ? allIds : allIds.slice(0, 1),
+                        shoppingMode: e.target.checked ? "multi" : "single",
+                        lastUpdated: nowISO(),
+                      }));
+                    }}
+                  />
+                </div>
+              </label>
               <div className="gl-list">
                 {STORES.map((s) => {
                   const isSelected = Array.isArray(strategy.selectedStores)
@@ -756,6 +916,50 @@ setPricingSummary(normalizePricingSummary(summary));
                     </label>
                   );
                 })}
+              </div>
+            </div>
+
+            <div className="gl-card">
+              <h3 className="gl-card-title">Shopping Options</h3>
+              <p className="gl-muted">Choose how you plan to shop today.</p>
+              <div className="gl-list">
+                {[
+                  { id: "pickup", name: "Pickup" },
+                  { id: "delivery", name: "Delivery" },
+                  { id: "walkthrough", name: "Walk-through in store" },
+                ].map((opt) => (
+                  <label key={opt.id} className="gl-row">
+                    <div className="gl-row-main">
+                      <div className="gl-row-name">{opt.name}</div>
+                      <div className="gl-row-meta">{opt.id === "walkthrough" ? "Be guided aisle by aisle" : ""}</div>
+                    </div>
+                    <div className="gl-row-actions">
+                      <input
+                        type="radio"
+                        name="fulfillment-mode"
+                        checked={(strategy.fulfillmentMode || "walkthrough") === opt.id}
+                        onChange={() =>
+                          setStrategy((prev) => ({ ...prev, fulfillmentMode: opt.id, lastUpdated: nowISO() }))
+                        }
+                      />
+                    </div>
+                  </label>
+                ))}
+                <label className="gl-row">
+                  <div className="gl-row-main">
+                    <div className="gl-row-name">Shop by Aisle</div>
+                    <div className="gl-row-meta">Group list by in-store aisles</div>
+                  </div>
+                  <div className="gl-row-actions">
+                    <input
+                      type="checkbox"
+                      checked={Boolean(strategy.shopByAisle)}
+                      onChange={(e) =>
+                        setStrategy((prev) => ({ ...prev, shopByAisle: e.target.checked, lastUpdated: nowISO() }))
+                      }
+                    />
+                  </div>
+                </label>
               </div>
             </div>
 
@@ -816,7 +1020,32 @@ setPricingSummary(normalizePricingSummary(summary));
                   {pricingSummary?.mode === "multi" && Array.isArray(pricingSummary?.storeBreakdown) && pricingSummary.storeBreakdown.length > 1 ? (
                     <div className="gl-summary" style={{ marginTop: 10 }}>
                       <div className="gl-summary-row"><span className="gl-muted">Per-Store Totals</span><span /></div>
-                      {pricingSummary.storeBreakdown.map((row) => (
+                      <div className="gl-summary-row">
+                        <span className="gl-muted">Sort</span>
+                        <div style={{ display: "flex", gap: 8 }}>
+                          <button
+                            className={sortDesc ? "gl-pill" : "gl-pill-active"}
+                            type="button"
+                            onClick={() => {
+                              setSortDesc(false);
+                              writeJSON("groceryLabSortDesc", false);
+                            }}
+                          >
+                            Best Savings
+                          </button>
+                          <button
+                            className={sortDesc ? "gl-pill-active" : "gl-pill"}
+                            type="button"
+                            onClick={() => {
+                              setSortDesc(true);
+                              writeJSON("groceryLabSortDesc", true);
+                            }}
+                          >
+                            Most expensive
+                          </button>
+                        </div>
+                      </div>
+                      {[...pricingSummary.storeBreakdown].sort((a,b)=> sortDesc ? b.total - a.total : a.total - b.total).map((row) => (
                         <div key={row.storeId} className="gl-summary-row">
                           <span className={row.storeId === pricingSummary.winnerStoreId ? "gl-strong" : undefined}>{row.storeName}</span>
                           <span>
@@ -832,51 +1061,27 @@ setPricingSummary(normalizePricingSummary(summary));
                       ) : (
                         <p className="gl-note">Reason: Best total among allowed stores today.</p>
                       )}
+                      <div className="gl-summary-row">
+                        <button className="gl-btn" type="button" onClick={() => setPricingItemsOpen((v) => !v)}>
+                          {pricingItemsOpen ? "Hide items" : "Show items"}
+                        </button>
+                        <span />
+                      </div>
+                      {pricingItemsOpen ? (
+                        <div className="gl-list" style={{ marginTop: 8 }}>
+                          {allItems.map((it) => (
+                            <div key={it.id} className="gl-row">
+                              <div className="gl-row-main">
+                                <div className="gl-row-name">{it.name}</div>
+                                <div className="gl-row-meta">Qty: {it.qty} {it.unit}</div>
+                              </div>
+                              <div className="gl-row-actions">{it.locked ? <span className="gl-pill">Meal Plan</span> : <span className="gl-pill">Extra</span>}</div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : null}
                     </div>
                   ) : null}
-                </div>
-              )}
-            </div>
-
-            <div className="gl-card">
-              <div className="gl-card-head">
-                <h3 className="gl-card-title">Month-to-Date Savings (Demo)</h3>
-                <span className="gl-pill">{monthKeyLocal()}</span>
-              </div>
-              {monthlySavings.trips === 0 ? (
-                <p className="gl-muted">No runs yet this month. Run pricing to start tracking savings.</p>
-              ) : (
-                <div className="gl-summary">
-                  <div className="gl-summary-row"><span className="gl-muted">Trips</span><span>{monthlySavings.trips}</span></div>
-                  <div className="gl-summary-row"><span className="gl-muted">Preferred store</span><span>{monthlySavings.preferredStoreName}</span></div>
-                  <div className="gl-summary-row"><span className="gl-muted">If always preferred</span><span>${money2(monthlySavings.preferredTotal)}</span></div>
-                  <div className="gl-summary-row"><span className="gl-muted">With app choices</span><span>${money2(monthlySavings.actualTotal)}</span></div>
-                  <div className="gl-summary-row gl-summary-total"><span>Savings</span><span>${money2(monthlySavings.savings)}</span></div>
-                  <p className="gl-note">Demo math: compares your preferred store to the best store per run.</p>
-                </div>
-              )}
-            </div>
-
-            <div className="gl-card">
-              <div className="gl-card-head">
-                <h3 className="gl-card-title">Savings History</h3>
-                <span className="gl-muted">Last {recentSavings.length || 0} runs</span>
-              </div>
-              {recentSavings.length === 0 ? (
-                <p className="gl-muted">No history yet. Run pricing to see history here.</p>
-              ) : (
-                <div className="gl-list">
-                  {recentSavings.map((e) => (
-                    <div key={e.id} className="gl-row">
-                      <div className="gl-row-main">
-                        <div className="gl-row-name">{e.dayKey}</div>
-                        <div className="gl-row-meta">Preferred: {e.preferredStoreName} • Actual: {e.actualStoreName}</div>
-                      </div>
-                      <div className="gl-row-actions">
-                        <span className="gl-pill">Save ${money2(e.savings)}</span>
-                      </div>
-                    </div>
-                  ))}
                 </div>
               )}
             </div>
@@ -889,21 +1094,66 @@ setPricingSummary(normalizePricingSummary(summary));
 
           {/* Panel 4: Review */}
           <div className="gl-panel" role="group" aria-label="Review panel">
-            <h2 className="gl-panel-title" tabIndex={-1}>Review</h2>
+            <h2 className="gl-panel-title" tabIndex={-1}>Confirm & Route</h2>
+
+            {/* Meal Plan Summary */}
+            {mealContext && (
+              <div className="gl-card" style={{ marginBottom: 12, backgroundColor: "rgba(246,220,138,.08)", borderLeft: "3px solid var(--gold)" }}>
+                <h3 className="gl-card-title" style={{ color: "var(--gold)" }}>📅 Meal Plan</h3>
+                <div style={{ display: "grid", gap: 10 }}>
+                  <div style={{ padding: "8px 12px", backgroundColor: "rgba(246,220,138,.12)", borderRadius: 6 }}>
+                    <div style={{ fontSize: 12, color: "var(--muted)" }}>Meal Type</div>
+                    <div style={{ fontSize: 14, fontWeight: 700, marginTop: 2 }}>{mealContext.mealLabel || "Select a meal"}</div>
+                  </div>
+                  <div style={{ padding: "8px 12px", backgroundColor: "rgba(246,220,138,.12)", borderRadius: 6 }}>
+                    <div style={{ fontSize: 12, color: "var(--muted)" }}>Time</div>
+                    <div style={{ fontSize: 14, fontWeight: 700, marginTop: 2 }}>{mealContext.time24 || "TBD"}</div>
+                  </div>
+                  <div style={{ padding: "8px 12px", backgroundColor: "rgba(246,220,138,.12)", borderRadius: 6 }}>
+                    <div style={{ fontSize: 12, color: "var(--muted)" }}>Date</div>
+                    <div style={{ fontSize: 14, fontWeight: 700, marginTop: 2 }}>{mealContext.dateISO || "Today"}</div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="gl-card">
               <h3 className="gl-card-title">Your Cart</h3>
-              <ul className="gl-list">
-                {allItems.map((it) => (
-                  <li key={it.id} className="gl-row">
-                    <div className="gl-row-main">
-                      <div className="gl-row-name">{it.name}</div>
-                      <div className="gl-row-meta">Qty: {it.qty} {it.unit}{it.locked ? " • Meal Plan" : " • Extra"}</div>
+              {Boolean(strategy.shopByAisle || (strategy.fulfillmentMode === "walkthrough")) ? (
+                <div className="gl-summary">
+                  {groupItemsByAisle(allItems).map((grp) => (
+                    <div key={grp.aisle} className="gl-card" style={{ padding: 10 }}>
+                      <div className="gl-card-head">
+                        <h4 className="gl-card-title">{grp.aisle}</h4>
+                        <span className="gl-muted">{grp.items.length} {grp.items.length === 1 ? "item" : "items"}</span>
+                      </div>
+                      <ul className="gl-list">
+                        {grp.items.map((it) => (
+                          <li key={it.id} className="gl-row">
+                            <div className="gl-row-main">
+                              <div className="gl-row-name">{it.name}</div>
+                              <div className="gl-row-meta">Qty: {it.qty} {it.unit}{it.locked ? " • Meal Plan" : " • Extra"}</div>
+                            </div>
+                            <div className="gl-row-actions">{it.locked ? <span className="gl-pill">Locked</span> : null}</div>
+                          </li>
+                        ))}
+                      </ul>
                     </div>
-                    <div className="gl-row-actions">{it.locked ? <span className="gl-pill">Locked</span> : null}</div>
-                  </li>
-                ))}
-              </ul>
+                  ))}
+                </div>
+              ) : (
+                <ul className="gl-list">
+                  {allItems.map((it) => (
+                    <li key={it.id} className="gl-row">
+                      <div className="gl-row-main">
+                        <div className="gl-row-name">{it.name}</div>
+                        <div className="gl-row-meta">Qty: {it.qty} {it.unit}{it.locked ? " • Meal Plan" : " • Extra"}</div>
+                      </div>
+                      <div className="gl-row-actions">{it.locked ? <span className="gl-pill">Locked</span> : null}</div>
+                    </li>
+                  ))}
+                </ul>
+              )}
 
               {!pricingSummary ? (
                 <p className="gl-muted">Tip: Run pricing first to generate totals.</p>
@@ -932,7 +1182,8 @@ setPricingSummary(normalizePricingSummary(summary));
                 <p className="gl-muted">No pricing summary yet. Go back and run pricing.</p>
               ) : (
                 <div className="gl-receipt">
-                  <div className="gl-receipt-row"><span>Date</span><span>{pricingSummary.dayKey}</span></div>
+                  <div className="gl-receipt-row"><span>Date</span><span>{formatDateTime().date}</span></div>
+                  <div className="gl-receipt-row"><span>Time</span><span>{formatDateTime().time}</span></div>
                   <div className="gl-receipt-row"><span>Store</span><span>{pricingSummary.winnerStoreName}</span></div>
                   <div className="gl-receipt-row"><span>Items</span><span>{pricingSummary.itemCount}</span></div>
                   <div className="gl-receipt-row"><span>Rotation</span><span>{Number(num(pricingSummary?.dailyMult, 1).toFixed(2))}×</span></div>
@@ -953,9 +1204,71 @@ setPricingSummary(normalizePricingSummary(summary));
                     </>
                   ) : null}
                   <div className="gl-divider" />
+                  <div className="gl-summary-row" style={{ justifyContent: "space-between" }}>
+                    <span className="gl-muted">Monthly + History</span>
+                    <button className="gl-btn" type="button" onClick={() => setShowHistory((v) => !v)}>{showHistory ? "Hide" : "Show"}</button>
+                  </div>
+                  {showHistory ? (
+                    <div className="gl-summary" style={{ marginTop: 10 }}>
+                      <div className="gl-card-head">
+                        <h3 className="gl-card-title">Month-to-Date Savings (Demo)</h3>
+                        <span className="gl-pill">{monthKeyLocal()}</span>
+                      </div>
+                      {monthlySavings.trips === 0 ? (
+                        <p className="gl-muted">No runs yet this month. Run pricing to start tracking savings.</p>
+                      ) : (
+                        <div className="gl-summary">
+                          <div className="gl-summary-row"><span className="gl-muted">Trips</span><span>{monthlySavings.trips}</span></div>
+                          <div className="gl-summary-row"><span className="gl-muted">Preferred store</span><span>{monthlySavings.preferredStoreName}</span></div>
+                          <div className="gl-summary-row"><span className="gl-muted">If always preferred</span><span>${money2(monthlySavings.preferredTotal)}</span></div>
+                          <div className="gl-summary-row"><span className="gl-muted">With app choices</span><span>${money2(monthlySavings.actualTotal)}</span></div>
+                          <div className="gl-summary-row gl-summary-total"><span>Savings</span><span>${money2(monthlySavings.savings)}</span></div>
+                          <p className="gl-note">Demo math: compares your preferred store to the best store per run.</p>
+                        </div>
+                      )}
+                      <div className="gl-divider" />
+                      <div className="gl-card-head">
+                        <h3 className="gl-card-title">Savings History</h3>
+                        <span className="gl-muted">Last {recentSavings.length || 0} runs</span>
+                      </div>
+                      {recentSavings.length === 0 ? (
+                        <p className="gl-muted">No history yet. Run pricing to see history here.</p>
+                      ) : (
+                        <div className="gl-list">
+                          {recentSavings.map((e) => (
+                            <div key={e.id} className="gl-row">
+                              <div className="gl-row-main">
+                                <div className="gl-row-name">{e.dayKey}</div>
+                                <div className="gl-row-meta">Preferred: {e.preferredStoreName} • Actual: {e.actualStoreName}</div>
+                              </div>
+                              <div className="gl-row-actions">
+                                <span className="gl-pill">Save ${money2(e.savings)}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ) : null}
                   <p className="gl-muted">Next phase: connect real store pricing APIs + routing rules.</p>
                 </div>
               )}
+            </div>
+
+            <div className="gl-card">
+              <h3 className="gl-card-title">Payment (Optional)</h3>
+              <p className="gl-muted">Connect payment later to speed up checkout.</p>
+              <div className="gl-list">
+                <label className="gl-row">
+                  <div className="gl-row-main">
+                    <div className="gl-row-name">Save card securely</div>
+                    <div className="gl-row-meta">Encrypted • PCI compliant</div>
+                  </div>
+                  <div className="gl-row-actions">
+                    <button className="gl-btn" type="button" disabled>Coming soon</button>
+                  </div>
+                </label>
+              </div>
             </div>
 
             <div className="gl-panel-footer">

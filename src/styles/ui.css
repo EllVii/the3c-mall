@@ -678,6 +678,12 @@ html, body, #root,
   min-height: 78px;
 }
 
+.cc-choice.is-active{
+  border-color: rgba(246, 220, 138, .55);
+  box-shadow: 0 10px 28px rgba(0,0,0,.45);
+  background: linear-gradient(180deg, rgba(246,220,138,.12), rgba(255,255,255,.06));
+}
+
 .cc-choice:hover{
   transform: translateY(-2px);
   filter: brightness(1.04);
@@ -689,6 +695,15 @@ html, body, #root,
   letter-spacing: .02em;
   color: var(--gold);
   margin-bottom: 4px;
+}
+
+.cc-choice-icon{
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  object-fit: contain;
+  background: rgba(0,0,0,.24);
+  border: 1px solid rgba(255,255,255,.18);
 }
 
 .cc-choice-desc{

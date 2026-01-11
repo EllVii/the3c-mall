@@ -1,6 +1,6 @@
 // src/components/meal-planner/RecipeDeck.jsx
-import React from "react";
-import { BASE_RECIPES } from "../../pages/MealPlannerPage.jsx";
+import React, { useState } from "react";
+import { BASE_RECIPES } from "../../../utils/recipes.js";
 
 const FOCUS_LABELS = {
   "no-restrictions": "No Restrictions",
@@ -15,6 +15,13 @@ const COOKING_METHODS = [
   { key: "air-fryer", label: "Air Fryer" },
   { key: "cast-iron", label: "Cast Iron" },
   { key: "grill", label: "Grill" },
+  { key: "skillet", label: "Skillet" },
+  { key: "wok", label: "Wok" },
+  { key: "slow-cooker", label: "Slow Cooker" },
+  { key: "pot", label: "Pot" },
+  { key: "stovetop", label: "Stovetop" },
+  { key: "sheet pan", label: "Sheet Pan" },
+  { key: "no-cook", label: "No Cook" },
 ];
 
 export default function RecipeDeck({
@@ -29,6 +36,8 @@ export default function RecipeDeck({
   onNext,
   onPrev,
 }) {
+  const [selectedVariant, setSelectedVariant] = useState(currentRecipe?.variants?.[0] || null);
+
   const displayIndex =
     currentRecipe && totalRecipes > 0
       ? BASE_RECIPES.findIndex((r) => r.id === currentRecipe.id) + 1
@@ -88,12 +97,25 @@ export default function RecipeDeck({
             {currentRecipe ? (
               <>
                 <div className="mp-rolodex-image-shell">
-                  <div className="mp-rolodex-image-placeholder">
-                    {/* Later: plug AI/live image here */}
-                    <span className="mp-rolodex-image-label">
-                      {currentRecipe.imagePrompt}
-                    </span>
-                  </div>
+                  {currentRecipe.imageUrl ? (
+                    <img 
+                      src={currentRecipe.imageUrl} 
+                      alt={currentRecipe.name}
+                      className="mp-rolodex-image"
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                        borderRadius: "8px 8px 0 0"
+                      }}
+                    />
+                  ) : (
+                    <div className="mp-rolodex-image-placeholder">
+                      <span className="mp-rolodex-image-label">
+                        {currentRecipe.name}
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="mp-rolodex-content">
@@ -111,14 +133,42 @@ export default function RecipeDeck({
                       {currentRecipe.methods.join(" · ")}
                     </span>
                     <span className="mp-tag">
-                      Spice: {spiceLevel.toUpperCase()}
+                      Spice: {currentRecipe.spiceLevel?.toUpperCase() || "Mild"}
                     </span>
                   </div>
+
+                  {/* Variant selection */}
+                  {currentRecipe.variants && currentRecipe.variants.length > 0 && (
+                    <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid rgba(126,224,255,.12)" }}>
+                      <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "var(--muted)", marginBottom: 6 }}>
+                        Choose variant
+                      </label>
+                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                        {currentRecipe.variants.map((v) => (
+                          <button
+                            key={v}
+                            type="button"
+                            onClick={() => setSelectedVariant(v)}
+                            style={{
+                              padding: "6px 10px",
+                              fontSize: 12,
+                              borderRadius: 4,
+                              border: selectedVariant === v ? "1px solid var(--gold)" : "1px solid rgba(126,224,255,.12)",
+                              background: selectedVariant === v ? "rgba(246,220,138,.15)" : "transparent",
+                              color: selectedVariant === v ? "var(--gold)" : "inherit",
+                              cursor: "pointer",
+                              transition: "all 0.2s ease"
+                            }}
+                          >
+                            {v}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   <p className="mp-rolodex-blurb">
-                    Full recipe lives in a pop-out card. When you&apos;re
-                    ready to cook, we&apos;ll show you the exact steps,
-                    timing, and a live image so you know exactly what it
-                    should look like.
+                    Full recipe and shopping list coming when you select this meal.
                   </p>
                 </div>
 

@@ -7,6 +7,8 @@ import FeedbackPanel from "../assets/components/FeedbackPanel.jsx";
 import ConciergeOverlay from "../assets/components/ConciergeOverlay.jsx";
 import GuidedAssistOverlay from "../assets/components/GuidedAssistOverlay.jsx";
 import SettingsModal from "../assets/components/SettingsModal.jsx";
+import ConciergeIntro from "../assets/components/ConciergeIntro.jsx";
+import { readJSON } from "../utils/Storage";
 
 import {
   getPrefsSafe,
@@ -39,6 +41,12 @@ export default function DashboardPage() {
   // Concierge overlay — OPEN BY DEFAULT
   const [ccOpen, setCcOpen] = useState(true);
   const [ccMin, setCcMin] = useState(false);
+
+  // Concierge Intro on first run
+  const [introOpen, setIntroOpen] = useState(() => {
+    const profile = readJSON("concierge.profile.v1", null);
+    return !profile;
+  });
 
   // Guided Assist
   const [gaOpen, setGaOpen] = useState(false);
@@ -161,6 +169,8 @@ export default function DashboardPage() {
 
   return (
     <section className="page db-shell">
+      {/* CONCIERGE INTRO (first run) */}
+      {introOpen ? <ConciergeIntro open={introOpen} onClose={() => setIntroOpen(false)} /> : null}
       {/* CONCIERGE OVERLAY */}
       <ConciergeOverlay
         open={ccOpen}
