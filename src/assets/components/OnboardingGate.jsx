@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { writeJSON, nowISO, readJSON } from "../../utils/Storage";
+import { writeJSON, nowISO } from "../../utils/Storage";
 
 const PROFILE_KEY = "concierge.profile.v1";
 const STRATEGY_KEY = "grocery.strategy.v1";

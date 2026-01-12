@@ -25,7 +25,7 @@ export default function SiteLayout() {
           <NavLink to="/features" style={linkStyle}>Features</NavLink>
           <NavLink to="/pricing" style={linkStyle}>Pricing</NavLink>
           <NavLink to="/login" style={linkStyle}>Login</NavLink>
-          <NavLink to="/app" style={linkStyle}>Dashboard</NavLink>
+          <NavLink to="/app" style={linkStyle}>App Dashboard</NavLink>
         </div>
       </header>
 

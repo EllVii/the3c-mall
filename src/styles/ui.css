@@ -181,10 +181,10 @@ html[data-theme="pearl-luxe"]{
   --bg0:#0b1018;
   --bg1:#111a26;
 
-  --text:#0f172a;
-  --muted:#243041;
-  --muted2:#3a4657;
-  --blackText:#0b1220;
+  --text:#0a1018;
+  --muted:#1a2332;
+  --muted2:#2a3546;
+  --blackText:#050b13;
 
   --bgOverlayTop: rgba(255,255,255,.16);
   --bgOverlayBottom: rgba(255,255,255,.40);
@@ -200,7 +200,7 @@ html[data-theme="pearl-luxe"]{
   --theme-image: url("/themes/pearl-luxe-bg.jpg");
 
   /* Dark gold */
-  --tileTitleColor: #7a5a18;
+  --tileTitleColor: #5a3a0a;
 
   /* ✅ deeper premium shadow to stop bleed */
   --tileTextShadow:
@@ -225,10 +225,10 @@ html[data-theme="retro-fusion"]{
   --bg0:#040610;
   --bg1:#070a18;
 
-  --text:#0b1220;
-  --muted:#1f2a3a;
-  --muted2:#37465a;
-  --blackText:#0b1220;
+  --text:#0a0f1a;
+  --muted:#151d2a;
+  --muted2:#222d3a;
+  --blackText:#050a13;
 
   --bgOverlayTop: rgba(255,255,255,.08);
   --bgOverlayBottom: rgba(255,255,255,.22);
@@ -243,7 +243,7 @@ html[data-theme="retro-fusion"]{
 
   --theme-image: url("/themes/retro-fusion-bg.jpg");
 
-  --tileTitleColor: var(--gold);
+  --tileTitleColor: #ff4f8f;
   --tileTextShadow:
     0 1px 0 rgba(255,255,255,.38),
     0 10px 24px rgba(0,0,0,.28);
@@ -457,12 +457,12 @@ html[data-theme="pearl-luxe"] .tile-hero::before{
   text-shadow: var(--tileTextShadow);
 }
 
-/* Pearl: stop “thin bleed” on subtext */
+/* Pearl: darker text for light backgrounds */
 html[data-theme="pearl-luxe"] .kicker,
 html[data-theme="pearl-luxe"] .sub,
 html[data-theme="pearl-luxe"] .tile-desc,
 html[data-theme="pearl-luxe"] .small{
-  color: rgba(20, 28, 40, .94);
+  color: rgba(10, 16, 24, .96);
 }
 
 /* =========================================================
@@ -527,6 +527,35 @@ html[data-theme="pearl-luxe"] .small{
   background: transparent;
   border: 1px solid rgba(246,220,138,.35);
   color: var(--gold);
+}
+
+/* =========================================================
+  THEME-SPECIFIC BUTTON OVERRIDES
+========================================================= */
+/* Pearl Luxe: darker secondary/ghost buttons for light background */
+html[data-theme="pearl-luxe"] .btn-secondary{
+  background: rgba(50,80,120,.12);
+  border: 1px solid rgba(50,80,120,.35);
+  color: #1a3a5a;
+}
+
+html[data-theme="pearl-luxe"] .btn-ghost{
+  background: transparent;
+  border: 1px solid rgba(90,58,10,.40);
+  color: #5a3a0a;
+}
+
+/* Retro Fusion: neon pop on light surfaces */
+html[data-theme="retro-fusion"] .btn-secondary{
+  background: rgba(255,79,143,.08);
+  border: 1px solid rgba(255,79,143,.40);
+  color: #ff4f8f;
+}
+
+html[data-theme="retro-fusion"] .btn-ghost{
+  background: transparent;
+  border: 1px solid rgba(255,79,143,.45);
+  color: #ff4f8f;
 }
 
 /* =========================================================

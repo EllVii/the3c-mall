@@ -29,8 +29,6 @@ export default function RecipeDeck({
   setFocus,
   cookingMethods,
   onToggleCookingMethod,
-  spiceLevel,
-  setSpiceLevel,
   currentRecipe,
   totalRecipes,
   onNext,

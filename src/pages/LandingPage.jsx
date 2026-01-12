@@ -45,7 +45,7 @@ export default function LandingPage() {
             border: "1px solid rgba(126,224,255,0.35)",  
           }}  
         >  
-          Enter Dashboard  
+          Enter App Dashboard  
         </a>  
       </div>  
     </section>
