@@ -2,7 +2,7 @@
   padding: 2rem 1.25rem 3rem;
   max-width: 1180px;
   margin: 0 auto;
-  color: #f4f6ff;
+  color: var(--text);
 }
 
 .mp-header {
@@ -15,7 +15,7 @@
   font-size: 0.75rem;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: #7ee0ff;
+  color: var(--blue);
 }
 
 .mp-title {
@@ -24,11 +24,11 @@
 }
 
 .mp-accent {
-  color: #f6dc8a;
+  color: var(--gold);
 }
 
 .mp-subtitle {
-  color: #a9b4d2;
+  color: var(--muted);
   max-width: 760px;
 }
 
@@ -70,7 +70,7 @@
 .pill-toggle{
   border: 1px solid rgba(126,224,255,.38);
   background: rgba(12,16,26,.72);
-  color: #e4ebff;
+  color: var(--text);
   padding: .45rem .7rem;
   border-radius: 999px;
   cursor: pointer;
@@ -80,7 +80,7 @@
 .pill-toggle.active{
   border-color: rgba(246,220,138,.62);
   background: linear-gradient(180deg, rgba(246,220,138,.14), rgba(12,16,26,.72));
-  color: #fff;
+  color: var(--text);
   box-shadow: 0 10px 28px rgba(0,0,0,.45);
 }
 
@@ -88,7 +88,7 @@
   display: flex;
   flex-direction: column;
   font-size: 0.82rem;
-  color: #c7d1f2;
+  color: var(--muted2);
   gap: 0.25rem;
   margin-bottom: 0.6rem;
 }
@@ -98,7 +98,7 @@
   border: 1px solid rgba(126,224,255,0.6);
   background: rgba(4,8,18,0.96);
   padding: 0.45rem 0.6rem;
-  color: #e4ebff;
+  color: var(--text);
 }
 
 .mp-textarea {
@@ -108,7 +108,7 @@
   border-radius: 0.75rem;
   border: 1px solid rgba(126,224,255,0.6);
   background: rgba(4,8,18,0.96);
-  color: #e4ebff;
+  color: var(--text);
   padding: 0.5rem;
 }
 
@@ -120,7 +120,7 @@
 
 .mp-saved {
   font-size: 0.8rem;
-  color: #f6dc8a;
+  color: var(--gold);
 }
 /* Tile mode: page stays fixed, inner card scrolls */
 .mp-page {

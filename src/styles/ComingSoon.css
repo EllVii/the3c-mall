@@ -2,7 +2,7 @@
 
 .cs-page {
   padding: 2rem 1.25rem 3rem;
-  color: #f4f6ff;
+  color: var(--text);
   max-width: 1180px;
   margin: 0 auto;
 }
@@ -19,7 +19,7 @@
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.16em;
-  color: #7ee0ff;
+  color: var(--blue);
   margin-bottom: 0.35rem;
 }
 
@@ -30,12 +30,12 @@
 }
 
 .cs-accent {
-  color: #f6dc8a;
+  color: var(--gold);
 }
 
 .cs-subtitle {
   font-size: 0.95rem;
-  color: #a9b4d2;
+  color: var(--muted);
   max-width: 760px;
 }
 
@@ -56,13 +56,13 @@
 .cs-meta span {
   text-transform: uppercase;
   letter-spacing: 0.14em;
-  color: #7b88a5;
+  color: var(--muted2);
   font-size: 0.7rem;
 }
 
 .cs-meta strong {
   font-weight: 800;
-  color: #f6dc8a;
+  color: var(--gold);
 }
 
 .cs-actions {
@@ -94,7 +94,7 @@
   font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.18em;
-  color: #8cf5c7;
+  color: var(--blue);
 }
 
 .cs-card-title {
@@ -106,7 +106,7 @@
 
 .cs-card-sub {
   font-size: 0.9rem;
-  color: #a9b4d2;
+  color: var(--muted);
   margin: 0;
 }
 

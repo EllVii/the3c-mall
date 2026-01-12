@@ -16,7 +16,7 @@ export default function Pricing() {
         "Meal Planner (MVP)",
         "Grocery Lab strategy (MVP)",
         "Saved settings + handoff (Meal → Grocery)",
-        "Limited tools / features during Alpha",
+        "Limited tools / features during Beta",
       ],
       cta: "Start Free",
       onClick: () => nav("/login"),

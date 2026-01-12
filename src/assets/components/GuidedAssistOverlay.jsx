@@ -3,8 +3,8 @@ import React, { useEffect, useMemo } from "react";
 
 export default function GuidedAssistOverlay({
   open,
-  title = "Need a hand?",
-  message = "Most people start here.",
+  title = "Welcome to 3C Mall",
+  message = "I'm here to help. Ready to get started?",
   primaryLabel = "Start",
   secondaryLabel = "Not now",
   onPrimary,

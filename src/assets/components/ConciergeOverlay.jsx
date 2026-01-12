@@ -11,6 +11,7 @@ export default function ConciergeOverlay({
   title = "Concierge",
   subtitle = "Concierge · Cost · Community",
   options = [],
+  userName = null,
 }) {
   const visible = open && !minimized;
 
@@ -75,8 +76,15 @@ export default function ConciergeOverlay({
         {/* BODY */}
         <div className="cc-body">
           <p className="small cc-copy">
-            Pick your lane. I’ll take you there and remember it so the app stays
-            quiet.
+            {userName ? (
+              <>
+                Hi <strong>{userName}</strong>! Pick your lane and I'll take you there. I'll remember your choice so the app stays focused on what matters to you.
+              </>
+            ) : (
+              <>
+                Pick your lane. I'll take you there and remember it so the app stays quiet.
+              </>
+            )}
           </p>
 
           <div className="cc-grid">

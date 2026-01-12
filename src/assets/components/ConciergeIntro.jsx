@@ -71,8 +71,14 @@ export default function ConciergeIntro({ open, onClose }) {
   if (!open) return null;
 
   const save = () => {
+    const name = firstName.trim();
+    if (!name) {
+      alert("Please enter your first name so we can personalize your experience.");
+      return;
+    }
+    
     const profile = {
-      firstName: firstName.trim(),
+      firstName: name,
       defaultStoreId,
       shoppingMode,
       reasonId,
@@ -94,7 +100,7 @@ export default function ConciergeIntro({ open, onClose }) {
           <div className="cc-head-left">
             <div className="cc-badge">3C</div>
             <div>
-              <div className="cc-title">Concierge Intro</div>
+              <div className="cc-title">{firstName ? `Great to meet you, ${firstName}!` : "Let's set up your 3C"}</div>
               <div className="cc-sub">20–40 seconds · saved forever</div>
             </div>
           </div>
@@ -105,16 +111,31 @@ export default function ConciergeIntro({ open, onClose }) {
         </div>
 
         <div className="cc-body">
-          {/* Step 1: Name */}
+          {/* AI Concierge Intro */}
+          <div className="cc-card" style={{ background: "rgba(126,224,255,.08)", borderColor: "rgba(126,224,255,.25)" }}>
+            <div className="cc-card-title" style={{ color: "var(--blue)" }}>👋 Welcome to Your 3C Mall</div>
+            <p className="small cc-copy">
+              I'm your AI guide for <strong>saving money</strong>, <strong>planning meals</strong>, and <strong>staying consistent</strong>. 
+              {firstName && ` Nice to meet you, ${firstName}!`}
+              <br />
+              Let me get to know you so I can help you best.
+            </p>
+          </div>
+
+          {/* Step 1: Name (REQUIRED) */}
           <div className="cc-card">
-            <div className="cc-card-title">What should we call you?</div>
+            <div className="cc-card-title">What's your first name? <span style={{ color: "var(--gold)" }}>*</span></div>
             <input
               className="input"
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
-              placeholder="First name"
+              placeholder="First name (required)"
+              required
+              autoFocus
             />
-            <div className="small cc-copy">Optional, helps us personalize your lane.</div>
+            <div className="small cc-copy">
+              I'll speak to you by name and personalize every recommendation in 3C Mall.
+            </div>
           </div>
 
           {/* Step 2: Store baseline */}
@@ -145,6 +166,9 @@ export default function ConciergeIntro({ open, onClose }) {
           {/* Step 3: Shopping mindset */}
           <div className="cc-card">
             <div className="cc-card-title">What matters most today?</div>
+            <div className="small cc-copy" style={{ marginBottom: ".7rem" }}>
+              This helps me recommend the best strategy. (You can change this anytime.)
+            </div>
             <div className="cc-grid cc-grid-choices">
               {MODES.map((m) => (
                 <button
@@ -163,7 +187,7 @@ export default function ConciergeIntro({ open, onClose }) {
           {/* Step 4: Reason */}
           <div className="cc-card">
             <div className="cc-card-title">
-              {shoppingMode === "fastest" ? "Why this store?" : "How should we optimize?"}
+              {shoppingMode === "fastest" ? "Why this store?" : "How should I optimize?"}
             </div>
             <div className="cc-grid cc-grid-choices">
               {REASONS.map((r) => (
@@ -177,7 +201,7 @@ export default function ConciergeIntro({ open, onClose }) {
                 </button>
               ))}
             </div>
-            <div className="small cc-copy">No typing — just tap.</div>
+            <div className="small cc-copy">This helps me tailor recommendations for you.</div>
           </div>
 
           {/* Step 4b: Optional birth month */}

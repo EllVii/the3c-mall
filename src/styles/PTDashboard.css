@@ -2,6 +2,8 @@
 .pt-page {
   padding: 2rem 1.5rem 3rem;
   color: #f4f6ff;
+  overflow-y: auto; /* Enable scrolling for PT mode */
+  max-height: 100dvh;
 }
 
 .pt-header {

@@ -1,13 +1,7 @@
 // src/assets/components/SettingsModal.jsx
 import React, { useMemo, useState } from "react";
 import { getPrefsSafe, setNavMode } from "../../utils/prefs";
-
-const THEMES = [
-  { id: "midnight-lux", name: "Midnight Lux" },
-  { id: "velocity-red", name: "Velocity Red" },
-  { id: "pearl-luxe", name: "Pearl Luxe" },
-  { id: "retro-fusion", name: "Retro Fusion" },
-];
+import { THEMES, getThemeId, setThemeId, applyTheme as applyThemeToDOM } from "../../utils/Settings/theme.js";
 
 export default function SettingsModal({ open, onClose, prefs, onChange }) {
   const [local, setLocal] = useState(() => prefs || getPrefsSafe());
@@ -17,10 +11,11 @@ export default function SettingsModal({ open, onClose, prefs, onChange }) {
 
   if (!open) return null;
 
-  const currentTheme = document.documentElement.getAttribute("data-theme") || "midnight-lux";
+  const currentTheme = getThemeId();
 
   function applyTheme(themeId) {
-    document.documentElement.setAttribute("data-theme", themeId);
+    setThemeId(themeId);
+    applyThemeToDOM(themeId);
   }
 
   function applyMode(nextMode) {
@@ -86,7 +81,9 @@ export default function SettingsModal({ open, onClose, prefs, onChange }) {
         </div>
 
         <div className="modal-foot">
-          <button className="btn btn-ghost" onClick={() => applyTheme("midnight-lux")}>
+          <button className="btn btn-ghost" onClick={() => {
+            applyTheme("midnight-lux");
+          }}>
             Reset theme
           </button>
         </div>

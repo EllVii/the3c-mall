@@ -3,6 +3,8 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/SettingsPage.css";
 import { getPrefsSafe, setNavMode } from "../utils/prefs";
+import { THEMES, getThemeId, setThemeId, applyTheme } from "../utils/Settings/theme.js";
+import { getDateFormat, setDateFormat, getTimeFormat, setTimeFormat } from "../utils/Settings/dateTime.js";
 
 /**
  * OPTIONAL SETTINGS MODULES
@@ -13,44 +15,32 @@ import ConciergeHub from "../assets/components/ConciergeHub.jsx";
 import FeedbackPanel from "../assets/components/FeedbackPanel.jsx";
 import FastingTimer from "../assets/components/FastingTimer.jsx";
 
-const THEMES = [
-  { id: "midnight-lux", title: "Midnight Lux", desc: "Deep navy, gold, and neon blue. Premium default." },
-  { id: "velocity-red", title: "Velocity Red", desc: "Controlled performance energy with red highlights." },
-  { id: "pearl-luxe", title: "Pearl Luxe", desc: "Soft silver luxury with refined contrast." },
-  { id: "retro-fusion", title: "Retro Fusion", desc: "Tasteful neon — 80s / 90s / modern blend." },
-];
-
-function getThemeSafe() {
-  try {
-    return localStorage.getItem("3c.theme") || "midnight-lux";
-  } catch {
-    return "midnight-lux";
-  }
-}
-
-function applyTheme(id) {
-  try {
-    localStorage.setItem("3c.theme", id);
-  } catch {
-    // ignore
-  }
-  document.documentElement.setAttribute("data-theme", id);
-}
-
 export default function SettingsPage() {
   const nav = useNavigate();
 
   const [prefs, setPrefs] = useState(() => getPrefsSafe());
-  const [theme, setTheme] = useState(() => getThemeSafe());
+  const [theme, setTheme] = useState(() => getThemeId());
+  const [dateFormat, setDateFormatState] = useState(() => getDateFormat());
+  const [timeFormat, setTimeFormatState] = useState(() => getTimeFormat());
 
   // Apply theme whenever it changes
   useEffect(() => {
+    setThemeId(theme);
     applyTheme(theme);
   }, [theme]);
 
+  // Apply date/time format whenever it changes
+  useEffect(() => {
+    setDateFormat(dateFormat);
+  }, [dateFormat]);
+
+  useEffect(() => {
+    setTimeFormat(timeFormat);
+  }, [timeFormat]);
+
   // Ensure theme is applied on mount (covers refresh / first load)
   useEffect(() => {
-    const t = getThemeSafe();
+    const t = getThemeId();
     setTheme(t);
     applyTheme(t);
   }, []);
@@ -126,7 +116,7 @@ export default function SettingsPage() {
                 className={`theme-tile ${active ? "active" : ""}`}
                 onClick={() => setTheme(t.id)}
               >
-                <div className="theme-title">{t.title}</div>
+                <div className="theme-title">{t.name}</div>
                 <div className="theme-desc">{t.desc}</div>
                 {active && <div className="theme-chip">Active</div>}
               </button>
@@ -144,31 +134,22 @@ export default function SettingsPage() {
           <div style={{ fontWeight: 900, color: "var(--gold)", marginBottom: ".5rem" }}>Date Format</div>
           <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
             <button
-              className={`btn ${(localStorage.getItem("3c.dateFormat") || "MM/DD/YYYY") === "MM/DD/YYYY" ? "btn-primary" : "btn-secondary"}`}
-              onClick={() => {
-                localStorage.setItem("3c.dateFormat", "MM/DD/YYYY");
-                window.location.reload();
-              }}
+              className={`btn ${dateFormat === "MM/DD/YYYY" ? "btn-primary" : "btn-secondary"}`}
+              onClick={() => setDateFormatState("MM/DD/YYYY")}
             >
               MM/DD/YYYY
             </button>
             <button
-              className={`btn ${localStorage.getItem("3c.dateFormat") === "DD/MM/YYYY" ? "btn-primary" : "btn-secondary"}`}
-              onClick={() => {
-                localStorage.setItem("3c.dateFormat", "DD/MM/YYYY");
-                window.location.reload();
-              }}
+              className={`btn ${dateFormat === "DD/MM/YYYY" ? "btn-primary" : "btn-secondary"}`}
+              onClick={() => setDateFormatState("DD/MM/YYYY")}
             >
               DD/MM/YYYY
             </button>
             <button
-              className={`btn ${localStorage.getItem("3c.dateFormat") === "YYYY/MM/DD" ? "btn-primary" : "btn-secondary"}`}
-              onClick={() => {
-                localStorage.setItem("3c.dateFormat", "YYYY/MM/DD");
-                window.location.reload();
-              }}
+              className={`btn ${dateFormat === "YYYY-MM-DD" ? "btn-primary" : "btn-secondary"}`}
+              onClick={() => setDateFormatState("YYYY-MM-DD")}
             >
-              YYYY/MM/DD
+              YYYY-MM-DD
             </button>
           </div>
         </div>
@@ -177,20 +158,14 @@ export default function SettingsPage() {
           <div style={{ fontWeight: 900, color: "var(--gold)", marginBottom: ".5rem" }}>Time Format</div>
           <div style={{ display: "flex", gap: "10px" }}>
             <button
-              className={`btn ${(localStorage.getItem("3c.timeFormat") || "12") === "12" ? "btn-primary" : "btn-secondary"}`}
-              onClick={() => {
-                localStorage.setItem("3c.timeFormat", "12");
-                window.location.reload();
-              }}
+              className={`btn ${timeFormat === "12h" ? "btn-primary" : "btn-secondary"}`}
+              onClick={() => setTimeFormatState("12h")}
             >
               12-hour
             </button>
             <button
-              className={`btn ${localStorage.getItem("3c.timeFormat") === "24" ? "btn-primary" : "btn-secondary"}`}
-              onClick={() => {
-                localStorage.setItem("3c.timeFormat", "24");
-                window.location.reload();
-              }}
+              className={`btn ${timeFormat === "24h" ? "btn-primary" : "btn-secondary"}`}
+              onClick={() => setTimeFormatState("24h")}
             >
               24-hour
             </button>
@@ -221,7 +196,7 @@ export default function SettingsPage() {
         <div style={{ marginTop: "1.25rem", paddingTop: "1.1rem", borderTop: "1px solid rgba(126,224,255,.12)" }}>
           <div style={{ fontWeight: 900, color: "var(--gold)" }}>Feedback</div>
           <div className="small" style={{ marginTop: ".25rem" }}>
-            Capture alpha/beta issues fast (UI overflow, broken routes, grocery wizard, etc.).
+            Capture beta issues fast (UI overflow, broken routes, grocery wizard, etc.).
           </div>
 
           <div style={{ marginTop: ".65rem" }}>

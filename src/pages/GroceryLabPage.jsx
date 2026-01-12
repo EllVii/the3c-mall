@@ -3,44 +3,14 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import "../styles/GroceryLabPage.css";
 import { readJSON, writeJSON, nowISO, safeId } from "../utils/Storage";
-import ConciergeIntro from "../assets/components/ConciergeIntro";
+import { formatDateISO, formatTimeValue } from "../utils/Settings/dateTime";
 
-// Date/Time formatting helper
-function formatDateTime() {
-  const now = new Date();
-  const dateFormat = localStorage.getItem("3c.dateFormat") || "MM/DD/YYYY";
-  const timeFormat = localStorage.getItem("3c.timeFormat") || "12";
+// NOTE: GroceryCartEditor.jsx exists in ../assets/components/grocery/ with full-featured cart management
+// (categories, substitutions, localStorage persistence). This page uses custom mealItems+extraItems logic.
+// Future consideration: Evaluate replacing custom cart logic with GroceryCartEditor component.
 
-  let dateStr = "";
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  const day = String(now.getDate()).padStart(2, "0");
-  const year = now.getFullYear();
-
-  switch (dateFormat) {
-    case "DD/MM/YYYY":
-      dateStr = `${day}/${month}/${year}`;
-      break;
-    case "YYYY/MM/DD":
-      dateStr = `${year}/${month}/${day}`;
-      break;
-    default:
-      dateStr = `${month}/${day}/${year}`;
-  }
-
-  let hours = now.getHours();
-  const minutes = String(now.getMinutes()).padStart(2, "0");
-  let timeStr = "";
-
-  if (timeFormat === "24") {
-    timeStr = `${String(hours).padStart(2, "0")}:${minutes}`;
-  } else {
-    const ampm = hours >= 12 ? "PM" : "AM";
-    hours = hours % 12 || 12;
-    timeStr = `${hours}:${minutes} ${ampm}`;
-  }
-
-  return { date: dateStr, time: timeStr };
-}
+// Remove duplicate formatDateTime - now using Settings/dateTime utilities
+// function formatDateTime() was here - REMOVED - using formatDateISO and formatTimeValue instead
 
 /**
  * GroceryLabPage (Phase 1)
@@ -267,7 +237,6 @@ export default function GroceryLabPage() {
   const savedSavingsHistory = useMemo(() => readJSON(SAVINGS_HISTORY_KEY, []), []);
 
   const [profile, setProfile] = useState(savedProfile || null);
-  const [introOpen, setIntroOpen] = useState(false);
   const [pricingItemsOpen, setPricingItemsOpen] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [sortDesc, setSortDesc] = useState(() => {
@@ -403,27 +372,6 @@ const [pricingSummary, setPricingSummary] = useState(() => normalizePricingSumma
     if (profile) writeJSON(PROFILE_KEY, profile);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile]);
-
-  const handleIntroClose = () => {
-    setIntroOpen(false);
-    const latestProfile = readJSON(PROFILE_KEY, null);
-    if (latestProfile) setProfile(latestProfile);
-    const latestStrategy = readJSON(STRATEGY_KEY, null);
-    if (latestStrategy && typeof latestStrategy === "object") {
-      const validStoreIds = new Set(STORES.map((x) => x.id));
-      const selectedStores = Array.isArray(latestStrategy.selectedStores)
-        ? latestStrategy.selectedStores.filter((id) => validStoreIds.has(id))
-        : strategy.selectedStores;
-      const mode = latestStrategy.shoppingMode === "single" ? "single" : "multi";
-      setStrategy((prev) => ({
-        ...prev,
-        ...latestStrategy,
-        shoppingMode: mode,
-        selectedStores,
-        lastUpdated: latestStrategy.lastUpdated || prev.lastUpdated,
-      }));
-    }
-  };
 
   // guard rails
   useEffect(() => {
@@ -616,7 +564,6 @@ setPricingSummary(normalizePricingSummary(summary));
               {headerBadge.modeLabel ? <span className="gl-pill">{headerBadge.modeLabel}</span> : null}
               {headerBadge.firstName ? <span className="gl-pill">Hi, {headerBadge.firstName}</span> : null}
               {headerBadge.birthMonth ? <span className="gl-pill">Perks: {headerBadge.birthMonth}</span> : null}
-              <button className="gl-link-edit" type="button" onClick={() => setIntroOpen(true)}>Edit</button>
             </div>
           ) : null}
         </div>
@@ -719,9 +666,21 @@ setPricingSummary(normalizePricingSummary(summary));
                 <div className="gl-card">
                   <div className="gl-card-head">
                     <h3 className="gl-card-title">Extras (Editable)</h3>
-                    <button className="gl-btn gl-btn-ghost" type="button" onClick={addExtraItem}>
-                      + Add
-                    </button>
+                    <div style={{ display: "flex", gap: ".5rem" }}>
+                      <button className="gl-btn gl-btn-ghost" type="button" onClick={addExtraItem}>
+                        + Add
+                      </button>
+                      {extraItems.length > 0 && (
+                        <button 
+                          className="gl-btn gl-btn-ghost" 
+                          type="button" 
+                          onClick={() => setExtraItems([])}
+                          title="Clear all extra items"
+                        >
+                          Clear All
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   {extraItems.length === 0 ? (
@@ -1182,8 +1141,8 @@ setPricingSummary(normalizePricingSummary(summary));
                 <p className="gl-muted">No pricing summary yet. Go back and run pricing.</p>
               ) : (
                 <div className="gl-receipt">
-                  <div className="gl-receipt-row"><span>Date</span><span>{formatDateTime().date}</span></div>
-                  <div className="gl-receipt-row"><span>Time</span><span>{formatDateTime().time}</span></div>
+                  <div className="gl-receipt-row"><span>Date</span><span>{new Date().toLocaleDateString()}</span></div>
+                  <div className="gl-receipt-row"><span>Time</span><span>{new Date().toLocaleTimeString()}</span></div>
                   <div className="gl-receipt-row"><span>Store</span><span>{pricingSummary.winnerStoreName}</span></div>
                   <div className="gl-receipt-row"><span>Items</span><span>{pricingSummary.itemCount}</span></div>
                   <div className="gl-receipt-row"><span>Rotation</span><span>{Number(num(pricingSummary?.dailyMult, 1).toFixed(2))}×</span></div>
@@ -1282,8 +1241,6 @@ setPricingSummary(normalizePricingSummary(summary));
       <footer className="gl-footer">
         <span className="gl-muted">Saved automatically • {allItems.length} unique items</span>
       </footer>
-
-      <ConciergeIntro open={introOpen} onClose={handleIntroClose} />
     </div>
   );
 }

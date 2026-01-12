@@ -8,14 +8,19 @@ import "./index.css";
 // Import theme utilities
 import { applyTheme, getThemeId } from "./utils/Settings/theme.js";
 
+// Import ErrorBoundary for crash handling
+import ErrorBoundary from "./assets/components/ErrorBoundary.jsx";
+
 // Initialize the theme before the app renders to prevent white flickering
 applyTheme(getThemeId());
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
+    </ErrorBoundary>
   </React.StrictMode>
 );
 registerSW({ immediate: true });

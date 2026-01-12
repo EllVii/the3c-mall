@@ -1,19 +1,17 @@
 import React, { useMemo, useState } from "react";
-import { Outlet, useLocation } from "react-router-dom";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import { getPrefsSafe } from "../../../utils/prefs.js";
 import ConciergeHub from "../ConciergeHub.jsx";
 import TopPreviewBar from "../TopPreviewBar.jsx";
 
 export default function AppLayout() {
+  const nav = useNavigate();
   const [conciergeOpen, setConciergeOpen] = useState(true);
   const [conciergeMin, setConciergeMin] = useState(false);
 
-  // Global user prefs (Alpha: local only)
+  // Global user prefs (use proper utility instead of direct localStorage access)
   const prefs = useMemo(() => {
-    try {
-      return JSON.parse(localStorage.getItem("3c.prefs.v1") || "{}");
-    } catch {
-      return {};
-    }
+    return getPrefsSafe();
   }, []);
 
   const { pathname } = useLocation();
@@ -29,6 +27,24 @@ export default function AppLayout() {
         onMinimizeConcierge={() => setConciergeMin((v) => !v)}
         prefs={prefs}
       />
+
+      {/* Settings quick access button */}
+      <button
+        className="btn btn-ghost"
+        onClick={() => nav("/app/settings")}
+        style={{
+          position: "fixed",
+          bottom: "1.5rem",
+          right: "1.5rem",
+          zIndex: 40,
+          padding: "0.5rem 0.75rem",
+          fontSize: "0.85rem",
+          borderRadius: "0.6rem",
+        }}
+        title="Settings"
+      >
+        ⚙️ Settings
+      </button>
 
       {/* Main content (NO VERTICAL SCROLL) */}
       <div className="app-stage">

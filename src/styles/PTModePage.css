@@ -1,4 +1,4 @@
-.pt-page { padding: 2rem 1.25rem 3rem; max-width: 1180px; margin: 0 auto; color: var(--text); }
+.pt-page { padding: 2rem 1.25rem 3rem; max-width: 1180px; margin: 0 auto; color: var(--text); overflow-y: auto; max-height: 100dvh; }
 
 .pt-header { display:flex; justify-content:space-between; align-items:flex-start; gap:1.5rem; margin-bottom:1rem; }
 .pt-kicker { font-size:.75rem; text-transform:uppercase; letter-spacing:.16em; color: var(--blue); margin-bottom:.25rem; }

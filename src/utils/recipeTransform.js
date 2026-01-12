@@ -1,5 +1,5 @@
 // src/utils/recipeTransform.js
-// Alpha-safe preset transformations (no AI).
+// Beta-safe preset transformations (no AI).
 // Export: applyRecipePreset(recipe, presetId)
 
 import { nowISO, safeId } from "./Storage";

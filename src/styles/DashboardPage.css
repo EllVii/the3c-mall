@@ -50,6 +50,10 @@
  }
 }
 
+.page-content {
+  padding-bottom: 140px;
+}
+
 /* ---------- Card mapping ---------- */
 /* Your JSX uses: className="card glass db-card" and "card glass db-card" */
 .card,
@@ -144,5 +148,6 @@
   letter-spacing: .06em;
   font-size: .7rem;
   background: rgba(0,0,0,.18);
+    color: rgba(255,255,255,.92); /* Ensure light text on dark badge background */
   border: 1px solid rgba(255,255,255,.22);
 }

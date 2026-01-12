@@ -37,7 +37,7 @@ export default function FitnessZone() {
           <p className="small">
             We’ll replace this with daily signals (energy, recovery, hydration, etc.).
           </p>
-          <p className="small fz-foot">Alpha note: this zone becomes active in Beta.</p>
+          <p className="small fz-foot">Beta note: this zone becomes active in v2.</p>
         </div>
 
         <div className="card glass fz-card">
@@ -46,7 +46,7 @@ export default function FitnessZone() {
           <p className="small">
             Later: PR goals, progression blocks, and trainer edits.
           </p>
-          <p className="small fz-foot">Alpha note: tracking + charts land after API phase.</p>
+          <p className="small fz-foot">Beta note: tracking + charts land after API phase.</p>
         </div>
       </div>
     </section>

@@ -49,7 +49,7 @@ export function setNavMode(navMode) {
 }
 
 /**
- * Alpha "notification" = in-app nudge schedule.
+ * Beta "notification" = in-app nudge schedule.
  * Shows only when user opens the app.
  */
 export function getNudgeState() {

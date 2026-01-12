@@ -7,13 +7,24 @@ const STRATEGY_KEY = "grocery.strategy.v1";
 
 export default function OnboardingGate({ open, onClose }) {
   const nav = useNavigate();
+  const [firstName, setFirstName] = React.useState("");
+  const [step, setStep] = React.useState("name"); // "name" or "choose"
 
   if (!open) return null;
 
+  const handleContinueFromName = () => {
+    const name = firstName.trim();
+    if (!name) {
+      alert("Please enter your first name so we can personalize your experience.");
+      return;
+    }
+    setStep("choose");
+  };
+
   const handleStartGroceries = () => {
-    // Save minimal profile (name = empty, will ask in Grocery Lab or Settings)
+    // Save profile WITH name (forced upfront)
     const profile = {
-      firstName: "",
+      firstName: firstName.trim(),
       defaultStoreId: "walmart", // safe default
       shoppingMode: "best_price",
       reasonId: "closest",
@@ -37,9 +48,9 @@ export default function OnboardingGate({ open, onClose }) {
   };
 
   const handleExplore = () => {
-    // Save minimal profile
+    // Save profile WITH name (forced upfront)
     const profile = {
-      firstName: "",
+      firstName: firstName.trim(),
       defaultStoreId: "not_sure",
       shoppingMode: "balanced",
       reasonId: "other",
@@ -62,50 +73,94 @@ export default function OnboardingGate({ open, onClose }) {
           {/* Logo / Brand */}
           <div className="cc-badge" style={{ fontSize: "2rem", marginBottom: "1.5rem" }}>3C</div>
 
-          {/* Headline */}
-          <h1 className="h2" style={{ marginBottom: ".5rem", textAlign: "center" }}>
-            Welcome to 3C Mall
-          </h1>
+          {step === "name" ? (
+            <>
+              {/* Step 1: Get user's name */}
+              <h1 className="h2" style={{ marginBottom: ".5rem", textAlign: "center" }}>
+                Welcome to 3C Mall
+              </h1>
 
-          {/* Sub-headline with value prop */}
-          <p className="cc-sub" style={{ marginBottom: "1.5rem", textAlign: "center", maxWidth: "420px", lineHeight: 1.6 }}>
-            I'll help you <strong>save money on groceries</strong>, <strong>plan meals fast</strong>, and <strong>stay consistent</strong> — all connected in one place.
-          </p>
+              <p className="cc-sub" style={{ marginBottom: "1.5rem", textAlign: "center", maxWidth: "420px", lineHeight: 1.6 }}>
+                I'll help you <strong>save money on groceries</strong>, <strong>plan meals fast</strong>, and <strong>stay consistent</strong> — all connected in one place.
+              </p>
 
-          {/* Explanation of the "Mall" concept */}
-          <div className="cc-card glass" style={{ marginBottom: "1.5rem", padding: "1rem", textAlign: "center" }}>
-            <div className="small" style={{ opacity: 0.85 }}>
-              <strong>3C Mall</strong> connects your meals, groceries, and strategy in one place — so every decision works together.
-            </div>
-          </div>
+              <div className="cc-card glass" style={{ marginBottom: "1.5rem", padding: "1rem", textAlign: "center" }}>
+                <div className="small" style={{ opacity: 0.85 }}>
+                  <strong>3C Mall</strong> connects your meals, groceries, and strategy in one place — so every decision works together.
+                </div>
+              </div>
 
-          {/* Primary CTA */}
-          <button
-            className="btn btn-primary"
-            onClick={handleStartGroceries}
-            style={{
-              width: "100%",
-              padding: "1rem",
-              marginBottom: ".75rem",
-              fontSize: "1rem",
-              fontWeight: 600,
-            }}
-          >
-            Start with Groceries (Recommended)
-          </button>
+              <div className="cc-card" style={{ marginBottom: "1.5rem" }}>
+                <div className="cc-card-title">What's your first name? <span style={{ color: "var(--gold)" }}>*</span></div>
+                <input
+                  className="input"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  placeholder="First name (required)"
+                  required
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleContinueFromName();
+                  }}
+                />
+                <div className="small cc-copy">
+                  I'll use this to personalize your experience and speak to you by name.
+                </div>
+              </div>
 
-          {/* Secondary CTA */}
-          <button
-            className="btn btn-ghost"
-            onClick={handleExplore}
-            style={{
-              width: "100%",
-              padding: ".75rem",
-              fontSize: ".95rem",
-            }}
-          >
-            Explore on my own
-          </button>
+              <button
+                className="btn btn-primary"
+                onClick={handleContinueFromName}
+                style={{
+                  width: "100%",
+                  padding: "1rem",
+                  fontSize: "1rem",
+                  fontWeight: 600,
+                }}
+              >
+                Continue →
+              </button>
+            </>
+          ) : (
+            <>
+              {/* Step 2: Choose path */}
+              <h1 className="h2" style={{ marginBottom: ".5rem", textAlign: "center" }}>
+                Nice to meet you, {firstName}!
+              </h1>
+
+              <p className="cc-sub" style={{ marginBottom: "1.5rem", textAlign: "center", maxWidth: "420px", lineHeight: 1.6 }}>
+                Let's get you started. How would you like to begin?
+              </p>
+
+              {/* Primary CTA */}
+              <button
+                className="btn btn-primary"
+                onClick={handleStartGroceries}
+                style={{
+                  width: "100%",
+                  padding: "1rem",
+                  marginBottom: ".75rem",
+                  fontSize: "1rem",
+                  fontWeight: 600,
+                }}
+              >
+                Start with Groceries (Recommended)
+              </button>
+
+              {/* Secondary CTA */}
+              <button
+                className="btn btn-ghost"
+                onClick={handleExplore}
+                style={{
+                  width: "100%",
+                  padding: ".75rem",
+                  fontSize: ".95rem",
+                }}
+              >
+                Explore on my own
+              </button>
+            </>
+          )}
         </div>
       </div>
 

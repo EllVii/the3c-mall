@@ -1,5 +1,5 @@
 /**
- * Alpha-safe Recipe object (local-first, portable to DB later)
+ * Beta-safe Recipe object (local-first, portable to DB later)
  */
 export const exampleRecipe = {
   schemaVersion: 1,
@@ -11,14 +11,14 @@ export const exampleRecipe = {
   createdAt: "2025-12-16T12:34:56.000Z",
   updatedAt: "2025-12-16T12:34:56.000Z",
 
-  // Ownership + scope (Alpha: optional, Beta: link to user)
+  // Ownership + scope (Beta: optional, v2: link to user)
   owner: {
     userId: null,                 // later: auth user id
     deviceId: null                // optional: local device id
   },
   visibility: "private",          // private | shared | public (later)
 
-  // Source (Alpha: manual only; Beta: imported)
+  // Source (Beta: manual only; v2: imported)
   source: {
     type: "manual",               // manual | url | youtube | tiktok | instagram | partner
     url: null,                    // original link if imported
@@ -48,7 +48,7 @@ export const exampleRecipe = {
       tags: ["protein"],
       optional: false,
 
-      // Grocery mapping (Alpha: manual; Beta: search results)
+      // Grocery mapping (Beta: manual; v2: search results)
       grocery: {
         canonicalName: "ground beef",
         storeSku: null,
@@ -76,7 +76,7 @@ export const exampleRecipe = {
     { n: 3, text: "Bake until bubbly." }
   ],
 
-  // Nutrition (Alpha: optional; Beta: computed)
+  // Nutrition (Beta: optional; v2: computed)
   nutrition: {
     perServing: {
       calories: null,
@@ -86,7 +86,7 @@ export const exampleRecipe = {
     }
   },
 
-  // Lifestyle compatibility flags (Alpha: user-set; Beta: inferred)
+  // Lifestyle compatibility flags (Beta: user-set; v2: inferred)
   lifestyle: {
     tags: ["family", "comfort"],
     compatible: {

@@ -230,7 +230,7 @@ export default function RecipesPage() {
           placeholder="Type a recipe name…"
         />
         <p className="small" style={{ marginTop: ".6rem" }}>
-          Alpha mode: manual recipes. Beta: URL import comes later.
+          Beta: manual recipes. v2: URL import comes later.
         </p>
       </div>
 

@@ -99,12 +99,12 @@ export default function ConciergeHub({ minimized, onMinimize, onExpand, onClose 
       {introOpen ? <ConciergeIntro open={introOpen} onClose={() => setIntroOpen(false)} /> : null}
       <div className="concierge-head">
         <div>
-          <div className="card-tag">Concierge</div>
+          <div className="card-tag">Your AI Guide</div>
           <div style={{ fontWeight: 900, color: "var(--gold)", marginTop: ".2rem" }}>
-            How can I help today?
+            {prefs.name ? `Hi ${prefs.name}, I'm` : "I'm"} here to help you win with 3C Mall.
           </div>
           <div className="small">
-            Alpha mode: mostly local, low-data by design.
+            Save money, plan meals, stay consistent—all connected.
           </div>
         </div>
 
@@ -116,14 +116,13 @@ export default function ConciergeHub({ minimized, onMinimize, onExpand, onClose 
 
       <div className="card glass" style={{ marginTop: ".7rem" }}>
         <div className="small">
-          <strong>Privacy / data:</strong> your choices are saved on-device in Alpha.
-          Cloud sync + real AI comes later (Beta). You can keep “Low Data Mode” on.
+          <strong>3C Mall AI:</strong> Your preferences stay on-device (Alpha). Cloud sync + advanced AI comes later (Beta). Low Data Mode keeps everything local.
         </div>
 
         <div className="nav-row" style={{ marginTop: ".65rem" }}>
           <button className={"btn " + (prefs.lowDataMode ? "btn-primary" : "btn-secondary")}
               onClick={() => persistPrefs({ ...prefs, lowDataMode: !prefs.lowDataMode })}>
-            Low Data: {prefs.lowDataMode ? "ON" : "OFF"}
+            Local Mode: {prefs.lowDataMode ? "ON" : "OFF"}
           </button>
 
           <button className="btn btn-secondary" onClick={() => nav("/app/settings")}>

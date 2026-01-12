@@ -1,17 +1,11 @@
 // src/components/settings/ThemeSelector.jsx
 import React from "react";
-
-const THEMES = [
-  { id: "midnight-lux", label: "Midnight Lux" },
-  { id: "velocity-red", label: "Velocity Red" },
-  { id: "pearl-luxe", label: "Pearl Luxe" },
-  { id: "retro-fusion", label: "Retro Fusion" },
-];
+import { THEMES, setThemeId, applyTheme } from "../../utils/Settings/theme.js";
 
 export default function ThemeSelector() {
   function setTheme(t) {
-    document.documentElement.setAttribute("data-theme", t);
-    localStorage.setItem("theme", t);
+    setThemeId(t);
+    applyTheme(t);
   }
 
   return (
@@ -24,7 +18,7 @@ export default function ThemeSelector() {
             className="btn btn-secondary"
             onClick={() => setTheme(t.id)}
           >
-            {t.label}
+            {t.name}
           </button>
         ))}
       </div>

@@ -3,7 +3,7 @@ const KEY = "3c-settings";
 const DEFAULTS = {
   dateFormat: "MM/DD/YYYY",
   timeFormat: "12h",
-  theme: "midnight",
+  theme: "midnight-lux",
 };
 
 export function getSettings(forceDefaults = false) {
@@ -29,7 +29,8 @@ export function setSettings(settings) {
 
 export function applyThemeToDom(theme) {
   try {
-    document.documentElement.setAttribute("data-theme", theme || "midnight");
+    document.documentElement.setAttribute("data-theme", theme || "midnight-lux");
   } catch {
     // ignore
-  }}
+  }
+}

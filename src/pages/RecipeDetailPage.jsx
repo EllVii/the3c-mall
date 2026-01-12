@@ -283,7 +283,7 @@ export default function RecipeDetailPage() {
           {activeTab === "steps" && (
             <>
               <div style={{ fontWeight: 900, color: "var(--gold)" }}>Steps</div>
-              <p className="small" style={{ marginTop: ".35rem" }}>Alpha-safe: simple step list (text).</p>
+              <p className="small" style={{ marginTop: ".35rem" }}>Beta: simple step list (text).</p>
 
               <textarea
                 className="textarea"

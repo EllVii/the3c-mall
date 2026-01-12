@@ -1,5 +1,5 @@
 // src/utils/recipeToGrocery.js
-// Recipe -> Grocery conversion + merging logic (Alpha-safe)
+// Recipe -> Grocery conversion + merging logic (Beta-safe)
 // Exports: recipeToGroceryItems, mergeGroceryItems
 
 import { safeId, nowISO } from "./Storage";
@@ -20,7 +20,7 @@ function keyForItem(item) {
 
 /**
  * Convert recipe ingredients to grocery items.
- * servingsUsed is just metadata right now (no complex scaling in alpha).
+ * servingsUsed is just metadata right now (no complex scaling in beta).
  */
 export function recipeToGroceryItems(recipe, servingsUsed = 1) {
   const items = [];
@@ -47,7 +47,7 @@ export function recipeToGroceryItems(recipe, servingsUsed = 1) {
         servingsUsed,
       },
 
-      // pricing placeholders (Alpha demo)
+      // pricing placeholders (Beta demo)
       pricing: {
         estimatedLow: null,
         estimatedHigh: null,

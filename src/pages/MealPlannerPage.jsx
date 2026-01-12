@@ -16,6 +16,7 @@ import RecipeDeck from "../assets/components/Meal-Planner/RecipeDeck.jsx";
 
 const MP_KEY = "mp.plan.v1";
 const MP_META_KEY = "mp.meta.v1"; // stores diet/fasting/spice preferences
+const MP_HISTORY_KEY = "mp.history.v1"; // stores previous saved meals
 const HANDOFF_KEY = "handoff.mealToGrocery.v1";
 
 const MEALS = [
@@ -32,6 +33,30 @@ function todayISO() {
   const mm = String(d.getMonth() + 1).padStart(2, "0");
   const dd = String(d.getDate()).padStart(2, "0");
   return `${yyyy}-${mm}-${dd}`;
+}
+
+function getAvailableMeals(selectedDateISO) {
+  const now = new Date();
+  const today = todayISO();
+  
+  // If date is in the future, all meals available
+  if (selectedDateISO > today) {
+    return MEALS;
+  }
+  
+  // If date is today, filter out meals that have already passed
+  if (selectedDateISO === today) {
+    const currentHour = now.getHours();
+    const currentMinutes = now.getMinutes();
+    
+    return MEALS.filter((meal) => {
+      const [mealHour, mealMinutes] = meal.defaultTime.split(":").map(Number);
+      return mealHour > currentHour || (mealHour === currentHour && mealMinutes >= currentMinutes);
+    });
+  }
+  
+  // If date is in the past, no meals available
+  return [];
 }
 
 export default function MealPlannerPage() {
@@ -51,6 +76,12 @@ export default function MealPlannerPage() {
   const [dietMeta, setDietMeta] = useState(savedMeta?.diet || { diet: "balanced", mealStyle: "standard", notes: "" });
   const [fastingMeta, setFastingMeta] = useState(savedMeta?.fasting || {});
   const [spiceMeta, setSpiceMeta] = useState(savedMeta?.spice || {});
+
+  // ✅ Load meal history
+  const savedHistory = useMemo(() => readJSON(MP_HISTORY_KEY, []), []);
+  const [mealHistory, setMealHistory] = useState(savedHistory);
+  const [showHistory, setShowHistory] = useState(false);
+  const [showHealthierOption, setShowHealthierOption] = useState(false);
 
   // Deck filters
   const [deckFocus, setDeckFocus] = useState("no-restrictions");
@@ -94,6 +125,17 @@ export default function MealPlannerPage() {
     [mealId]
   );
 
+  const availableMeals = useMemo(() => getAvailableMeals(dateISO), [dateISO]);
+
+  // Auto-select first available meal when date changes
+  useEffect(() => {
+    if (availableMeals.length > 0) {
+      const meal = availableMeals[0];
+      setMealId(meal.id);
+      setTime24(meal.defaultTime);
+    }
+  }, [availableMeals]);
+
   function goNext() {
     setStep((s) => Math.min(4, s + 1));
   }
@@ -115,10 +157,12 @@ export default function MealPlannerPage() {
 
   function savePlanAndSendToGrocery() {
     const plan = {
+      id: `meal-${Date.now()}`,
       dateISO,
       time24,
       mealId,
       mealLabel: chosenMeal.label,
+      recipe: currentRecipe,
       createdAt: nowISO(),
       meta: {
         diet: dietMeta,
@@ -128,6 +172,11 @@ export default function MealPlannerPage() {
     };
 
     writeJSON(MP_KEY, plan);
+
+    // ✅ Save to history for "Previous Meals" view
+    const updatedHistory = [...mealHistory, plan].slice(-50); // Keep last 50 meals
+    setMealHistory(updatedHistory);
+    writeJSON(MP_HISTORY_KEY, updatedHistory);
 
     // ✅ handoff with meals for Grocery Lab display
     writeJSON(HANDOFF_KEY, {
@@ -139,6 +188,7 @@ export default function MealPlannerPage() {
         mealId,
         mealLabel: chosenMeal.label,
         time24,
+        recipe: currentRecipe,
       },
     });
 
@@ -172,6 +222,11 @@ export default function MealPlannerPage() {
             <button className="btn btn-secondary" onClick={() => nav("/app/grocery-lab")}>
               Grocery Lab →
             </button>
+            {mealHistory.length > 0 && (
+              <button className="btn btn-ghost" onClick={() => setShowHistory(!showHistory)}>
+                📋 Previous Meals ({mealHistory.length})
+              </button>
+            )}
           </div>
         </div>
 
@@ -192,6 +247,83 @@ export default function MealPlannerPage() {
       </header>
 
       <div className="card mp-card" style={{ marginTop: "1rem" }}>
+        {/* PREVIOUS MEALS */}
+        {showHistory && mealHistory.length > 0 && (
+          <>
+            <div style={{ color: "var(--gold)", fontWeight: 900, fontSize: "1.15rem", marginBottom: ".7rem" }}>
+              📋 Previous Meals ({mealHistory.length})
+            </div>
+            <div className="small" style={{ marginBottom: "1rem", opacity: 0.85 }}>
+              Quickly re-use or modify any of your saved meals.
+            </div>
+
+            <div style={{ display: "grid", gap: ".7rem", maxHeight: "400px", overflowY: "auto" }}>
+              {[...mealHistory].reverse().map((meal) => (
+                <div key={meal.id} className="card" style={{ padding: ".75rem", background: "rgba(255,255,255,.06)" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", gap: ".5rem" }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 700, color: "var(--gold)", marginBottom: ".2rem" }}>
+                        {meal.mealLabel} • {meal.time24}
+                      </div>
+                      <div className="small" style={{ opacity: 0.75 }}>
+                        {meal.dateISO} • {meal.recipe?.name || "Recipe saved"}
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", gap: ".4rem" }}>
+                      <button
+                        className="btn btn-secondary"
+                        style={{ padding: ".4rem .6rem", fontSize: ".85rem" }}
+                        onClick={() => {
+                          setMealId(meal.mealId);
+                          setTime24(meal.time24);
+                          setDateISO(meal.dateISO);
+                          setDietMeta(meal.meta?.diet || dietMeta);
+                          setStep(3);
+                          showToast("Meal loaded!");
+                        }}
+                      >
+                        Use
+                      </button>
+                      <button
+                        className="btn btn-ghost"
+                        style={{ padding: ".4rem .6rem", fontSize: ".85rem" }}
+                        onClick={() => {
+                          const shareText = `Check out: ${meal.mealLabel} - ${meal.recipe?.name || "Delicious meal"} from 3C Mall!`;
+                          if (navigator.share) {
+                            navigator.share({ title: "3C Mall Meal", text: shareText });
+                          } else {
+                            showToast("Share link copied!");
+                          }
+                        }}
+                      >
+                        Share
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <button
+              className="btn btn-ghost"
+              onClick={() => setShowHistory(false)}
+              style={{ marginTop: ".7rem", width: "100%" }}
+            >
+              Hide History
+            </button>
+          </>
+        )}
+
+        {showHistory && mealHistory.length === 0 && (
+          <div className="card" style={{ padding: ".9rem", textAlign: "center" }}>
+            <div className="small" style={{ opacity: 0.75 }}>
+              No saved meals yet. Plan and save your first meal to see history here.
+            </div>
+          </div>
+        )}
+
+        {!showHistory && (
+          <>
         {/* STEP 0: DATE */}
         {step === 0 && (
           <>
@@ -231,11 +363,19 @@ export default function MealPlannerPage() {
           <>
             <div style={{ color: "var(--gold)", fontWeight: 900, fontSize: "1.15rem" }}>Pick the meal</div>
             <div className="small" style={{ marginTop: ".35rem" }}>
-              Includes <strong>Snacks</strong> and <strong>OMAD</strong>.
+              {dateISO === todayISO() ? "Next available meal or non-fasting option:" : "Choose a meal for this date."}
             </div>
 
+            {availableMeals.length === 0 && dateISO === todayISO() && (
+              <div className="card" style={{ marginTop: ".75rem", padding: ".9rem", background: "rgba(246,220,138,.08)", borderColor: "rgba(246,220,138,.25)" }}>
+                <div className="small">
+                  No meals available for today at this time. Try tomorrow or a future date.
+                </div>
+              </div>
+            )}
+
             <div className="grid" style={{ marginTop: ".75rem" }}>
-              {MEALS.map((m) => (
+              {availableMeals.map((m) => (
                 <button
                   key={m.id}
                   className={"btn " + (mealId === m.id ? "btn-primary" : "btn-secondary")}
@@ -325,7 +465,51 @@ export default function MealPlannerPage() {
                 <button className="btn btn-primary" onClick={savePlanAndSendToGrocery}>
                   Save + Send to Grocery Lab →
                 </button>
+                <button className="btn btn-secondary" onClick={() => setShowHealthierOption(!showHealthierOption)}>
+                  ✨ Make it Healthier (Beta)
+                </button>
+                <button className="btn btn-ghost" onClick={() => {
+                  const shareText = `Check out this meal: ${chosenMeal.label} at ${time24} on ${dateISO}. Shared from 3C Mall!`;
+                  if (navigator.share) {
+                    navigator.share({ title: "3C Mall Meal", text: shareText });
+                  } else {
+                    showToast("Share via: Copy link or email");
+                  }
+                }}>
+                  📤 Share Meal
+                </button>
               </div>
+
+              {showHealthierOption && (
+                <div className="card" style={{ marginTop: ".9rem", padding: ".9rem", background: "rgba(126,224,255,.08)", borderColor: "rgba(126,224,255,.25)" }}>
+                  <div className="small" style={{ color: "var(--blue)", fontWeight: 800, marginBottom: ".5rem" }}>
+                    🏃 Make it Healthier
+                  </div>
+                  <p className="small" style={{ marginBottom: ".7rem" }}>
+                    Swap ingredients for lower-calorie, higher-protein, or nutrient-dense alternatives.
+                  </p>
+                  <div className="nav-row">
+                    <button className="btn btn-secondary" onClick={() => {
+                      setDietMeta({ ...dietMeta, diet: "high-protein" });
+                      showToast("Switched to High-Protein!");
+                    }}>
+                      High-Protein Swap
+                    </button>
+                    <button className="btn btn-secondary" onClick={() => {
+                      setDietMeta({ ...dietMeta, diet: "low-carb" });
+                      showToast("Switched to Low-Carb!");
+                    }}>
+                      Low-Carb Swap
+                    </button>
+                    <button className="btn btn-secondary" onClick={() => {
+                      setDietMeta({ ...dietMeta, diet: "balanced" });
+                      showToast("Back to Balanced!");
+                    }}>
+                      Reset
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </>
         )}
@@ -344,6 +528,8 @@ export default function MealPlannerPage() {
             Jump to Summary
           </button>
         </div>
+        </>
+        )}
       </div>
     </section>
   );

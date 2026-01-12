@@ -39,11 +39,12 @@ export default function App() {
 
   useEffect(() => {
     const isAppRoute = pathname.startsWith("/app");
+    const isPTMode = pathname.includes("/app/pt") || pathname.includes("trainer") || pathname.includes("pt-dashboard");
     const html = document.documentElement;
     const body = document.body;
 
-    html.classList.toggle("app-mode", isAppRoute);
-    body.classList.toggle("app-mode", isAppRoute);
+    html.classList.toggle("app-mode", isAppRoute && !isPTMode); // Don't set app-mode for PT routes (allows scroll)
+    body.classList.toggle("app-mode", isAppRoute && !isPTMode);
 
     // optional: always jump to top on marketing pages
     if (!isAppRoute) window.scrollTo(0, 0);
