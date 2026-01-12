@@ -609,7 +609,7 @@ setPricingSummary(normalizePricingSummary(summary));
       <header className="gl-header">
         <div className="gl-header-left">
           <h1 className="gl-title">Grocery Lab</h1>
-          <p className="gl-subtitle">Route your cart like a logistics pro.</p>
+          <p className="gl-subtitle">Smart routing for your cart. 3C Mall connects meals, groceries, and strategy.</p>
           {headerBadge.storeName || headerBadge.modeLabel ? (
             <div className="gl-inline-summary" style={{ marginTop: 6 }}>
               {headerBadge.storeName ? <span className="gl-pill">{headerBadge.storeName}</span> : null}

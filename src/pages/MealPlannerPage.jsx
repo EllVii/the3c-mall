@@ -163,7 +163,7 @@ export default function MealPlannerPage() {
         <div>
           <p className="kicker">Center • Meal Plans</p>
           <h1 className="h1">Meal Planner</h1>
-          <p className="sub">Pick a date, confirm the time, choose the meal — then set preferences.</p>
+          <p className="sub">Pick your meal, set preferences — then Grocery Lab optimizes your shop. Everything connected in 3C Mall.</p>
 
           <div className="nav-row">
             <button className="btn btn-secondary" onClick={() => nav("/app")}>

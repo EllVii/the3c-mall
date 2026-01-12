@@ -7,6 +7,7 @@ import FeedbackPanel from "../assets/components/FeedbackPanel.jsx";
 import ConciergeOverlay from "../assets/components/ConciergeOverlay.jsx";
 import GuidedAssistOverlay from "../assets/components/GuidedAssistOverlay.jsx";
 import SettingsModal from "../assets/components/SettingsModal.jsx";
+import OnboardingGate from "../assets/components/OnboardingGate.jsx";
 import ConciergeIntro from "../assets/components/ConciergeIntro.jsx";
 import { readJSON } from "../utils/Storage";
 
@@ -38,6 +39,12 @@ export default function DashboardPage() {
   const [prefs, setPrefsState] = useState(() => getPrefsSafe());
   const [nudge, setNudge] = useState({ show: false });
 
+  // Track if user has completed at least one shop (trust metric)
+  const hasShoppedBefore = useMemo(() => {
+    const history = readJSON("grocery.savingsHistory.v1", []);
+    return Array.isArray(history) && history.length > 0;
+  }, []);
+
   // Concierge overlay — OPEN BY DEFAULT
   const [ccOpen, setCcOpen] = useState(true);
   const [ccMin, setCcMin] = useState(false);
@@ -47,6 +54,9 @@ export default function DashboardPage() {
     const profile = readJSON("concierge.profile.v1", null);
     return !profile;
   });
+
+  // Onboarding gate (NEW: simpler first-time experience)
+  const isFirstTime = !readJSON("concierge.profile.v1", null);
 
   // Guided Assist
   const [gaOpen, setGaOpen] = useState(false);
@@ -169,8 +179,11 @@ export default function DashboardPage() {
 
   return (
     <section className="page db-shell">
-      {/* CONCIERGE INTRO (first run) */}
-      {introOpen ? <ConciergeIntro open={introOpen} onClose={() => setIntroOpen(false)} /> : null}
+      {/* ONBOARDING GATE (first time only) */}
+      <OnboardingGate open={isFirstTime} onClose={() => {}} />
+
+      {/* CONCIERGE INTRO (deprecated, kept for legacy) */}
+      {introOpen && !isFirstTime ? <ConciergeIntro open={introOpen} onClose={() => setIntroOpen(false)} /> : null}
       {/* CONCIERGE OVERLAY */}
       <ConciergeOverlay
         open={ccOpen}
@@ -189,7 +202,7 @@ export default function DashboardPage() {
         }}
         onPick={onConciergePick}
         title="Concierge"
-        subtitle="Concierge · Cost · Community"
+        subtitle="Groceries • Meals • Strategy"
         options={conciergeOptions}
       />
 
@@ -263,12 +276,16 @@ export default function DashboardPage() {
                 <button className="btn btn-primary" onClick={() => nav(z.route)}>
                   Open
                 </button>
-                <button className="btn btn-secondary" onClick={() => chooseFocus(z.id)}>
-                  Set default
-                </button>
-                <button className="btn btn-ghost" onClick={() => setFeedbackOpen(true)}>
-                  Feedback
-                </button>
+                {hasShoppedBefore && (
+                  <>
+                    <button className="btn btn-secondary" onClick={() => chooseFocus(z.id)}>
+                      Set default
+                    </button>
+                    <button className="btn btn-ghost" onClick={() => setFeedbackOpen(true)}>
+                      Feedback
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           ))}
