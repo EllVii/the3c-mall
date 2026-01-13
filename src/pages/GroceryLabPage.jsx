@@ -226,15 +226,15 @@ export default function GroceryLabPage() {
   const cameFromMeal = location.state?.from === "meal";
   const quickReview = location.state?.quickReview === true;
 
-  // persisted (read once)
-  const savedStrategy = useMemo(() => readJSON(STRATEGY_KEY, null), []);
-  const savedUsage = useMemo(() => readJSON(STORE_USAGE_KEY, null), []);
-  const savedMealItems = useMemo(() => readJSON(MEAL_ITEMS_KEY, null), []);
-  const savedGroceries = useMemo(() => readJSON(GROCERY_KEY, null), []);
-  const savedPricing = useMemo(() => readJSON(PRICING_SUMMARY_KEY, null), []);
-  const savedHandoff = useMemo(() => readJSON(HANDOFF_KEY, null), []);
-  const savedProfile = useMemo(() => readJSON(PROFILE_KEY, null), []);
-  const savedSavingsHistory = useMemo(() => readJSON(SAVINGS_HISTORY_KEY, []), []);
+  // Read fresh data from localStorage (not cached)
+  const savedStrategy = readJSON(STRATEGY_KEY, null);
+  const savedUsage = readJSON(STORE_USAGE_KEY, null);
+  const savedMealItems = readJSON(MEAL_ITEMS_KEY, null);
+  const savedGroceries = readJSON(GROCERY_KEY, null);
+  const savedPricing = readJSON(PRICING_SUMMARY_KEY, null);
+  const savedHandoff = readJSON(HANDOFF_KEY, null);
+  const savedProfile = readJSON(PROFILE_KEY, null);
+  const savedSavingsHistory = readJSON(SAVINGS_HISTORY_KEY, []);
 
   const [profile, setProfile] = useState(savedProfile || null);
   const [pricingItemsOpen, setPricingItemsOpen] = useState(false);

@@ -218,6 +218,19 @@ export default function Pricing() {
           </div>
         </div>
       </section>
+
+      {/* Bottom Navigation */}
+      <div className="nav-row" style={{ marginTop: "2rem" }}>
+        <button className="btn btn-secondary" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+          ↑ Back to Top
+        </button>
+        <button className="btn btn-secondary" onClick={() => nav("/")}>
+          ← Home
+        </button>
+        <button className="btn btn-primary" onClick={() => nav("/login")}>
+          Get Started →
+        </button>
+      </div>
     </main>
   );
 }

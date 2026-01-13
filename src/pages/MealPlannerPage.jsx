@@ -18,6 +18,7 @@ const MP_KEY = "mp.plan.v1";
 const MP_META_KEY = "mp.meta.v1"; // stores diet/fasting/spice preferences
 const MP_HISTORY_KEY = "mp.history.v1"; // stores previous saved meals
 const HANDOFF_KEY = "handoff.mealToGrocery.v1";
+const MEAL_ITEMS_KEY = "cart.mealItems.v1";
 
 const MEALS = [
   { id: "breakfast", label: "Breakfast", defaultTime: "06:00" },
@@ -59,6 +60,10 @@ function getAvailableMeals(selectedDateISO) {
   return [];
 }
 
+function isPastDate(dateISO) {
+  return dateISO && dateISO < todayISO();
+}
+
 export default function MealPlannerPage() {
   const nav = useNavigate();
 
@@ -81,6 +86,7 @@ export default function MealPlannerPage() {
   const savedHistory = useMemo(() => readJSON(MP_HISTORY_KEY, []), []);
   const [mealHistory, setMealHistory] = useState(savedHistory);
   const [showHistory, setShowHistory] = useState(false);
+  const [showHiddenHistory, setShowHiddenHistory] = useState(false);
   const [showHealthierOption, setShowHealthierOption] = useState(false);
 
   // Deck filters
@@ -179,10 +185,19 @@ export default function MealPlannerPage() {
     writeJSON(MP_HISTORY_KEY, updatedHistory);
 
     // ✅ handoff with meals for Grocery Lab display
+    const recipeItems = currentRecipe?.ingredients?.map((ing, idx) => ({
+      id: `ing-${idx}`,
+      name: ing.name || ing.item || ing,
+      qty: ing.quantity || ing.amount || 1,
+      unit: ing.unit || "each",
+      category: ing.category || "Other",
+    })) || [];
+
     writeJSON(HANDOFF_KEY, {
       at: nowISO(),
       message: "Saved. Sent to Grocery Lab.",
       from: "meal",
+      items: recipeItems,
       mealContext: {
         dateISO,
         mealId,
@@ -199,6 +214,43 @@ export default function MealPlannerPage() {
       state: { from: "meal", quickReview: true },
     });
   }
+
+  function persistHistory(next) {
+    setMealHistory(next);
+    writeJSON(MP_HISTORY_KEY, next);
+  }
+
+  function hideMealPlan(id) {
+    const next = mealHistory.map((meal) => (meal.id === id ? { ...meal, hidden: true } : meal));
+    persistHistory(next);
+    showToast("Meal hidden.");
+  }
+
+  function deleteMealPlan(id) {
+    const next = mealHistory.filter((meal) => meal.id !== id);
+    persistHistory(next);
+    showToast("Meal removed.");
+  }
+
+  function removeFromGrocery(meal) {
+    const handoff = readJSON(HANDOFF_KEY, null);
+    const ctx = handoff?.mealContext || null;
+    const matchesHandoff =
+      ctx &&
+      ctx.dateISO === meal.dateISO &&
+      ctx.mealId === meal.mealId &&
+      ctx.time24 === meal.time24;
+
+    if (matchesHandoff) {
+      writeJSON(HANDOFF_KEY, null);
+    }
+    writeJSON(MEAL_ITEMS_KEY, []);
+    showToast("Removed meal items from Grocery Lab.");
+  }
+
+  const visibleHistory = mealHistory.filter((meal) => showHiddenHistory || !meal.hidden);
+  const hiddenCount = mealHistory.filter((meal) => meal.hidden).length;
+  const totalHistoryCount = mealHistory.length;
 
   return (
     <section className="page mp-page">
@@ -224,7 +276,7 @@ export default function MealPlannerPage() {
             </button>
             {mealHistory.length > 0 && (
               <button className="btn btn-ghost" onClick={() => setShowHistory(!showHistory)}>
-                📋 Previous Meals ({mealHistory.length})
+                📋 Previous Meals ({totalHistoryCount})
               </button>
             )}
           </div>
@@ -248,17 +300,28 @@ export default function MealPlannerPage() {
 
       <div className="card mp-card" style={{ marginTop: "1rem" }}>
         {/* PREVIOUS MEALS */}
-        {showHistory && mealHistory.length > 0 && (
+        {showHistory && visibleHistory.length > 0 && (
           <>
-            <div style={{ color: "var(--gold)", fontWeight: 900, fontSize: "1.15rem", marginBottom: ".7rem" }}>
-              📋 Previous Meals ({mealHistory.length})
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: ".75rem" }}>
+              <div style={{ color: "var(--gold)", fontWeight: 900, fontSize: "1.15rem" }}>
+                📋 Previous Meals ({visibleHistory.length})
+              </div>
+              {hiddenCount > 0 && (
+                <button
+                  className="btn btn-ghost"
+                  style={{ padding: ".35rem .6rem", fontSize: ".85rem" }}
+                  onClick={() => setShowHiddenHistory((v) => !v)}
+                >
+                  {showHiddenHistory ? "Hide Hidden Meals" : `Show Hidden (${hiddenCount})`}
+                </button>
+              )}
             </div>
             <div className="small" style={{ marginBottom: "1rem", opacity: 0.85 }}>
               Quickly re-use or modify any of your saved meals.
             </div>
 
             <div style={{ display: "grid", gap: ".7rem", maxHeight: "400px", overflowY: "auto" }}>
-              {[...mealHistory].reverse().map((meal) => (
+              {[...visibleHistory].reverse().map((meal) => (
                 <div key={meal.id} className="card" style={{ padding: ".75rem", background: "rgba(255,255,255,.06)" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", gap: ".5rem" }}>
                     <div style={{ flex: 1 }}>
@@ -284,6 +347,15 @@ export default function MealPlannerPage() {
                       >
                         Use
                       </button>
+                      {isPastDate(meal.dateISO) && (
+                        <button
+                          className="btn btn-secondary"
+                          style={{ padding: ".4rem .6rem", fontSize: ".85rem" }}
+                          onClick={() => removeFromGrocery(meal)}
+                        >
+                          Remove from Grocery
+                        </button>
+                      )}
                       <button
                         className="btn btn-ghost"
                         style={{ padding: ".4rem .6rem", fontSize: ".85rem" }}
@@ -297,6 +369,20 @@ export default function MealPlannerPage() {
                         }}
                       >
                         Share
+                      </button>
+                      <button
+                        className="btn btn-ghost"
+                        style={{ padding: ".4rem .6rem", fontSize: ".85rem" }}
+                        onClick={() => hideMealPlan(meal.id)}
+                      >
+                        Hide
+                      </button>
+                      <button
+                        className="btn btn-ghost"
+                        style={{ padding: ".4rem .6rem", fontSize: ".85rem", color: "var(--danger)" }}
+                        onClick={() => deleteMealPlan(meal.id)}
+                      >
+                        Delete
                       </button>
                     </div>
                   </div>
@@ -314,12 +400,23 @@ export default function MealPlannerPage() {
           </>
         )}
 
-        {showHistory && mealHistory.length === 0 && (
-          <div className="card" style={{ padding: ".9rem", textAlign: "center" }}>
-            <div className="small" style={{ opacity: 0.75 }}>
-              No saved meals yet. Plan and save your first meal to see history here.
+        {showHistory && visibleHistory.length === 0 && (
+          <>
+            <div className="card" style={{ padding: ".9rem", textAlign: "center" }}>
+              <div className="small" style={{ opacity: 0.75 }}>
+                {hiddenCount > 0
+                  ? "All meals are hidden. Toggle hidden meals to manage them."
+                  : "No saved meals yet. Plan and save your first meal to see history here."}
+              </div>
             </div>
-          </div>
+            <button
+              className="btn btn-primary"
+              onClick={() => setShowHistory(false)}
+              style={{ marginTop: ".9rem", width: "100%" }}
+            >
+              Plan a Meal →
+            </button>
+          </>
         )}
 
         {!showHistory && (
@@ -519,9 +616,16 @@ export default function MealPlannerPage() {
           <button className="btn btn-secondary" onClick={goPrev} disabled={step === 0}>
             ← Previous
           </button>
-          <button className="btn btn-secondary" onClick={() => setStep(0)} disabled={step !== 4}>
-            Plan Another Meal →
-          </button>
+          {step < 4 && (
+            <button className="btn btn-primary" onClick={goNext}>
+              Next →
+            </button>
+          )}
+          {step === 4 && (
+            <button className="btn btn-secondary" onClick={() => setStep(0)}>
+              Plan Another Meal →
+            </button>
+          )}
 
           {/* quick jump */}
           <button className="btn btn-ghost" onClick={() => setStep(4)}>
