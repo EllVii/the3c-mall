@@ -3,15 +3,334 @@
 /* =============== LANDING / MARKETING LAYOUT =============== */
 
 /* Page shell */
-.lp-page {
+.landing-page {
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
   background: radial-gradient(circle at top left, #151821 0, #05060a 45%, #020308 100%);
   color: #f7f7fb;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
-    "Inter", sans-serif;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", sans-serif;
+  padding: 2rem 1.5rem;
+}
+
+.lp-highlight {
+  color: #f6dc8a;
+}
+
+/* HERO SECTION */
+.lp-hero {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 3rem 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  align-items: start;
+}
+
+.lp-hero-left {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.lp-kicker {
+  font-size: 0.85rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(126, 224, 255, 0.9);
+  font-weight: 800;
+}
+
+.lp-hero h1 {
+  font-size: clamp(2.2rem, 4vw, 3.2rem);
+  line-height: 1.1;
+  margin: 0;
+  font-weight: 900;
+}
+
+.lp-subtitle {
+  font-size: 1.05rem;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.75);
+  max-width: 600px;
+  margin: 0;
+}
+
+/* WAITLIST CARD */
+.lp-waitlist-card {
+  background: radial-gradient(circle at top left, rgba(246, 220, 138, 0.12), rgba(4, 7, 20, 0.95));
+  border: 1px solid rgba(246, 220, 138, 0.3);
+  border-radius: 20px;
+  padding: 1.8rem;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(18px);
+  margin-top: 1rem;
+}
+
+.lp-beta-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, #f7d57c, #f5c56a);
+  color: #111;
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+}
+
+.lp-waitlist-card h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1.4rem;
+  color: #f6dc8a;
+}
+
+.lp-waitlist-desc {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+  margin: 0 0 1.5rem;
+  line-height: 1.5;
+}
+
+.lp-waitlist-form {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.lp-email-input {
+  flex: 1;
+  min-width: 200px;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.3);
+  color: #fff;
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.lp-email-input:focus {
+  border-color: rgba(246, 220, 138, 0.6);
+}
+
+.lp-email-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.lp-submit-btn {
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  border: none;
+  background: linear-gradient(135deg, #f7d57c, #f5c56a);
+  color: #111;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+}
+
+.lp-submit-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+}
+
+.lp-success {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: rgba(76, 217, 100, 0.15);
+  border: 1px solid rgba(76, 217, 100, 0.4);
+  border-radius: 12px;
+}
+
+.lp-success-icon {
+  font-size: 1.5rem;
+  color: #4cd964;
+}
+
+.lp-success p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.9rem;
+}
+
+.lp-cta-row {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}
+
+/* VIDEO GRID */
+.lp-hero-right {
+  position: relative;
+}
+
+.lp-video-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.2rem;
+}
+
+.lp-video-card {
+  position: relative;
+  background: radial-gradient(circle at top left, rgba(255, 255, 255, 0.08), rgba(8, 10, 20, 0.9));
+  border-radius: 20px;
+  padding: 0.8rem;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+
+.lp-video {
+  width: 100%;
+  height: auto;
+  border-radius: 14px;
+  display: block;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  background: #000;
+}
+
+.lp-video-label {
+  margin-top: 0.6rem;
+  text-align: center;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.8);
+  letter-spacing: 0.02em;
+}
+
+/* FEATURES SECTION */
+.lp-features {
+  max-width: 1200px;
+  margin: 4rem auto;
+  padding: 3rem 0;
+}
+
+.lp-section-title {
+  text-align: center;
+  font-size: 2rem;
+  margin: 0 0 2.5rem;
+  color: #f6dc8a;
+}
+
+.lp-feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+}
+
+.lp-feature-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 2rem;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.lp-feature-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(246, 220, 138, 0.4);
+}
+
+.lp-feature-icon {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.lp-feature-card h3 {
+  font-size: 1.2rem;
+  margin: 0 0 0.75rem;
+  color: #fff;
+}
+
+.lp-feature-card p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.6;
+  font-size: 0.95rem;
+}
+
+/* STATS SECTION */
+.lp-stats {
+  max-width: 1200px;
+  margin: 3rem auto;
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.lp-stat-pill {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 1.2rem 1.8rem;
+  border-radius: 999px;
+  background: rgba(14, 18, 30, 0.96);
+  border: 1px solid rgba(120, 136, 176, 0.7);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+}
+
+.lp-stat-number {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #f6dc8a;
+}
+
+.lp-stat-label {
+  font-size: 0.75rem;
+  color: #a9b0c7;
+  text-align: center;
+}
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+  .lp-hero {
+    grid-template-columns: 1fr;
+    gap: 3rem;
+  }
+  
+  .lp-video-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .landing-page {
+    padding: 1.5rem 1rem;
+  }
+  
+  .lp-hero {
+    padding: 2rem 0;
+  }
+  
+  .lp-waitlist-form {
+    flex-direction: column;
+  }
+  
+  .lp-email-input {
+    min-width: 100%;
+  }
+  
+  .lp-cta-row {
+    flex-direction: column;
+  }
+  
+  .lp-feature-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .lp-stats {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }
 
 /* Optional: Add watermark class for 3C icon in background */

@@ -1,0 +1,154 @@
+/* src/assets/components/BetaGate.css */
+
+.beta-gate {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: radial-gradient(circle at top left, #151821 0, #05060a 45%, #020308 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  overflow-y: auto;
+}
+
+.beta-gate-content {
+  max-width: 480px;
+  width: 100%;
+  background: radial-gradient(circle at top left, rgba(246, 220, 138, 0.08), rgba(4, 7, 20, 0.95));
+  border: 1px solid rgba(246, 220, 138, 0.25);
+  border-radius: 24px;
+  padding: 3rem 2.5rem;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(20px);
+  text-align: center;
+}
+
+.beta-gate-logo {
+  margin-bottom: 1.5rem;
+}
+
+.beta-logo-img {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  opacity: 0.9;
+}
+
+.beta-gate-title {
+  font-size: 1.8rem;
+  margin: 0 0 1rem;
+  color: #f6dc8a;
+  font-weight: 900;
+}
+
+.beta-gate-desc {
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 1rem;
+  line-height: 1.6;
+  margin: 0 0 2rem;
+}
+
+.beta-gate-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.beta-gate-input {
+  padding: 1rem 1.2rem;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.4);
+  color: #fff;
+  font-size: 1rem;
+  text-align: center;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  outline: none;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.beta-gate-input:focus {
+  border-color: rgba(246, 220, 138, 0.6);
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.beta-gate-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.beta-gate-btn {
+  padding: 1rem 1.5rem;
+  border-radius: 14px;
+  border: none;
+  background: linear-gradient(135deg, #f7d57c, #f5c56a);
+  color: #111;
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+}
+
+.beta-gate-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+}
+
+.beta-gate-btn:active {
+  transform: translateY(0);
+}
+
+.beta-gate-error {
+  color: #ff5555;
+  font-size: 0.85rem;
+  margin: -0.5rem 0 0;
+  padding: 0.75rem;
+  background: rgba(255, 85, 85, 0.1);
+  border: 1px solid rgba(255, 85, 85, 0.3);
+  border-radius: 10px;
+}
+
+.beta-gate-footer {
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.beta-gate-note {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.9rem;
+  margin: 0 0 0.5rem;
+}
+
+.beta-gate-link {
+  color: #7ee0ff;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.beta-gate-link:hover {
+  color: #a8efff;
+  text-decoration: underline;
+}
+
+/* Responsive */
+@media (max-width: 560px) {
+  .beta-gate {
+    padding: 1.5rem;
+  }
+  
+  .beta-gate-content {
+    padding: 2rem 1.5rem;
+  }
+  
+  .beta-gate-title {
+    font-size: 1.5rem;
+  }
+}

@@ -2,6 +2,9 @@
 import React, { useEffect } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 
+// Beta Gate
+import BetaGate from "./assets/components/BetaGate.jsx";
+
 // Alpha helper (safe)
 import AlphaRouteChip from "./assets/components/AlphaRouteChip.jsx";
 
@@ -36,8 +39,27 @@ import RecipeDetailPage from "./pages/RecipeDetailPage.jsx";
 export default function App() {
   const { pathname } = useLocation();
   const showAlphaChip = import.meta.env.VITE_ALPHA_CHIP !== "0";
+  
+  // Check if we're on the .app domain
+  const host = window.location.hostname.toLowerCase();
+  const isDotApp = host === "the3cmall.app" || host.endsWith(".the3cmall.app");
 
   useEffect(() => {
+    const isDotCom = host === "the3cmall.com" || host.endsWith(".the3cmall.com");
+    const marketingRoutes = ["/", "/features", "/pricing"];
+
+    if (isDotCom && (pathname.startsWith("/app") || pathname === "/login")) {
+      const target = `https://the3cmall.app${pathname}${window.location.search}${window.location.hash}`;
+      window.location.replace(target);
+      return;
+    }
+
+    if (isDotApp && marketingRoutes.includes(pathname)) {
+      const target = `https://the3cmall.com${pathname}${window.location.search}${window.location.hash}`;
+      window.location.replace(target);
+      return;
+    }
+
     const isAppRoute = pathname.startsWith("/app");
     const isPTMode = pathname.includes("/app/pt") || pathname.includes("trainer") || pathname.includes("pt-dashboard");
     const html = document.documentElement;
@@ -50,7 +72,8 @@ export default function App() {
     if (!isAppRoute) window.scrollTo(0, 0);
   }, [pathname]);
 
-  return (
+  // Wrap app routes with BetaGate on .app domain
+  const appContent = (
     <div className="app-shell">
       {showAlphaChip && <AlphaRouteChip />}
 
@@ -95,4 +118,11 @@ export default function App() {
       </Routes>
     </div>
   );
+
+  // Apply BetaGate only on .app domain
+  if (isDotApp) {
+    return <BetaGate>{appContent}</BetaGate>;
+  }
+
+  return appContent;
 }
