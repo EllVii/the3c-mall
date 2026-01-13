@@ -519,8 +519,8 @@ export default function MealPlannerPage() {
           <button className="btn btn-secondary" onClick={goPrev} disabled={step === 0}>
             ← Previous
           </button>
-          <button className="btn btn-secondary" onClick={goNext} disabled={step === 4}>
-            Next →
+          <button className="btn btn-secondary" onClick={() => setStep(0)} disabled={step !== 4}>
+            Plan Another Meal →
           </button>
 
           {/* quick jump */}
