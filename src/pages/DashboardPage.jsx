@@ -8,6 +8,7 @@ import ConciergeOverlay from "../assets/components/ConciergeOverlay.jsx";
 import GuidedAssistOverlay from "../assets/components/GuidedAssistOverlay.jsx";
 import SettingsModal from "../assets/components/SettingsModal.jsx";
 import OnboardingGate from "../assets/components/OnboardingGate.jsx";
+import OnboardingTutorial, { TUTORIAL_SEEN_KEY } from "../assets/components/OnboardingTutorial.jsx";
 import ConciergeIntro from "../assets/components/ConciergeIntro.jsx";
 import { readJSON, writeJSON } from "../utils/Storage";
 
@@ -62,7 +63,15 @@ export default function DashboardPage() {
   const [ccOpen, setCcOpen] = useState(true);
   const [ccMin, setCcMin] = useState(false);
 
-  // Concierge Intro on first run
+  // Onboarding Tutorial (mall + amenities + concierge intro) - shows ONCE on first visit
+  const [showTutorial, setShowTutorial] = useState(() => {
+    const hasSeen = readJSON(TUTORIAL_SEEN_KEY, null);
+    const profile = readJSON("concierge.profile.v1", null);
+    // Show tutorial if first time AND haven't seen tutorial yet
+    return !profile && !hasSeen;
+  });
+
+  // Concierge Intro on first run (after tutorial)
   const [introOpen, setIntroOpen] = useState(() => {
     const profile = readJSON("concierge.profile.v1", null);
     return !profile;
@@ -240,9 +249,18 @@ export default function DashboardPage() {
 
   return (
     <section className="page db-shell">
+      {/* ONBOARDING TUTORIAL - shows once on first visit (explains mall + amenities + concierge) */}
+      <OnboardingTutorial
+        open={showTutorial}
+        onComplete={() => {
+          setShowTutorial(false);
+          // Proceed to name entry (OnboardingGate will show because isFirstTime is still true)
+        }}
+      />
+
       {/* ONBOARDING GATE - force name entry on first use */}
       <OnboardingGate
-        open={isFirstTime}
+        open={isFirstTime && !showTutorial}
         onClose={() => {
           // After onboarding gate, trigger ConciergeIntro
           setIntroOpen(true);

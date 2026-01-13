@@ -38,6 +38,24 @@
   gap: 1.75rem;
 }
 
+/* Mobile: horizontal scroll */
+@media (max-width: 768px) {
+  .pricing-grid {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    gap: 1rem;
+    padding-bottom: 1rem;
+  }
+
+  .pricing-grid > .card {
+    flex: 0 0 85%;
+    min-width: 280px;
+    scroll-snap-align: start;
+  }
+}
+
 /* Base pricing card */
 .card.pricing-card {
   background: radial-gradient(circle at top left,

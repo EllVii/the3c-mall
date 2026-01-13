@@ -77,34 +77,27 @@ export default function OnboardingGate({ open, onClose }) {
             <>
               {/* Step 1: Get user's name */}
               <h1 className="h2" style={{ marginBottom: ".5rem", textAlign: "center" }}>
-                Welcome to 3C Mall
+                Nice to Meet You
               </h1>
 
               <p className="cc-sub" style={{ marginBottom: "1.5rem", textAlign: "center", maxWidth: "420px", lineHeight: 1.6 }}>
-                I'll help you <strong>save money on groceries</strong>, <strong>plan meals fast</strong>, and <strong>stay consistent</strong> — all connected in one place.
+                Let's personalize your 3C experience. First things first — what should I call you?
               </p>
 
-              <div className="cc-card glass" style={{ marginBottom: "1.5rem", padding: "1rem", textAlign: "center" }}>
-                <div className="small" style={{ opacity: 0.85 }}>
-                  <strong>3C Mall</strong> connects your meals, groceries, and strategy in one place — so every decision works together.
-                </div>
-              </div>
-
               <div className="cc-card" style={{ marginBottom: "1.5rem" }}>
-                <div className="cc-card-title">What's your first name? <span style={{ color: "var(--gold)" }}>*</span></div>
                 <input
                   className="input"
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
-                  placeholder="First name (required)"
+                  placeholder="Your first name"
                   required
                   autoFocus
                   onKeyDown={(e) => {
                     if (e.key === "Enter") handleContinueFromName();
                   }}
                 />
-                <div className="small cc-copy">
-                  I'll use this to personalize your experience and speak to you by name.
+                <div className="small cc-copy" style={{ marginTop: ".5rem" }}>
+                  I'll use this to speak to you personally throughout 3C.
                 </div>
               </div>
 

@@ -5,6 +5,7 @@ import "../styles/SettingsPage.css";
 import { getPrefsSafe, setNavMode } from "../utils/prefs";
 import { THEMES, getThemeId, setThemeId, applyTheme } from "../utils/Settings/theme.js";
 import { getDateFormat, setDateFormat, getTimeFormat, setTimeFormat } from "../utils/Settings/dateTime.js";
+import { writeJSON } from "../utils/Storage";
 
 /**
  * OPTIONAL SETTINGS MODULES
@@ -54,6 +55,34 @@ export default function SettingsPage() {
   const navModeLabel = useMemo(() => {
     return prefs?.navMode === "full" ? "Full Mall" : "Focused";
   }, [prefs?.navMode]);
+
+  // Dev reset function
+  const handleDevReset = () => {
+    const isDev = import.meta.env.MODE === 'development';
+    if (!isDev) return;
+
+    const LAST_RESET_KEY = "dev.lastOnboardingReset";
+    const COOLDOWN_MS = 30 * 60 * 1000; // 30 minutes
+
+    const lastReset = parseInt(localStorage.getItem(LAST_RESET_KEY) || "0", 10);
+    const now = Date.now();
+    const timeSinceReset = now - lastReset;
+
+    if (timeSinceReset < COOLDOWN_MS) {
+      const minutesLeft = Math.ceil((COOLDOWN_MS - timeSinceReset) / 60000);
+      alert(`DEV: Onboarding reset is on cooldown. Wait ${minutesLeft} more minute(s).`);
+      return;
+    }
+
+    const confirm = window.confirm("DEV MODE: Reset onboarding and clear profile?\n\nThis will:\n- Clear your name and preferences\n- Show the welcome screen again\n- Allow re-entering all info\n\nCooldown: 30 minutes");
+    
+    if (confirm) {
+      localStorage.removeItem("concierge.profile.v1");
+      localStorage.removeItem("grocery.strategy.v1");
+      localStorage.setItem(LAST_RESET_KEY, now.toString());
+      window.location.reload();
+    }
+  };
 
   return (
     <section className="page settings-page">
@@ -224,6 +253,26 @@ export default function SettingsPage() {
           This page, the background, and all cards update instantly when you switch themes.
         </p>
       </div>
+
+      {/* DEV RESET BUTTON - only shows in development mode */}
+      {import.meta.env.MODE === 'development' && (
+        <div className="card glass settings-block" style={{ marginTop: "2rem", borderColor: "rgba(255, 107, 143, 0.35)", background: "rgba(255, 107, 143, 0.05)" }}>
+          <h3 className="settings-h3" style={{ color: "#ff6b8f" }}>🔧 Developer Reset</h3>
+          <p className="small">Clear onboarding and profile to test the initial flow again. 30-minute cooldown applies.</p>
+
+          <button
+            className="btn btn-secondary"
+            onClick={handleDevReset}
+            style={{
+              marginTop: ".75rem",
+              borderColor: "rgba(255, 107, 143, 0.50)",
+              color: "#ff6b8f",
+            }}
+          >
+            Reset Onboarding & Profile
+          </button>
+        </div>
+      )}
     </section>
   );
 }
