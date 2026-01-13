@@ -13,10 +13,14 @@ export default function MealSummaryPanel({
   spice,
 }) {
   const summary = useMemo(() => {
+    // Combine date + time for clarity
+    const dateTimeDisplay = meal?.dateISO && meal?.time24 
+      ? `${meal.dateISO} at ${meal.time24}`
+      : "—";
+    
     return {
       mealLabel: meal?.mealLabel || meal?.mealId || "—",
-      date: meal?.dateISO || "—",
-      time: meal?.time24 || "—",
+      scheduled: dateTimeDisplay,
       diet: diet?.diet || "balanced",
       mealStyle: diet?.mealStyle || "standard",
       fasting: fasting?.enabled ? fasting?.mode : "Off",
@@ -43,8 +47,7 @@ export default function MealSummaryPanel({
         }}
       >
         <SummaryRow label="Meal" value={summary.mealLabel} />
-        <SummaryRow label="Date" value={summary.date} />
-        <SummaryRow label="Time" value={summary.time} />
+        <SummaryRow label="Scheduled" value={summary.scheduled} />
         <SummaryRow label="Diet" value={summary.diet} />
         <SummaryRow label="Meal Style" value={summary.mealStyle} />
         <SummaryRow label="Fasting" value={summary.fasting} />

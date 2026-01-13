@@ -263,10 +263,10 @@ export default function MealPlannerPage() {
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", gap: ".5rem" }}>
                     <div style={{ flex: 1 }}>
                       <div style={{ fontWeight: 700, color: "var(--gold)", marginBottom: ".2rem" }}>
-                        {meal.mealLabel} • {meal.time24}
+                        {meal.mealLabel}
                       </div>
                       <div className="small" style={{ opacity: 0.75 }}>
-                        {meal.dateISO} • {meal.recipe?.name || "Recipe saved"}
+                        {meal.dateISO} at {meal.time24} • {meal.recipe?.name || "Recipe saved"}
                       </div>
                     </div>
                     <div style={{ display: "flex", gap: ".4rem" }}>
