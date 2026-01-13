@@ -14,6 +14,33 @@
     "Inter", sans-serif;
 }
 
+/* Optional: Add watermark class for 3C icon in background */
+.lp-page--watermark {
+  position: relative;
+  isolation: isolate;
+}
+
+.lp-page--watermark::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  
+  background-image: url("/brand/3c-emblem.png");
+  background-repeat: no-repeat;
+  background-position: 50% 25%;
+  background-size: min(560px, 72vw);
+  background-attachment: fixed;
+  opacity: 0.06;
+  filter: saturate(1.1) contrast(1.05);
+}
+
+.lp-page--watermark > * {
+  position: relative;
+  z-index: 1;
+}
+
 /* HERO: text + right column */
 
 .lp-hero {
@@ -310,4 +337,42 @@
     flex-direction: column;
     align-items: stretch;
   }
+}
+
+/* =============== 3C MALL INTRO EXPLAINER =============== */
+
+.landing-intro {
+  margin-top: 1.5rem;
+  border-radius: 18px;
+  border: 1px solid rgba(126, 224, 255, 0.18);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 1.2rem 1.2rem;
+  max-width: 540px;
+}
+
+.landing-intro-title {
+  margin: 0 0 0.5rem;
+  font-weight: 900;
+  font-size: 1rem;
+  color: var(--gold, #f5c56a);
+  letter-spacing: 0.02em;
+}
+
+.landing-intro-text {
+  margin: 0 0 0.75rem;
+  color: rgba(255, 255, 255, 0.84);
+  line-height: 1.5;
+  font-size: 0.95rem;
+}
+
+.landing-intro-list {
+  margin: 0;
+  padding-left: 1.2rem;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.landing-intro-list li {
+  margin: 0.4rem 0;
 }

@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 
 export default function Home() {
   return (
-    <section className="landing">
+    <section className="lp-page lp-page--watermark">
       {/* Left: Hero text */}
       <div className="landing-hero">
         <div className="landing-pill">Concierge • Cost • Community</div>
@@ -19,6 +19,21 @@ export default function Home() {
           The 3C Mall is your always-on lifestyle hub. Track your protein,
           grocery costs, and momentum — all in one emotionally safe, high-performance space.
         </p>
+
+        {/* What is 3C Mall intro */}
+        <div className="landing-intro">
+          <h2 className="landing-intro-title">What is 3C Mall?</h2>
+          <p className="landing-intro-text">
+            <strong>3C</strong> stands for <strong>Concierge</strong>, <strong>Cost</strong>, and <strong>Community</strong>.
+            The <strong>Mall</strong> is your grocery stores in one place — plus the amenities that make it easier to win:
+            meal planning, recipes, routing, and support.
+          </p>
+          <ul className="landing-intro-list">
+            <li><strong>Concierge</strong> — guides you to the right lane fast.</li>
+            <li><strong>Cost</strong> — helps you spend less without doing extra work.</li>
+            <li><strong>Community</strong> — support without pressure or noise.</li>
+          </ul>
+        </div>
 
         <div className="landing-actions">
           <a href="https://the3cmall.app/app" className="btn-primary">
