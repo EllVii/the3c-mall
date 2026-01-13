@@ -99,14 +99,14 @@
   position: relative;
   overflow: hidden;
   width: 100%;
-  padding: 0.88rem 1.4rem;
+  padding: 0.75rem 1.2rem;
   border-radius: 999px;
   border: none;
   cursor: pointer;
 
-  font-size: 0.92rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
 
   background: linear-gradient(135deg, #f7d57c, #f5c56a, #ffe7ad);
   color: #15151a;
@@ -197,7 +197,7 @@
 /* SECONDARY BUTTON – light gray cancel */
 .cancel-btn-light {
   width: 100%;
-  padding: 0.8rem 1.4rem;
+  padding: 0.75rem 1.2rem;
   border-radius: 999px;
   margin-top: 0.35rem;
 
@@ -205,8 +205,8 @@
   color: #7f8696;
   border: 1px solid #dde0e8;
 
-  font-size: 0.88rem;
-  font-weight: 500;
+  font-size: 0.85rem;
+  font-weight: 600;
   cursor: pointer;
 
   box-shadow: none;

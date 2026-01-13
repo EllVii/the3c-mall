@@ -91,10 +91,10 @@
 /* Marketing buttons override (same look as before) */
 .btn-primary,
 .btn-outline {
-  padding: 0.8rem 1.6rem;
+  padding: 0.75rem 1.2rem;
   border-radius: 999px;
-  font-size: 0.95rem;
-  font-weight: 500;
+  font-size: 0.85rem;
+  font-weight: 600;
   text-decoration: none;
   display: inline-flex;
   align-items: center;
