@@ -175,3 +175,43 @@ export function resetGuides() {
     // ignore
   }
 }
+
+/**
+ * ONBOARDING TOUR (new premium onboarding flow)
+ */
+const ONBOARDING_KEY = "3c.onboarding.v1";
+
+export function getOnboardingSafe() {
+  try {
+    const raw = localStorage.getItem(ONBOARDING_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function markOnboardingComplete(payload) {
+  const next = {
+    seen: true,
+    ...payload,
+  };
+  try {
+    localStorage.setItem(ONBOARDING_KEY, JSON.stringify(next));
+  } catch {
+    // ignore
+  }
+  return next;
+}
+
+export function hasCompletedOnboarding() {
+  const o = getOnboardingSafe();
+  return !!o?.seen;
+}
+
+export function resetOnboarding() {
+  try {
+    localStorage.removeItem(ONBOARDING_KEY);
+  } catch {
+    // ignore
+  }
+}

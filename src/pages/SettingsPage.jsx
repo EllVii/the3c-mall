@@ -2,7 +2,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/SettingsPage.css";
-import { getPrefsSafe, setNavMode } from "../utils/prefs";
+import { getPrefsSafe, setNavMode, resetOnboarding } from "../utils/prefs";
 import { THEMES, getThemeId, setThemeId, applyTheme } from "../utils/Settings/theme.js";
 import { getDateFormat, setDateFormat, getTimeFormat, setTimeFormat } from "../utils/Settings/dateTime.js";
 import { writeJSON } from "../utils/Storage";
@@ -55,6 +55,13 @@ export default function SettingsPage() {
   const navModeLabel = useMemo(() => {
     return prefs?.navMode === "full" ? "Full Mall" : "Focused";
   }, [prefs?.navMode]);
+
+  // Re-run tour function
+  function handleRerunTour() {
+    resetOnboarding();
+    // send them straight back to dashboard; tour will show immediately
+    nav("/app");
+  }
 
   // Dev reset function
   const handleDevReset = () => {
@@ -151,6 +158,23 @@ export default function SettingsPage() {
               </button>
             );
           })}
+        </div>
+      </div>
+
+      {/* GUIDED TOUR */}
+      <div className="card glass settings-block">
+        <h3 className="settings-h3">Guided Tour</h3>
+        <p className="small">
+          Re-run the first-time walkthrough (Mall concept + personalization).
+        </p>
+
+        <div className="nav-row">
+          <button className="btn btn-primary" onClick={handleRerunTour}>
+            Re-run Tour
+          </button>
+          <button className="btn btn-secondary" onClick={() => nav("/app")}>
+            Back to Dashboard
+          </button>
         </div>
       </div>
 

@@ -9,6 +9,7 @@ import GuidedAssistOverlay from "../assets/components/GuidedAssistOverlay.jsx";
 import SettingsModal from "../assets/components/SettingsModal.jsx";
 import OnboardingGate from "../assets/components/OnboardingGate.jsx";
 import OnboardingTutorial, { TUTORIAL_SEEN_KEY } from "../assets/components/OnboardingTutorial.jsx";
+import OnboardingTour from "../assets/components/OnboardingTour.jsx";
 import ConciergeIntro from "../assets/components/ConciergeIntro.jsx";
 import { readJSON, writeJSON } from "../utils/Storage";
 
@@ -21,6 +22,8 @@ import {
   disableNudges,
   hasSeenGuide,
   markGuideSeen,
+  hasCompletedOnboarding,
+  markOnboardingComplete,
 } from "../utils/prefs";
 
 const ZONES = [
@@ -70,6 +73,9 @@ export default function DashboardPage() {
     // Show tutorial if first time AND haven't seen tutorial yet
     return !profile && !hasSeen;
   });
+
+  // NEW: Premium Onboarding Tour (replaces old gate) - shows ONCE, then never again
+  const [onboardingOpen, setOnboardingOpen] = useState(() => !hasCompletedOnboarding());
 
   // Concierge Intro on first run (after tutorial)
   const [introOpen, setIntroOpen] = useState(() => {
@@ -255,6 +261,29 @@ export default function DashboardPage() {
         onComplete={() => {
           setShowTutorial(false);
           // Proceed to name entry (OnboardingGate will show because isFirstTime is still true)
+        }}
+      />
+
+      {/* PREMIUM ONBOARDING TOUR - full walkthrough + profile capture (shows once, never again) */}
+      <OnboardingTour
+        open={onboardingOpen}
+        onClose={() => setOnboardingOpen(false)}
+        onComplete={(profile) => {
+          // Save the onboarding data
+          markOnboardingComplete(profile);
+          setOnboardingOpen(false);
+
+          // Save profile name to concierge profile so it displays everywhere
+          if (profile?.name) {
+            const existingProfile = readJSON("concierge.profile.v1", {});
+            writeJSON("concierge.profile.v1", {
+              ...existingProfile,
+              firstName: profile.name,
+              shopMode: profile.shopMode,
+              homeStore: profile.homeStore,
+              birthday: profile.birthday,
+            });
+          }
         }}
       />
 

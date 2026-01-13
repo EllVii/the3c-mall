@@ -1,0 +1,199 @@
+import React, { useEffect, useMemo, useState } from "react";
+
+export default function OnboardingTour({
+  open,
+  onComplete,
+  onClose,
+  brand = "3C Mall",
+}) {
+  const isOpen = !!open;
+
+  const slides = useMemo(
+    () => [
+      {
+        title: `Welcome to ${brand}`,
+        body:
+          "All your grocery stores and lifestyle tools — in one place, in the palm of your hand.\n\nNo juggling apps. No scattered decisions.",
+        fields: null,
+      },
+      {
+        title: "A mall only works with great amenities",
+        body:
+          "3C Mall brings everything together so your life runs smoother:\n\n• Grocery routing\n• Meal planning\n• Cost awareness\n• Recovery & momentum tools\n\nSome are live. Some are coming soon.\nYou'll always know what's available.",
+        fields: null,
+      },
+      {
+        title: "Your built-in Concierge",
+        body:
+          "The Concierge reduces decision fatigue by adapting to how you shop, eat, and move.\n\nNo judgment.\nNo pressure.\nJust smarter defaults over time.",
+        fields: null,
+      },
+      {
+        title: "Let's personalize",
+        body: "Quick setup — you can change this anytime.",
+        fields: "profile",
+      },
+    ],
+    [brand]
+  );
+
+  const [step, setStep] = useState(0);
+  const [name, setName] = useState("");
+  const [shopMode, setShopMode] = useState("best_price"); // best_price | loyal
+  const [homeStore, setHomeStore] = useState(""); // optional (string)
+  const [birthday, setBirthday] = useState(""); // optional "MM/DD"
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setStep(0);
+  }, [isOpen]);
+
+  // ESC closes
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e) => {
+      if (e.key === "Escape") onClose?.();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
+
+  const isLast = step === slides.length - 1;
+
+  function next() {
+    setStep((s) => Math.min(s + 1, slides.length - 1));
+  }
+
+  function prev() {
+    setStep((s) => Math.max(s - 1, 0));
+  }
+
+  function complete() {
+    const payload = {
+      name: String(name || "").trim(),
+      shopMode,
+      homeStore: String(homeStore || "").trim(),
+      birthday: String(birthday || "").trim(), // keep simple; validate later if you want
+      completedAt: new Date().toISOString(),
+    };
+    onComplete?.(payload);
+  }
+
+  const slide = slides[step];
+
+  return (
+    <div className="ob-overlay" role="dialog" aria-modal="true" aria-label="Onboarding">
+      <div className="ob-backdrop" onClick={onClose} />
+
+      <div className="ob-panel">
+        <div className="ob-head">
+          <div className="ob-badge" aria-hidden="true">3C</div>
+          <div className="ob-head-text">
+            <div className="ob-title">{slide.title}</div>
+            <div className="ob-progress">
+              Step {step + 1} of {slides.length}
+            </div>
+          </div>
+
+          <button className="ob-x" onClick={onClose} aria-label="Close">
+            ✕
+          </button>
+        </div>
+
+        <div className="ob-body">
+          <p className="ob-body-text">
+            {slide.body.split("\n").map((line, idx) => (
+              <React.Fragment key={idx}>
+                {line}
+                <br />
+              </React.Fragment>
+            ))}
+          </p>
+
+          {slide.fields === "profile" && (
+            <div className="ob-form">
+              <label className="ob-label">
+                What should we call you?
+                <input
+                  className="ob-input"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="First name"
+                  autoFocus
+                />
+              </label>
+
+              <div className="ob-grid">
+                <label className="ob-label">
+                  Birthday (MM/DD) — optional
+                  <input
+                    className="ob-input"
+                    value={birthday}
+                    onChange={(e) => setBirthday(e.target.value)}
+                    placeholder="MM/DD"
+                  />
+                </label>
+
+                <label className="ob-label">
+                  Preferred store — optional
+                  <input
+                    className="ob-input"
+                    value={homeStore}
+                    onChange={(e) => setHomeStore(e.target.value)}
+                    placeholder="Costco / Walmart / etc."
+                  />
+                </label>
+              </div>
+
+              <div className="ob-radio">
+                <div className="ob-label" style={{ marginBottom: ".35rem" }}>
+                  How do you prefer to shop?
+                </div>
+
+                <button
+                  type="button"
+                  className={"ob-choice " + (shopMode === "best_price" ? "on" : "")}
+                  onClick={() => setShopMode("best_price")}
+                >
+                  <div className="ob-choice-title">Best price across stores</div>
+                  <div className="ob-choice-desc">Let 3C route items where they're cheapest.</div>
+                </button>
+
+                <button
+                  type="button"
+                  className={"ob-choice " + (shopMode === "loyal" ? "on" : "")}
+                  onClick={() => setShopMode("loyal")}
+                >
+                  <div className="ob-choice-title">Loyal to one main store</div>
+                  <div className="ob-choice-desc">Keep it simple. Optimize within your preferred store.</div>
+                </button>
+
+                <div className="ob-note">
+                  You can change this later in Settings.
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="ob-foot">
+          <button className="btn btn-ghost" onClick={prev} disabled={step === 0}>
+            Back
+          </button>
+
+          {!isLast ? (
+            <button className="btn btn-primary" onClick={next}>
+              Next
+            </button>
+          ) : (
+            <button className="btn btn-primary" onClick={complete}>
+              Enter Dashboard
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
