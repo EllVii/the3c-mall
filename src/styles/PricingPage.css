@@ -46,12 +46,13 @@
     scroll-snap-type: x mandatory;
     -webkit-overflow-scrolling: touch;
     gap: 1rem;
-    padding-bottom: 1rem;
+    padding: 0.25rem 1rem 1rem 1rem;
   }
 
   .pricing-grid > .card {
-    flex: 0 0 85%;
+    flex: 0 0 calc(100vw - 2rem - 1rem);
     min-width: 280px;
+    max-width: 350px;
     scroll-snap-align: start;
   }
 }
@@ -442,8 +443,9 @@ html:not(.app-mode) .pricing-grid .pricing-card {
   }
 
   html:not(.app-mode) .pricing-grid > .pricing-card {
-    flex: 0 0 88%;
+    flex: 0 0 calc(100vw - 2rem - 1rem);
     min-width: 280px;
+    max-width: 350px;
     scroll-snap-align: start;
   }
 

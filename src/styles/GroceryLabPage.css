@@ -80,15 +80,17 @@ html, body { width: 100%; height: 100%; overflow-x: hidden; }
   justify-content: space-between;
   gap: 16px;
   padding: 22px 18px 10px;
-  max-width: 1100px;
-  margin: 0 auto;
   width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 
 .gl-title{
   margin: 0;
   font-size: 28px;
   letter-spacing: .2px;
+  flex-shrink: 0;
 }
 
 .gl-subtitle{
@@ -100,9 +102,11 @@ html, body { width: 100%; height: 100%; overflow-x: hidden; }
 .gl-header-right{ 
   display:flex; 
   gap: 10px; 
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   justify-content: flex-end;
+  flex-shrink: 0;
+  min-width: min-content;
 }
 
 /* =========================================================
@@ -452,6 +456,27 @@ html, body { width: 100%; height: 100%; overflow-x: hidden; }
 }
 
 /* Mobile tightening */
+@media (max-width: 768px){
+  .gl-header{
+    padding-left: 12px;
+    padding-right: 12px;
+    flex-wrap: wrap;
+  }
+  
+  .gl-header-right{
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    flex-shrink: 1;
+    min-width: auto;
+  }
+
+  .gl-btn{
+    font-size: 13px;
+    padding: 8px 10px;
+  }
+}
+
 @media (max-width: 420px){
   .gl-header{ padding-left: 12px; padding-right: 12px; }
   .gl-steps{ padding-left: 12px; padding-right: 12px; }
