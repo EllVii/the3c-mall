@@ -17,9 +17,15 @@ export default function OnboardingTour({
         fields: null,
       },
       {
-        title: "A mall only works with great amenities",
+        title: "What is the 3C?",
         body:
-          "3C Mall brings everything together so your life runs smoother:\n\n• Grocery routing\n• Meal planning\n• Cost awareness\n• Recovery & momentum tools\n\nSome are live. Some are coming soon.\nYou'll always know what's available.",
+          "3C stands for:\n\n🤝 Concierge\nYour AI guide that adapts to your choices.\n\n💰 Cost\nTrack and optimize what you spend on food.\n\n👥 Community\nSupport without judgment or pressure.\n\nTogether, they make the Mall—a unified space for shopping, planning, and living well.",
+        fields: null,
+      },
+      {
+        title: "The Mall is your hub",
+        body:
+          "Think of it like a real shopping mall:\n\nThe grocery stores are your shopping destinations—optimized with routing and pricing.\n\nThe amenities are your lifestyle tools:\n\n• Meal planner\n• Cost awareness\n• Recovery & momentum tools\n\nSome are live now. Some are coming soon.",
         fields: null,
       },
       {
