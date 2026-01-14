@@ -24,6 +24,7 @@ const STRATEGY_KEY = "grocery.strategy.v1";
 const STORE_USAGE_KEY = "grocery.storeUsage.v1";
 const HANDOFF_KEY = "handoff.mealToGrocery.v1";
 const PROFILE_KEY = "concierge.profile.v1";
+const MP_KEY = "mp.plan.v1";
 
 const MEAL_ITEMS_KEY = "cart.mealItems.v1";
 const GROCERY_KEY = "grocery.items.v1";
@@ -188,17 +189,6 @@ function isValidName(name) {
   return String(name || "").trim().length >= 2;
 }
 
-// fallback only
-function itemsFromMealPlanFallback() {
-  const names = ["Milk", "Eggs", "Ground beef", "Bananas", "Olive oil", "Pasta", "Orange juice"];
-  return names.map((n) =>
-    normalizeItem(
-      { id: safeId("itm"), name: n, qty: n.toLowerCase() === "eggs" ? 2 : 1, unit: "each" },
-      { locked: true }
-    )
-  );
-}
-
 // -------------------------------
 // Daily Price Rotation (00:00 local time) — SAFE
 // -------------------------------
@@ -234,6 +224,7 @@ export default function GroceryLabPage() {
   const savedPricing = readJSON(PRICING_SUMMARY_KEY, null);
   const savedHandoff = readJSON(HANDOFF_KEY, null);
   const savedProfile = readJSON(PROFILE_KEY, null);
+  const savedPlan = readJSON(MP_KEY, null);
   const savedSavingsHistory = readJSON(SAVINGS_HISTORY_KEY, []);
 
   const [profile, setProfile] = useState(savedProfile || null);
@@ -277,12 +268,14 @@ export default function GroceryLabPage() {
   }, []);
 
   // initial items
+  const hasMealPlan = Boolean((Array.isArray(savedHandoff?.items) && savedHandoff.items.length) || savedPlan);
+
   const initialMealItems = useMemo(() => {
     const handoffItems = Array.isArray(savedHandoff?.items) ? savedHandoff.items : null;
-    const base = handoffItems || savedMealItems || null;
-    const src = Array.isArray(base) && base.length ? base : itemsFromMealPlanFallback();
+    const base = hasMealPlan ? (handoffItems || savedMealItems || null) : null;
+    const src = Array.isArray(base) && base.length ? base : [];
     return src.map((it) => normalizeItem(it, { locked: true })).filter((it) => isValidName(it.name));
-  }, [savedHandoff, savedMealItems]);
+  }, [savedHandoff, savedMealItems, hasMealPlan]);
 
   const mealContext = useMemo(() => {
     return savedHandoff?.mealContext || null;
@@ -315,6 +308,15 @@ export default function GroceryLabPage() {
   const [stepIndex, setStepIndex] = useState(0);
 const [pricingSummary, setPricingSummary] = useState(() => normalizePricingSummary(savedPricing));
   const [savingsHistory, setSavingsHistory] = useState(() => (Array.isArray(savedSavingsHistory) ? savedSavingsHistory : []));
+
+  useEffect(() => {
+    if (!hasMealPlan && mealItems.length) {
+      writeJSON(MEAL_ITEMS_KEY, []);
+      writeJSON(HANDOFF_KEY, null);
+      setMealItems([]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasMealPlan]);
 
   // focus heading when step changes
   const panelHeadingRef = useRef(null);

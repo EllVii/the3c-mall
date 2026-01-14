@@ -1,5 +1,6 @@
 import nodemailer from "nodemailer";
 import dotenv from "dotenv";
+import { formatMSTTimestamp } from "./timezone.js";
 
 dotenv.config();
 
@@ -126,7 +127,7 @@ export async function sendAdminReport(type, data) {
       htmlContent = `
         <h2>New Waitlist Entry</h2>
         <p><strong>Email:</strong> ${data.email}</p>
-        <p><strong>Time:</strong> ${data.timestamp}</p>
+        <p><strong>Time:</strong> ${formatMSTTimestamp(data.timestamp)}</p>
         <p><strong>Referrer:</strong> ${data.referrer || "Direct"}</p>
         <p><strong>IP:</strong> ${data.clientIp}</p>
       `;
@@ -135,12 +136,12 @@ export async function sendAdminReport(type, data) {
       htmlContent = `
         <h2>Failed Beta Code Attempt</h2>
         <p><strong>Code Attempted:</strong> ${data.code}</p>
-        <p><strong>Time:</strong> ${data.timestamp}</p>
+        <p><strong>Time:</strong> ${formatMSTTimestamp(data.timestamp)}</p>
       `;
     }
 
     const mailOptions = {
-      from: `3C Mall Reports <${process.env.SMTP_USER || "noreply@the3cmall.com"}>`,
+      from: `3C Mall Reports <${process.env.SENDER_EMAIL || "noreply@the3cmall.app"}>`,
       to: adminEmail,
       subject,
       html: `

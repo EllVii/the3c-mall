@@ -71,7 +71,9 @@ export default function OnboardingGate({ open, onClose }) {
       <div className="cc-panel cc-panel-onboarding">
         <div className="cc-onboarding-content">
           {/* Logo / Brand */}
-          <div className="cc-badge" style={{ fontSize: "2rem", marginBottom: "1.5rem" }}>3C</div>
+          <div className="cc-badge" style={{ marginBottom: "1.5rem" }}>
+            <img className="cc-logo" src="/icons/3c-mall.png" alt="" />
+          </div>
 
           {step === "name" ? (
             <>

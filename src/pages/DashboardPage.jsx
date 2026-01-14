@@ -9,7 +9,6 @@ import GuidedAssistOverlay from "../assets/components/GuidedAssistOverlay.jsx";
 import SettingsModal from "../assets/components/SettingsModal.jsx";
 import OnboardingGate from "../assets/components/OnboardingGate.jsx";
 import OnboardingTutorial, { TUTORIAL_SEEN_KEY } from "../assets/components/OnboardingTutorial.jsx";
-import OnboardingTour from "../assets/components/OnboardingTour.jsx";
 import ConciergeIntro from "../assets/components/ConciergeIntro.jsx";
 import { readJSON, writeJSON } from "../utils/Storage";
 
@@ -22,8 +21,6 @@ import {
   disableNudges,
   hasSeenGuide,
   markGuideSeen,
-  hasCompletedOnboarding,
-  markOnboardingComplete,
 } from "../utils/prefs";
 
 const ZONES = [
@@ -66,16 +63,12 @@ export default function DashboardPage() {
   const [ccOpen, setCcOpen] = useState(true);
   const [ccMin, setCcMin] = useState(false);
 
-  // Onboarding Tutorial (mall + amenities + concierge intro) - shows ONCE on first visit
+  // Onboarding Tutorial (animated intro) - shows ONCE on first visit
   const [showTutorial, setShowTutorial] = useState(() => {
     const hasSeen = readJSON(TUTORIAL_SEEN_KEY, null);
     const profile = readJSON("concierge.profile.v1", null);
-    // Show tutorial if first time AND haven't seen tutorial yet
     return !profile && !hasSeen;
   });
-
-  // NEW: Premium Onboarding Tour (replaces old gate) - shows ONCE, then never again
-  const [onboardingOpen, setOnboardingOpen] = useState(() => !hasCompletedOnboarding());
 
   // Concierge Intro on first run (after tutorial)
   const [introOpen, setIntroOpen] = useState(() => {
@@ -83,7 +76,7 @@ export default function DashboardPage() {
     return !profile;
   });
 
-  // Onboarding gate (NEW: simpler first-time experience)
+  // Onboarding gate (after tutorial)
   const isFirstTime = !readJSON("concierge.profile.v1", null);
 
   // Guided Assist
@@ -255,7 +248,7 @@ export default function DashboardPage() {
 
   return (
     <section className="page db-shell">
-      {/* ONBOARDING TUTORIAL - shows once on first visit (explains mall + amenities + concierge) */}
+      {/* ONBOARDING TUTORIAL - shows once on first visit (animated intro) */}
       <OnboardingTutorial
         open={showTutorial}
         onComplete={() => {
@@ -264,35 +257,11 @@ export default function DashboardPage() {
         }}
       />
 
-      {/* PREMIUM ONBOARDING TOUR - full walkthrough + profile capture (shows once, never again) */}
-      <OnboardingTour
-        open={onboardingOpen}
-        onClose={() => setOnboardingOpen(false)}
-        onComplete={(profile) => {
-          // Save the onboarding data
-          markOnboardingComplete(profile);
-          setOnboardingOpen(false);
-
-          // Save profile name to concierge profile so it displays everywhere
-          if (profile?.name) {
-            const existingProfile = readJSON("concierge.profile.v1", {});
-            writeJSON("concierge.profile.v1", {
-              ...existingProfile,
-              firstName: profile.name,
-              shopMode: profile.shopMode,
-              homeStore: profile.homeStore,
-              birthday: profile.birthday,
-            });
-          }
-        }}
-      />
-
       {/* ONBOARDING GATE - force name entry on first use */}
       <OnboardingGate
         open={isFirstTime && !showTutorial}
         onClose={() => {
-          // After onboarding gate, trigger ConciergeIntro
-          setIntroOpen(true);
+          setIntroOpen(false);
         }}
       />
 

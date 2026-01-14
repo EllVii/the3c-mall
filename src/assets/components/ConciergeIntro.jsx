@@ -98,7 +98,9 @@ export default function ConciergeIntro({ open, onClose }) {
       <div className="cc-panel cc-panel-wide">
         <div className="cc-head">
           <div className="cc-head-left">
-            <div className="cc-badge">3C</div>
+            <div className="cc-badge">
+              <img className="cc-logo" src="/icons/3c-mall.png" alt="" />
+            </div>
             <div>
               <div className="cc-title">{firstName ? `Great to meet you, ${firstName}!` : "Let's set up your 3C"}</div>
               <div className="cc-sub">20–40 seconds · saved forever</div>

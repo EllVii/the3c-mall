@@ -49,7 +49,7 @@ export default function App() {
     const marketingRoutes = ["/", "/features", "/pricing"];
 
     if (isDotCom && pathname.startsWith("/app")) {
-      const target = `https://the3cmall.app${pathname}${window.location.search}${window.location.hash}`;
+      const target = `https://the3cmall.com${window.location.search}${window.location.hash}`;
       window.location.replace(target);
       return;
     }

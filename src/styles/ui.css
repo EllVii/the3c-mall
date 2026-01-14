@@ -668,6 +668,11 @@ html, body, #root,
   background: linear-gradient(135deg, var(--gold), var(--blue));
   flex: 0 0 auto;
 }
+.cc-logo{
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
 
 .cc-title{
   font-weight: 900;
@@ -1106,6 +1111,15 @@ html, body, #root,
   color: var(--blackText);
   background: linear-gradient(135deg, var(--gold), var(--blue));
   flex: 0 0 auto;
+}
+.ob-logo{
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+}
+.ob-logo-large{
+  width: 64px;
+  height: 64px;
 }
 
 .ob-head-text{ min-width: 0; }

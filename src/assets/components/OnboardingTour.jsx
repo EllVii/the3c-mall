@@ -95,7 +95,9 @@ export default function OnboardingTour({
 
       <div className="ob-panel">
         <div className="ob-head">
-          <div className="ob-badge" aria-hidden="true">3C</div>
+          <div className="ob-badge" aria-hidden="true">
+            <img className="ob-logo" src="/icons/3c-mall.png" alt="" />
+          </div>
           <div className="ob-head-text">
             <div className="ob-title">{slide.title}</div>
             <div className="ob-progress">

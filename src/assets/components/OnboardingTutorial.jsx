@@ -105,12 +105,15 @@ export default function OnboardingTutorial({ open, onComplete }) {
           {/* VISUAL ICON */}
           <div
             style={{
-              fontSize: "3rem",
               marginBottom: "1rem",
               animation: "bounce 2s ease-in-out infinite",
             }}
           >
-            {currentScreen.visual}
+            <img
+              src="/icons/3c-mall.png"
+              alt=""
+              className="ob-logo ob-logo-large"
+            />
           </div>
 
           {/* HEADLINE */}

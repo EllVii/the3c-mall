@@ -5,6 +5,7 @@ import rateLimit from "express-rate-limit";
 import validator from "validator";
 import { initDatabase, addWaitlistEntry, addBetaCodeAttempt, getSummary } from "./db.js";
 import { sendWaitlistEmail, sendAdminReport } from "./email.js";
+import { getMSTISOTimestamp } from "./timezone.js";
 
 dotenv.config();
 
@@ -49,7 +50,7 @@ app.post("/api/report/waitlist", limiter, async (req, res) => {
     // Add to database
     const result = addWaitlistEntry({
       email: email.toLowerCase(),
-      timestamp: timestamp || new Date().toISOString(),
+      timestamp: timestamp || getMSTISOTimestamp(),
       userAgent: userAgent || req.headers["user-agent"] || "",
       referrer: referrer || req.headers.referer || "",
       clientIp,
@@ -99,7 +100,7 @@ app.post("/api/report/beta-code", limiter, async (req, res) => {
     const result = addBetaCodeAttempt({
       code: code.substring(0, 8), // Limit stored length for privacy
       success: success === true,
-      timestamp: timestamp || new Date().toISOString(),
+      timestamp: timestamp || getMSTISOTimestamp(),
       userAgent: userAgent || req.headers["user-agent"] || "",
       clientIp,
     });

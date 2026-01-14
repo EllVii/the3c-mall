@@ -24,7 +24,7 @@ export default function SiteLayout() {
           <NavLink to="/" style={linkStyle} end>Home</NavLink>
           <NavLink to="/features" style={linkStyle}>Features</NavLink>
           <NavLink to="/pricing" style={linkStyle}>Pricing</NavLink>
-          <a href="https://the3cmall.app" style={linkStyle({ isActive: false })}>
+          <a href="https://the3cmall.app/app" style={linkStyle({ isActive: false })}>
             Beta Access
           </a>
         </div>
