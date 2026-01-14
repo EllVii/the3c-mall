@@ -1,5 +1,6 @@
 // src/assets/components/BetaGate.jsx
 import React, { useState } from "react";
+import { reportBetaCodeUsage } from "../../utils/reportingService";
 import "./BetaGate.css";
 
 export default function BetaGate({ children }) {
@@ -10,17 +11,23 @@ export default function BetaGate({ children }) {
     return localStorage.getItem("beta_access") === "true";
   });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // TODO: Replace with your actual beta codes or backend validation
-    const validCodes = [
-      "BETA2026",
-      "3CMALL",
-      "EARLYACCESS"
-    ];
 
-    if (validCodes.includes(code.toUpperCase())) {
+    const envCodes = import.meta.env.VITE_BETA_CODES;
+    const validCodes = envCodes
+      ? envCodes.split(",").map((entry) => entry.trim().toUpperCase()).filter(Boolean)
+      : ["BETA2026", "3CMALL", "EARLYACCESS"];
+    const normalized = code.trim().toUpperCase();
+
+    const isValid = validCodes.includes(normalized);
+
+    // Report the attempt (if enabled)
+    if (import.meta.env.VITE_REPORT_BETA_CODES === "true") {
+      await reportBetaCodeUsage(code, isValid);
+    }
+
+    if (isValid) {
       localStorage.setItem("beta_access", "true");
       setIsAuthenticated(true);
       setError("");
@@ -45,7 +52,8 @@ export default function BetaGate({ children }) {
         <h1 className="beta-gate-title">🔒 Beta Access Required</h1>
         
         <p className="beta-gate-desc">
-          The 3C Mall app is currently in closed beta. Enter your beta code to continue.
+          The 3C Mall app is currently in closed beta for invited testers only. Join the waitlist on
+          the public site if you need access.
         </p>
 
         <form onSubmit={handleSubmit} className="beta-gate-form">

@@ -48,8 +48,14 @@ export default function App() {
     const isDotCom = host === "the3cmall.com" || host.endsWith(".the3cmall.com");
     const marketingRoutes = ["/", "/features", "/pricing"];
 
-    if (isDotCom && (pathname.startsWith("/app") || pathname === "/login")) {
+    if (isDotCom && pathname.startsWith("/app")) {
       const target = `https://the3cmall.app${pathname}${window.location.search}${window.location.hash}`;
+      window.location.replace(target);
+      return;
+    }
+
+    if (isDotCom && pathname === "/login") {
+      const target = `https://the3cmall.com${window.location.search}${window.location.hash}`;
       window.location.replace(target);
       return;
     }

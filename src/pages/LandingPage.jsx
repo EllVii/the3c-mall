@@ -5,14 +5,41 @@ import "../styles/LandingPage.css";
 export default function LandingPage() {
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleWaitlist = (e) => {
+  const handleWaitlist = async (e) => {
     e.preventDefault();
-    // TODO: Connect to your waitlist backend/service
-    console.log("Waitlist signup:", email);
-    setSubmitted(true);
-    // Store in localStorage for now
-    localStorage.setItem("waitlist_email", email);
+    setLoading(true);
+    setError("");
+
+    try {
+      // Store in localStorage
+      localStorage.setItem("waitlist_email", email);
+      
+      // Report to backend if enabled
+      const reportEmail = import.meta.env.VITE_REPORT_EMAIL;
+      const shouldReport = import.meta.env.VITE_REPORT_WAITLIST === "true";
+
+      if (shouldReport && reportEmail) {
+        // TODO: Send to your backend endpoint for email reporting
+        console.log("Would report to:", reportEmail);
+        // Example: await fetch('/api/waitlist', { method: 'POST', body: JSON.stringify({ email }) });
+      }
+
+      setSubmitted(true);
+    } catch (err) {
+      setError("Failed to join waitlist. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleForm = () => {
+    const formUrl = import.meta.env.VITE_WAITLIST_FORM_URL;
+    if (formUrl) {
+      window.open(formUrl, "_blank");
+    }
   };
 
   return (
@@ -39,23 +66,35 @@ export default function LandingPage() {
             </p>
             
             {!submitted ? (
-              <form onSubmit={handleWaitlist} className="lp-waitlist-form">
-                <input
-                  type="email"
-                  placeholder="Enter your email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="lp-email-input"
-                />
-                <button type="submit" className="lp-submit-btn">
-                  Join Waitlist
+              <>
+                <form onSubmit={handleWaitlist} className="lp-waitlist-form">
+                  <input
+                    type="email"
+                    placeholder="Enter your email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    className="lp-email-input"
+                  />
+                  <button type="submit" className="lp-submit-btn" disabled={loading}>
+                    {loading ? "Joining..." : "Join Waitlist"}
+                  </button>
+                </form>
+                {error && <p className="lp-form-error">{error}</p>}
+                
+                <div className="lp-form-divider">or</div>
+                
+                <button onClick={handleGoogleForm} className="lp-google-form-btn">
+                  📋 Fill Out Detailed Form
                 </button>
-              </form>
+              </>
             ) : (
               <div className="lp-success">
                 <span className="lp-success-icon">✓</span>
                 <p>You're on the list! We'll email you when spots open.</p>
+                <button onClick={handleGoogleForm} className="lp-google-form-link">
+                  Want to provide more info? Fill out our form →
+                </button>
               </div>
             )}
           </div>
@@ -75,21 +114,21 @@ export default function LandingPage() {
           <div className="lp-video-grid">
             <div className="lp-video-card">
               <video autoPlay loop muted playsInline className="lp-video">
-                <source src="/assets/videos/groceries.mp4" type="video/mp4" />
+                <source src="/src/assets/videos/groceries.mp4" type="video/mp4" />
               </video>
               <div className="lp-video-label">Smart Grocery Routing</div>
             </div>
             
             <div className="lp-video-card">
               <video autoPlay loop muted playsInline className="lp-video">
-                <source src="/assets/videos/coach.mp4" type="video/mp4" />
+                <source src="/src/assets/videos/coach.mp4" type="video/mp4" />
               </video>
               <div className="lp-video-label">Personal Concierge</div>
             </div>
             
             <div className="lp-video-card">
               <video autoPlay loop muted playsInline className="lp-video">
-                <source src="/assets/videos/athlete.mp4" type="video/mp4" />
+                <source src="/src/assets/videos/athlete.mp4" type="video/mp4" />
               </video>
               <div className="lp-video-label">Fitness Integration</div>
             </div>
