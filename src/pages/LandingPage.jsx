@@ -13,16 +13,22 @@ export default function LandingPage() {
     e.preventDefault();
     setLoading(true);
     setError("");
+    console.log("📧 Waitlist form submitted with email:", email);
+    console.log("🔗 API Base:", import.meta.env.VITE_API_BASE);
+    console.log("✅ Report enabled:", import.meta.env.VITE_REPORT_WAITLIST);
 
     try {
       // Store in localStorage
       localStorage.setItem("waitlist_email", email);
       
       // Report to backend (email confirmation happens server-side)
+      console.log("Calling reportWaitlistSignup...");
       await reportWaitlistSignup(email);
+      console.log("✅ Reported to backend");
 
       setSubmitted(true);
     } catch (err) {
+      console.error("❌ Waitlist error:", err);
       setError("Failed to join waitlist. Please try again.");
     } finally {
       setLoading(false);

@@ -15,11 +15,12 @@ export async function reportWaitlistSignup(email) {
   const shouldReport = import.meta.env.VITE_REPORT_WAITLIST === "true";
   
   if (!shouldReport) {
-    console.log("Waitlist reporting disabled");
+    console.log("⛔ Waitlist reporting disabled");
     return;
   }
 
   try {
+    console.log("📤 Sending waitlist signup to:", `${API_BASE}/api/report/waitlist`);
     const response = await fetch(`${API_BASE}/api/report/waitlist`, {
       method: "POST",
       headers: {
@@ -33,8 +34,10 @@ export async function reportWaitlistSignup(email) {
       }),
     });
 
+    console.log("📡 Response status:", response.status, response.statusText);
+
     if (!response.ok) {
-      console.error("Failed to report waitlist signup:", response.status);
+      console.error("❌ Failed to report waitlist signup:", response.status);
       throw new Error("Failed to report signup");
     }
 
@@ -42,7 +45,7 @@ export async function reportWaitlistSignup(email) {
     console.log("✅ Waitlist signup reported:", data);
     return data;
   } catch (error) {
-    console.error("Error reporting waitlist signup:", error);
+    console.error("❌ Error reporting waitlist signup:", error);
     // Don't throw - let signup succeed even if reporting fails
   }
 }
@@ -57,11 +60,12 @@ export async function reportBetaCodeUsage(code, success) {
   const shouldReport = import.meta.env.VITE_REPORT_BETA_CODES === "true";
   
   if (!shouldReport) {
-    console.log("Beta code reporting disabled");
+    console.log("⛔ Beta code reporting disabled");
     return;
   }
 
   try {
+    console.log("📤 Sending beta code attempt to:", `${API_BASE}/api/report/beta-code`, { code: code.substring(0, 2) + "*****", success });
     const response = await fetch(`${API_BASE}/api/report/beta-code`, {
       method: "POST",
       headers: {
@@ -75,8 +79,10 @@ export async function reportBetaCodeUsage(code, success) {
       }),
     });
 
+    console.log("📡 Response status:", response.status, response.statusText);
+
     if (!response.ok) {
-      console.error("Failed to report beta code usage:", response.status);
+      console.error("❌ Failed to report beta code usage:", response.status);
       throw new Error("Failed to report beta attempt");
     }
 
@@ -84,7 +90,7 @@ export async function reportBetaCodeUsage(code, success) {
     console.log("✅ Beta code attempt reported:", data);
     return data;
   } catch (error) {
-    console.error("Error reporting beta code usage:", error);
+    console.error("❌ Error reporting beta code usage:", error);
     // Don't throw - let auth succeed even if reporting fails
   }
 }
