@@ -56,6 +56,18 @@ export async function sendWaitlistEmail(recipientEmail) {
       transporter = initTransporter();
     }
 
+    const waitlistFormUrl =
+      process.env.WAITLIST_FORM_URL || process.env.VITE_WAITLIST_FORM_URL;
+    const waitlistFormSection = waitlistFormUrl
+      ? `
+            <div style="margin: 30px 0; text-align: center;">
+              <a href="${waitlistFormUrl}" style="display: inline-block; background: #1e90ff; color: #fff; padding: 12px 18px; border-radius: 6px; text-decoration: none; font-size: 14px;">
+                Complete the waitlist form
+              </a>
+            </div>
+          `
+      : "";
+
     const mailOptions = {
       from: `3C Mall <${process.env.SENDER_EMAIL || process.env.SMTP_USER || "noreply@the3cmall.app"}>`,
       to: recipientEmail,
@@ -76,6 +88,8 @@ export async function sendWaitlistEmail(recipientEmail) {
               We're currently in <strong>closed beta</strong> and testing with a limited group of users. 
               We'll send you an email with a beta code when a spot opens up for you.
             </p>
+
+            ${waitlistFormSection}
 
             <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 30px 0;">
               <h3 style="margin: 0 0 15px; color: #333;">What you can expect:</h3>

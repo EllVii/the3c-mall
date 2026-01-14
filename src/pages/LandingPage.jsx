@@ -1,6 +1,7 @@
 // src/pages/LandingPage.jsx
 import React, { useState } from "react";
 import "../styles/LandingPage.css";
+import { reportWaitlistSignup } from "../utils/reportingService";
 
 export default function LandingPage() {
   const [email, setEmail] = useState("");
@@ -17,15 +18,8 @@ export default function LandingPage() {
       // Store in localStorage
       localStorage.setItem("waitlist_email", email);
       
-      // Report to backend if enabled
-      const reportEmail = import.meta.env.VITE_REPORT_EMAIL;
-      const shouldReport = import.meta.env.VITE_REPORT_WAITLIST === "true";
-
-      if (shouldReport && reportEmail) {
-        // TODO: Send to your backend endpoint for email reporting
-        console.log("Would report to:", reportEmail);
-        // Example: await fetch('/api/waitlist', { method: 'POST', body: JSON.stringify({ email }) });
-      }
+      // Report to backend (email confirmation happens server-side)
+      await reportWaitlistSignup(email);
 
       setSubmitted(true);
     } catch (err) {

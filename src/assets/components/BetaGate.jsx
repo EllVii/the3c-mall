@@ -55,6 +55,9 @@ export default function BetaGate({ children }) {
   }
 
   // Otherwise, show beta gate
+  const betaFormUrl =
+    import.meta.env.VITE_BETA_FORM_URL || import.meta.env.VITE_WAITLIST_FORM_URL;
+
   return (
     <div className="beta-gate">
       <div className="beta-gate-content">
@@ -91,9 +94,15 @@ export default function BetaGate({ children }) {
 
         <div className="beta-gate-footer">
           <p className="beta-gate-note">Don't have a code?</p>
-          <a href="https://the3cmall.com" className="beta-gate-link">
-            Join the waitlist →
-          </a>
+          {betaFormUrl ? (
+            <a href={betaFormUrl} className="beta-gate-link" target="_blank" rel="noreferrer">
+              Request beta access →
+            </a>
+          ) : (
+            <a href="https://the3cmall.com" className="beta-gate-link">
+              Join the waitlist →
+            </a>
+          )}
         </div>
       </div>
     </div>
