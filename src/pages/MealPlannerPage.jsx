@@ -162,27 +162,8 @@ export default function MealPlannerPage() {
   }
 
   function savePlanAndSendToGrocery() {
-    const plan = {
-      id: `meal-${Date.now()}`,
-      dateISO,
-      time24,
-      mealId,
-      mealLabel: chosenMeal.label,
-      recipe: currentRecipe,
-      createdAt: nowISO(),
-      meta: {
-        diet: dietMeta,
-        fasting: fastingMeta,
-        spice: spiceMeta,
-      },
-    };
-
-    writeJSON(MP_KEY, plan);
-
-    // ✅ Save to history for "Previous Meals" view
-    const updatedHistory = [...mealHistory, plan].slice(-50); // Keep last 50 meals
-    setMealHistory(updatedHistory);
-    writeJSON(MP_HISTORY_KEY, updatedHistory);
+    const plan = buildPlan();
+    persistPlan(plan);
 
     // ✅ handoff with meals for Grocery Lab display
     const recipeItems = currentRecipe?.ingredients?.map((ing, idx) => ({
@@ -213,6 +194,38 @@ export default function MealPlannerPage() {
     nav("/app/grocery-lab", {
       state: { from: "meal", quickReview: true },
     });
+  }
+
+  function savePlanOnly() {
+    const plan = buildPlan();
+    persistPlan(plan);
+    writeJSON(HANDOFF_KEY, null);
+    writeJSON(MEAL_ITEMS_KEY, []);
+    showToast("Saved ✓ Not sent to Grocery Lab.");
+  }
+
+  function buildPlan() {
+    return {
+      id: `meal-${Date.now()}`,
+      dateISO,
+      time24,
+      mealId,
+      mealLabel: chosenMeal.label,
+      recipe: currentRecipe,
+      createdAt: nowISO(),
+      meta: {
+        diet: dietMeta,
+        fasting: fastingMeta,
+        spice: spiceMeta,
+      },
+    };
+  }
+
+  function persistPlan(plan) {
+    writeJSON(MP_KEY, plan);
+    const updatedHistory = [...mealHistory, plan].slice(-50);
+    setMealHistory(updatedHistory);
+    writeJSON(MP_HISTORY_KEY, updatedHistory);
   }
 
   function persistHistory(next) {
@@ -558,9 +571,16 @@ export default function MealPlannerPage() {
                 spice={spiceMeta}
               />
 
+              <p className="small" style={{ marginTop: ".75rem" }}>
+                Want to save this meal without adding items to Grocery Lab?
+              </p>
+
               <div className="nav-row" style={{ marginTop: ".9rem" }}>
                 <button className="btn btn-primary" onClick={savePlanAndSendToGrocery}>
                   Save + Send to Grocery Lab →
+                </button>
+                <button className="btn btn-secondary" onClick={savePlanOnly}>
+                  Save Only (No Grocery Lab)
                 </button>
                 <button className="btn btn-secondary" onClick={() => setShowHealthierOption(!showHealthierOption)}>
                   ✨ Make it Healthier (Beta)

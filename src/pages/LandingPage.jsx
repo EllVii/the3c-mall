@@ -144,7 +144,7 @@ export default function LandingPage() {
           <div className="lp-feature-card">
             <div className="lp-feature-icon">🛒</div>
             <h3>Multi-Store Grocery Optimization</h3>
-            <p>Save up to 40% by routing your grocery list across multiple stores with smart pricing.</p>
+            <p>Smart pricing comparison across stores can potentially save 20-40% on groceries.</p>
           </div>
           
           <div className="lp-feature-card">
@@ -164,16 +164,16 @@ export default function LandingPage() {
       {/* Social Proof */}
       <section className="lp-stats">
         <div className="lp-stat-pill">
-          <span className="lp-stat-number">$2,400+</span>
-          <span className="lp-stat-label">Avg. Annual Savings</span>
+          <span className="lp-stat-number">Early Access</span>
+          <span className="lp-stat-label">Closed Beta Phase</span>
         </div>
         <div className="lp-stat-pill">
-          <span className="lp-stat-number">500+</span>
-          <span className="lp-stat-label">Beta Testers</span>
+          <span className="lp-stat-number">3 Modules</span>
+          <span className="lp-stat-label">Concierge, Cost, Community</span>
         </div>
         <div className="lp-stat-pill">
-          <span className="lp-stat-number">4.8/5</span>
-          <span className="lp-stat-label">User Rating</span>
+          <span className="lp-stat-number">Free Beta</span>
+          <span className="lp-stat-label">Help Shape the Future</span>
         </div>
       </section>
     </main>

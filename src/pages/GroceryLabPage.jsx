@@ -145,6 +145,19 @@ function monthKeyLocal(d = new Date()) {
   return `${yr}-${mo}`;
 }
 
+function parsePlanDateTime(dateISO, time24) {
+  if (!dateISO) return null;
+  const time = time24 || "23:59";
+  const dt = new Date(`${dateISO}T${time}`);
+  return Number.isNaN(dt.getTime()) ? null : dt;
+}
+
+function isPlanActive(dateISO, time24) {
+  const dt = parsePlanDateTime(dateISO, time24);
+  if (!dt) return false;
+  return dt.getTime() >= Date.now();
+}
+
 function seededInt(seedStr) {
   // deterministic hash -> 32-bit int
   let h = 2166136261;
@@ -268,7 +281,15 @@ export default function GroceryLabPage() {
   }, []);
 
   // initial items
-  const hasMealPlan = Boolean((Array.isArray(savedHandoff?.items) && savedHandoff.items.length) || savedPlan);
+  const handoffContext = savedHandoff?.mealContext || null;
+  const hasActiveHandoff = Boolean(
+    Array.isArray(savedHandoff?.items) &&
+      savedHandoff.items.length &&
+      handoffContext &&
+      isPlanActive(handoffContext.dateISO, handoffContext.time24)
+  );
+  const hasActivePlan = savedPlan && isPlanActive(savedPlan.dateISO, savedPlan.time24);
+  const hasMealPlan = Boolean(hasActiveHandoff || hasActivePlan);
 
   const initialMealItems = useMemo(() => {
     const handoffItems = Array.isArray(savedHandoff?.items) ? savedHandoff.items : null;

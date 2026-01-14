@@ -1,7 +1,7 @@
 // src/assets/components/Meal-Planner/DietConversionPanel.jsx
 import React, { useEffect, useMemo, useState } from "react";
 
-const DIETS = [
+const LIFESTYLES = [
   { id: "carnivore", label: "Carnivore", notes: "Meat-first, minimal plants." },
   { id: "keto", label: "Keto", notes: "Low-carb, higher fat." },
   { id: "paleo", label: "Paleo", notes: "Whole foods, no processed." },
@@ -15,32 +15,34 @@ const MEALS = [
 ];
 
 export default function DietConversionPanel({ value, onChange }) {
-  const [diet, setDiet] = useState(value?.diet || "balanced");
+  const [lifestyle, setLifestyle] = useState(value?.lifestyle || value?.diet || "balanced");
   const [mealStyle, setMealStyle] = useState(value?.mealStyle || "standard");
-  const [notes, setNotes] = useState(value?.notes || "");
+  const [allergies, setAllergies] = useState(value?.allergies || value?.notes || "");
 
   // ✅ Keep internal state in sync if parent loads saved value later
   useEffect(() => {
     if (!value) return;
-    if (value.diet) setDiet(value.diet);
+    if (value.lifestyle || value.diet) setLifestyle(value.lifestyle || value.diet);
     if (value.mealStyle) setMealStyle(value.mealStyle);
-    if (typeof value.notes === "string") setNotes(value.notes);
+    if (typeof value.allergies === "string" || typeof value.notes === "string") {
+      setAllergies(value.allergies || value.notes || "");
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [value?.diet, value?.mealStyle, value?.notes]);
+  }, [value?.lifestyle, value?.diet, value?.mealStyle, value?.allergies, value?.notes]);
 
   const summary = useMemo(() => {
-    const d = DIETS.find((x) => x.id === diet);
+    const d = LIFESTYLES.find((x) => x.id === lifestyle);
     const m = MEALS.find((x) => x.id === mealStyle);
     return {
-      dietLabel: d?.label || "",
-      dietNotes: d?.notes || "",
+      lifestyleLabel: d?.label || "",
+      lifestyleNotes: d?.notes || "",
       mealLabel: m?.label || "",
       mealDesc: m?.desc || "",
     };
-  }, [diet, mealStyle]);
+  }, [lifestyle, mealStyle]);
 
   function pushChange(next = {}) {
-    const payload = { diet, mealStyle, notes, ...next };
+    const payload = { lifestyle, mealStyle, allergies, ...next };
     onChange?.(payload);
   }
 
@@ -54,21 +56,21 @@ export default function DietConversionPanel({ value, onChange }) {
       }}
     >
       <header style={{ marginBottom: "0.9rem" }}>
-        <h3 style={{ margin: 0 }}>Diet Conversion Panel</h3>
+        <h3 style={{ margin: 0 }}>Lifestyle Conversion Panel</h3>
         <p style={{ margin: "0.25rem 0 0 0", opacity: 0.8 }}>
-          Switch your eating style without losing your plan structure.
+          Switch your lifestyle preferences without losing your plan structure.
         </p>
       </header>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.9rem" }}>
         <div>
-          <label style={{ opacity: 0.85, fontWeight: 700 }}>Diet Type</label>
+          <label style={{ opacity: 0.85, fontWeight: 700 }}>Lifestyle Type</label>
           <select
-            value={diet}
+            value={lifestyle}
             onChange={(e) => {
               const v = e.target.value;
-              setDiet(v);
-              pushChange({ diet: v });
+              setLifestyle(v);
+              pushChange({ lifestyle: v });
             }}
             style={{
               width: "100%",
@@ -80,14 +82,14 @@ export default function DietConversionPanel({ value, onChange }) {
               color: "white",
             }}
           >
-            {DIETS.map((d) => (
+            {LIFESTYLES.map((d) => (
               <option key={d.id} value={d.id}>
                 {d.label}
               </option>
             ))}
           </select>
           <p style={{ margin: "0.45rem 0 0 0", opacity: 0.75, fontSize: "0.92rem" }}>
-            {summary.dietNotes}
+            {summary.lifestyleNotes}
           </p>
         </div>
 
@@ -123,15 +125,15 @@ export default function DietConversionPanel({ value, onChange }) {
       </div>
 
       <div style={{ marginTop: "1rem" }}>
-        <label style={{ opacity: 0.85, fontWeight: 700 }}>Notes</label>
+        <label style={{ opacity: 0.85, fontWeight: 700 }}>Allergies</label>
         <textarea
-          value={notes}
+          value={allergies}
           onChange={(e) => {
             const v = e.target.value;
-            setNotes(v);
-            pushChange({ notes: v });
+            setAllergies(v);
+            pushChange({ allergies: v });
           }}
-          placeholder="Example: 'Keto weekdays, balanced weekends' or 'Quick meals only for lunch'..."
+          placeholder="Example: 'peanuts, shellfish, dairy' (comma-separated)"
           style={{
             width: "100%",
             minHeight: "84px",
@@ -159,17 +161,17 @@ export default function DietConversionPanel({ value, onChange }) {
         }}
       >
         <div>
-          <div style={{ fontWeight: 800 }}>{summary.dietLabel}</div>
+          <div style={{ fontWeight: 800 }}>{summary.lifestyleLabel}</div>
           <div style={{ opacity: 0.75, fontSize: "0.92rem" }}>{summary.mealLabel}</div>
         </div>
 
         <button
           type="button"
           onClick={() => {
-            setDiet("balanced");
+            setLifestyle("balanced");
             setMealStyle("standard");
-            setNotes("");
-            onChange?.({ diet: "balanced", mealStyle: "standard", notes: "" });
+            setAllergies("");
+            onChange?.({ lifestyle: "balanced", mealStyle: "standard", allergies: "" });
           }}
           style={{
             padding: "0.75rem 1rem",

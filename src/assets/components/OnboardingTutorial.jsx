@@ -10,7 +10,7 @@ const SCREENS = [
     title: "Welcome to 3C Mall",
     headline: "One place for all your savings.",
     copy: "3C Mall puts your grocery stores, meal plans, and lifestyle tools in one space — so you stop juggling apps.",
-    visual: "🏪",
+    visual: "3C_LOGO",
     color: "rgba(255, 165, 0, 0.12)",
     borderColor: "rgba(255, 165, 0, 0.40)",
   },
@@ -109,11 +109,15 @@ export default function OnboardingTutorial({ open, onComplete }) {
               animation: "bounce 2s ease-in-out infinite",
             }}
           >
-            <img
-              src="/icons/3c-mall.png"
-              alt=""
-              className="ob-logo ob-logo-large"
-            />
+            {currentScreen.visual === "3C_LOGO" ? (
+              <img
+                src="/icons/3c-mall.png"
+                alt=""
+                className="ob-logo ob-logo-large"
+              />
+            ) : (
+              <span style={{ fontSize: "3rem" }}>{currentScreen.visual}</span>
+            )}
           </div>
 
           {/* HEADLINE */}
