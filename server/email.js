@@ -9,7 +9,18 @@ let transporter;
  * Initialize email transporter based on configuration
  */
 function initTransporter() {
-  if (process.env.USE_SENDGRID === "true" && process.env.SENDGRID_API_KEY) {
+  if (process.env.USE_RESEND === "true" && process.env.RESEND_API_KEY) {
+    // Resend configuration
+    transporter = nodemailer.createTransport({
+      host: "smtp.resend.com",
+      port: 465,
+      secure: true,
+      auth: {
+        user: "resend",
+        pass: process.env.RESEND_API_KEY,
+      },
+    });
+  } else if (process.env.USE_SENDGRID === "true" && process.env.SENDGRID_API_KEY) {
     // SendGrid configuration
     transporter = nodemailer.createTransport({
       host: "smtp.sendgrid.net",
@@ -45,7 +56,7 @@ export async function sendWaitlistEmail(recipientEmail) {
     }
 
     const mailOptions = {
-      from: `3C Mall <${process.env.SMTP_USER || "noreply@the3cmall.com"}>`,
+      from: `3C Mall <${process.env.SENDER_EMAIL || process.env.SMTP_USER || "noreply@the3cmall.app"}>`,
       to: recipientEmail,
       subject: "Welcome to 3C Mall Beta Waitlist 🚀",
       html: `
@@ -188,7 +199,7 @@ export async function sendDailySummary(summary) {
     `;
 
     const mailOptions = {
-      from: `3C Mall Reports <${process.env.SMTP_USER || "noreply@the3cmall.com"}>`,
+      from: `3C Mall Reports <${process.env.SENDER_EMAIL || process.env.SMTP_USER || "noreply@the3cmall.app"}>`,
       to: adminEmail,
       subject: `3C Mall Daily Summary - ${new Date().toLocaleDateString()}`,
       html: htmlContent,

@@ -11,6 +11,13 @@ export default function BetaGate({ children }) {
     return localStorage.getItem("beta_access") === "true";
   });
 
+  const isCodeFormatValid = (value) => {
+    const trimmed = value.trim();
+    if (trimmed.length < 6 || trimmed.length > 10) return false;
+    if (!/^[A-Za-z0-9]+$/.test(trimmed)) return false;
+    return /[A-Za-z]/.test(trimmed);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -18,7 +25,13 @@ export default function BetaGate({ children }) {
     const validCodes = envCodes
       ? envCodes.split(",").map((entry) => entry.trim().toUpperCase()).filter(Boolean)
       : ["BETA2026", "3CMALL", "EARLYACCESS"];
-    const normalized = code.trim().toUpperCase();
+    const trimmed = code.trim();
+    const normalized = trimmed.toUpperCase();
+
+    if (!isCodeFormatValid(trimmed)) {
+      setError("Invalid code format. Use the 6–10 character code from your invite.");
+      return;
+    }
 
     const isValid = validCodes.includes(normalized);
 
@@ -62,6 +75,9 @@ export default function BetaGate({ children }) {
             placeholder="Enter your beta code"
             value={code}
             onChange={(e) => setCode(e.target.value)}
+            onPaste={(e) => e.preventDefault()}
+            onCopy={(e) => e.preventDefault()}
+            onCut={(e) => e.preventDefault()}
             className="beta-gate-input"
             autoFocus
           />
