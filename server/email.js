@@ -71,34 +71,55 @@ export async function sendWaitlistEmail(recipientEmail) {
     const mailOptions = {
       from: `3C Mall <${process.env.SENDER_EMAIL || process.env.SMTP_USER || "noreply@the3cmall.app"}>`,
       to: recipientEmail,
-      subject: "Welcome to 3C Mall Beta Waitlist 🚀",
+      subject: "✅ You're on the 3C Mall Beta Waitlist!",
       html: `
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <div style="background: linear-gradient(135deg, #1a1f2e 0%, #0f1419 100%); padding: 40px; border-radius: 12px; text-align: center; color: white;">
             <h1 style="margin: 0 0 10px; font-size: 28px;">Welcome to 3C Mall! 🎉</h1>
-            <p style="margin: 0; color: #a9b0c7; font-size: 14px;">You're on the beta waitlist</p>
+            <p style="margin: 0; color: #a9b0c7; font-size: 14px;">Your spot on the Beta Waitlist is confirmed</p>
           </div>
 
           <div style="padding: 40px; border: 1px solid #e0e0e0; border-top: none; border-radius: 0 0 12px 12px;">
             <p style="color: #333; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
-              Thanks for signing up! We're excited to have you interested in 3C Mall.
+              <strong>Thanks for joining the waitlist!</strong> You're officially registered and we'll notify you when your beta access is ready.
             </p>
 
-            <p style="color: #666; font-size: 14px; line-height: 1.6; margin: 0 0 30px;">
-              We're currently in <strong>closed beta</strong> and testing with a limited group of users. 
-              We'll send you an email with a beta code when a spot opens up for you.
+            <p style="color: #666; font-size: 14px; line-height: 1.6; margin: 0 0 20px;">
+              We're currently in <strong>closed beta</strong> with a limited group of early users. 
+              <strong>We'll send you a beta code via email</strong> when a spot opens up—usually within 1-2 weeks.
             </p>
+
+            <div style="background: #1877f2; color: white; padding: 25px; border-radius: 8px; margin: 30px 0; text-align: center;">
+              <h3 style="margin: 0 0 15px; font-size: 18px;">Join Our Community!</h3>
+              <p style="margin: 0 0 20px; font-size: 14px; opacity: 0.95;">
+                Get early tips, exclusive updates, and connect with other beta users
+              </p>
+              <a href="https://www.facebook.com/profile.php?id=61571590767305" style="display: inline-block; background: white; color: #1877f2; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 15px;">
+                Follow us on Facebook →
+              </a>
+            </div>
 
             ${waitlistFormSection}
 
             <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 30px 0;">
-              <h3 style="margin: 0 0 15px; color: #333;">What you can expect:</h3>
+              <h3 style="margin: 0 0 15px; color: #333;">What's Coming:</h3>
               <ul style="margin: 0; padding-left: 20px; color: #666; font-size: 14px;">
-                <li style="margin-bottom: 8px;">💰 Save up to 40% on groceries with smart multi-store routing</li>
-                <li style="margin-bottom: 8px;">🥗 Personalized meal planning that adapts to your budget and preferences</li>
-                <li style="margin-bottom: 8px;">👥 Connect with a community of health-conscious users and coaches</li>
-                <li>📊 Track your savings and metabolic progress over time</li>
+                <li style="margin-bottom: 8px;">💰 Save up to 40% on groceries with intelligent multi-store routing</li>
+                <li style="margin-bottom: 8px;">🥗 AI-powered meal planning tailored to your budget and health goals</li>
+                <li style="margin-bottom: 8px;">👥 Connect with nutrition coaches and a supportive community</li>
+                <li>📊 Track your savings and metabolic progress in real-time</li>
               </ul>
+            </div>
+
+            <div style="border-top: 1px solid #e0e0e0; padding-top: 20px; margin-top: 30px;">
+              <p style="color: #666; font-size: 13px; margin: 0 0 10px; line-height: 1.6;">
+                <strong>What happens next?</strong>
+              </p>
+              <ol style="margin: 0; padding-left: 20px; color: #666; font-size: 13px; line-height: 1.8;">
+                <li>Follow us on Facebook for updates and early tips</li>
+                <li>Watch your inbox for your beta code (within 1-2 weeks)</li>
+                <li>Enter your code at <a href="https://the3cmall.com" style="color: #1e90ff; text-decoration: none;">the3cmall.com</a> to get started</li>
+              </ol>
             </div>
 
             <p style="color: #999; font-size: 13px; margin: 30px 0 0; line-height: 1.6;">
