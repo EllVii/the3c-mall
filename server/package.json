@@ -5,6 +5,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
+    "build": "echo 'Skipping backend build (no compile step)'",
     "start": "node index.js",
     "dev": "nodemon index.js",
     "db:init": "node scripts/init-db.js"
