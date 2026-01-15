@@ -89,13 +89,23 @@ export async function sendWaitlistEmail(recipientEmail) {
               <strong>We'll send you a beta code via email</strong> when a spot opens up—usually within 1-2 weeks.
             </p>
 
-            <div style="background: #1877f2; color: white; padding: 25px; border-radius: 8px; margin: 30px 0; text-align: center;">
-              <h3 style="margin: 0 0 15px; font-size: 18px;">Join Our Community!</h3>
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 25px; border-radius: 8px; margin: 30px 0; text-align: center;">
+              <h3 style="margin: 0 0 10px; font-size: 20px;">🚀 Want Beta Access Faster?</h3>
               <p style="margin: 0 0 20px; font-size: 14px; opacity: 0.95;">
-                Get early tips, exclusive updates, and connect with other beta users
+                Complete our quick Beta Testing form to help us match you with the right features
               </p>
-              <a href="https://www.facebook.com/profile.php?id=61571590767305" style="display: inline-block; background: white; color: #1877f2; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 15px;">
-                Follow us on Facebook →
+              <a href="https://docs.google.com/forms/d/e/1FAIpQLSdwWVKrcqBrA8doDVN_oo7TDgzR54Yr88UEQWTumGG3J0WFQQ/viewform?usp=dialog" style="display: inline-block; background: white; color: #764ba2; padding: 14px 28px; border-radius: 6px; text-decoration: none; font-weight: 700; font-size: 15px; margin-bottom: 10px;">
+                Complete Beta Testing Form →
+              </a>
+            </div>
+
+            <div style="background: #1877f2; color: white; padding: 20px; border-radius: 8px; margin: 30px 0; text-align: center;">
+              <h3 style="margin: 0 0 10px; font-size: 17px;">Join Our Community</h3>
+              <p style="margin: 0 0 15px; font-size: 13px; opacity: 0.95;">
+                Get updates, tips, and connect with other beta users
+              </p>
+              <a href="https://www.facebook.com/The3CMall" style="display: inline-block; background: white; color: #1877f2; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 14px;">
+                Follow on Facebook →
               </a>
             </div>
 
@@ -116,7 +126,8 @@ export async function sendWaitlistEmail(recipientEmail) {
                 <strong>What happens next?</strong>
               </p>
               <ol style="margin: 0; padding-left: 20px; color: #666; font-size: 13px; line-height: 1.8;">
-                <li>Follow us on Facebook for updates and early tips</li>
+                <li><strong>Complete the Beta Testing Form</strong> to get priority access</li>
+                <li>Follow us on Facebook for updates and community tips</li>
                 <li>Watch your inbox for your beta code (within 1-2 weeks)</li>
                 <li>Enter your code at <a href="https://the3cmall.com" style="color: #1e90ff; text-decoration: none;">the3cmall.com</a> to get started</li>
               </ol>
