@@ -1,0 +1,33 @@
+services:
+  - type: web
+    name: 3cmall-backend
+    env: node
+    region: oregon
+    plan: free
+    buildCommand: npm install
+    startCommand: node index.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: SENDER_EMAIL
+        value: noreply@the3cmall.app
+      - key: REPORT_EMAIL
+        value: ellviisauces@gmail.com
+      - key: ADMIN_EMAIL
+        value: ellviisauces@gmail.com
+      - key: CORS_ORIGIN
+        value: https://the3cmall.com,https://www.the3cmall.com,https://the3cmall.app,https://www.the3cmall.app,http://localhost:5173
+      - key: RATE_LIMIT_WINDOW_MS
+        value: 900000
+      - key: RATE_LIMIT_MAX_REQUESTS
+        value: 10
+      - key: TIMEZONE
+        value: America/Phoenix
