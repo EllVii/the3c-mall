@@ -3,7 +3,6 @@ import cors from "cors";
 import dotenv from "dotenv";
 import rateLimit from "express-rate-limit";
 import validator from "validator";
-import { initDatabase } from "./db.js";
 import { sendWaitlistEmail, sendAdminReport } from "./email.js";
 import { getMSTISOTimestamp } from "./timezone.js";
 import { supabase } from "./supabase.js";
@@ -26,9 +25,6 @@ const limiter = rateLimit({
   max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || "10"),
   message: "Too many requests, please try again later.",
 });
-
-// Initialize database
-initDatabase();
 
 // Routes
 
