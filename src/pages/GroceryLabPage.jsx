@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import "../styles/GroceryLabPage.css";
 import { readJSON, writeJSON, nowISO, safeId } from "../utils/Storage";
 import { formatDateISO, formatTimeValue } from "../utils/Settings/dateTime";
+import { betaMessaging } from "../utils/betaMessaging";
 
 // NOTE: GroceryCartEditor.jsx exists in ../assets/components/grocery/ with full-featured cart management
 // (categories, substitutions, localStorage persistence). This page uses custom mealItems+extraItems logic.
@@ -979,6 +980,13 @@ setPricingSummary(normalizePricingSummary(summary));
           {/* Panel 3: Pricing */}
           <div className="gl-panel" role="group" aria-label="Pricing panel">
             <h2 className="gl-panel-title" tabIndex={-1}>Pricing</h2>
+
+            <div className="gl-card" style={{ background: "rgba(246,220,138,.08)", borderColor: "rgba(246,220,138,.25)", marginBottom: ".7rem" }}>
+              <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--gold)", marginBottom: ".4rem" }}>{betaMessaging.groceryLab.title}</div>
+              <p className="small" style={{ margin: 0, color: "rgba(255,255,255,0.8)" }}>
+                {betaMessaging.groceryLab.description}
+              </p>
+            </div>
 
             <div className="gl-card">
               <div className="gl-card-head">

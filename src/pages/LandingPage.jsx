@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import "../styles/LandingPage.css";
 import { reportWaitlistSignup } from "../utils/reportingService";
+import { betaMessaging } from "../utils/betaMessaging";
 
 export default function LandingPage() {
   const [email, setEmail] = useState("");
@@ -90,8 +91,21 @@ export default function LandingPage() {
               </>
             ) : (
               <div className="lp-success">
-                <span className="lp-success-icon">✓</span>
-                <p>You're on the list! We'll email you when spots open.</p>
+                <span className="lp-success-icon">🎉</span>
+                <p style={{ fontWeight: 600, fontSize: "1.1rem", marginBottom: ".5rem" }}>{betaMessaging.betaTesterConfirm.headline}</p>
+                <p style={{ fontSize: "0.9rem", marginBottom: "1rem", color: "rgba(255,255,255,0.85)" }}>{betaMessaging.betaTesterConfirm.subheading}</p>
+                
+                <div style={{ textAlign: "left", marginBottom: "1rem", fontSize: "0.85rem", color: "rgba(255,255,255,0.8)" }}>
+                  <p style={{ fontWeight: 600, marginBottom: ".4rem" }}>{betaMessaging.betaTesterConfirm.mission}</p>
+                  <ul style={{ margin: 0, paddingLeft: "1.2rem" }}>
+                    {betaMessaging.betaTesterConfirm.missionPoints.map((point, i) => (
+                      <li key={i} style={{ marginBottom: ".3rem" }}>• {point}</li>
+                    ))}
+                  </ul>
+                </div>
+                
+                <p style={{ fontSize: "0.85rem", fontStyle: "italic", color: "rgba(246,220,138,0.9)", marginBottom: "1rem" }}>{betaMessaging.betaTesterConfirm.closing}</p>
+                
                 <button onClick={handleGoogleForm} className="lp-google-form-link">
                   Want to provide more info? Fill out our form →
                 </button>

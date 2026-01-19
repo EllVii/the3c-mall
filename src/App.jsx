@@ -18,6 +18,8 @@ import Features from "./pages/Features.jsx";
 import Pricing from "./pages/Pricing.jsx";
 import Login from "./pages/Login.jsx";
 import CommentLimitModal from "./pages/CommentLimitModal.jsx";
+import TermsOfService from "./pages/TermsOfService.jsx";
+import PrivacyPolicy from "./pages/PrivacyPolicy.jsx";
 
 // App pages
 import DashboardPage from "./pages/DashboardPage.jsx";
@@ -91,6 +93,8 @@ export default function App() {
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/comment-limit" element={<CommentLimitModal />} />
+          <Route path="/terms" element={<TermsOfService />} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
         </Route>
 
         {/* PRIVATE APP AREA */}

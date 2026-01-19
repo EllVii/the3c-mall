@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { nowISO, readJSON, writeJSON } from "../../utils/Storage";
 import { useNavigate } from "react-router-dom";
+import { betaMessaging } from "../../utils/betaMessaging";
 
 const PROFILE_KEY = "concierge.profile.v1";
 const STRATEGY_KEY = "grocery.strategy.v1";
@@ -113,15 +114,17 @@ export default function ConciergeIntro({ open, onClose }) {
         </div>
 
         <div className="cc-body">
-          {/* AI Concierge Intro */}
+          {/* AI Concierge Intro + Beta Welcome */}
           <div className="cc-card" style={{ background: "rgba(126,224,255,.08)", borderColor: "rgba(126,224,255,.25)" }}>
-            <div className="cc-card-title" style={{ color: "var(--blue)" }}>👋 Welcome to Your 3C Mall</div>
+            <div className="cc-card-title" style={{ color: "var(--blue)" }}>👋 {betaMessaging.onboarding.title}</div>
             <p className="small cc-copy">
-              I'm your AI guide for <strong>saving money</strong>, <strong>planning meals</strong>, and <strong>staying consistent</strong>. 
-              {firstName && ` Nice to meet you, ${firstName}!`}
-              <br />
-              Let me get to know you so I can help you best.
+              {betaMessaging.onboarding.description}
             </p>
+            <div className="small cc-copy" style={{ marginTop: ".6rem", borderTop: "1px solid rgba(126,224,255,.15)", paddingTop: ".6rem" }}>
+              {betaMessaging.onboarding.highlights.map((h, i) => (
+                <div key={i} style={{ marginBottom: ".4rem" }}>✓ {h}</div>
+              ))}
+            </div>
           </div>
 
           {/* Step 1: Name (REQUIRED) */}

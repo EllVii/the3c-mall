@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { readJSON, writeJSON } from "../../utils/Storage.js";
 import { useNavigate } from "react-router-dom";
 import ConciergeIntro from "./ConciergeIntro.jsx";
+import { betaMessaging } from "../../utils/betaMessaging.js";
 
 const PREF_KEY = "3c.prefs.v1";
 
@@ -101,10 +102,10 @@ export default function ConciergeHub({ minimized, onMinimize, onExpand, onClose 
         <div>
           <div className="card-tag">Your AI Guide</div>
           <div style={{ fontWeight: 900, color: "var(--gold)", marginTop: ".2rem" }}>
-            {prefs.name ? `Hi ${prefs.name}, I'm` : "I'm"} here to help you win with 3C Mall.
+            {betaMessaging.concierge.greeting}
           </div>
           <div className="small">
-            Save money, plan meals, stay consistent—all connected.
+            {betaMessaging.concierge.intro}
           </div>
         </div>
 

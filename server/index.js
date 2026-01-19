@@ -6,6 +6,7 @@ import validator from "validator";
 import { sendWaitlistEmail, sendAdminReport } from "./email.js";
 import { getMSTISOTimestamp } from "./timezone.js";
 import { supabase } from "./supabase.js";
+import { getKrogerService, KrogerService } from "./kroger.js";
 
 dotenv.config();
 
@@ -137,15 +138,22 @@ app.post("/api/report/beta-code", limiter, async (req, res) => {
 /**
  * GET /api/report/summary
  * Get aggregate statistics (admin only)
- * TODO: Add proper authentication
+ * Requires ADMIN_TOKEN in Authorization header
  */
 app.get("/api/report/summary", (req, res) => {
   try {
-    // TODO: Implement admin token verification
-    // const token = req.headers.authorization?.split(" ")[1];
-    // if (!verifyAdminToken(token)) {
-    //   return res.status(401).json({ error: "Unauthorized" });
-    // }
+    // Implement admin token verification
+    const adminToken = process.env.ADMIN_TOKEN;
+    const authHeader = req.headers.authorization;
+    
+    if (!adminToken || !authHeader) {
+      return res.status(401).json({ error: "Unauthorized - missing credentials" });
+    }
+    
+    const token = authHeader.split(" ")[1];
+    if (token !== adminToken) {
+      return res.status(403).json({ error: "Forbidden - invalid token" });
+    }
 
     const now = new Date();
     const startOfDay = new Date(now);
@@ -257,6 +265,97 @@ app.get("/api/report/summary", (req, res) => {
 });
 
 /**
+ * GET /api/kroger/search
+ * Search for products in Kroger catalog
+ * Query params: term, brand, productId, locationId, fulfillment, limit, start
+ */
+app.get("/api/kroger/search", async (req, res) => {
+  try {
+    const kroger = getKrogerService();
+    
+    if (!kroger.enabled) {
+      return res.status(503).json({ 
+        error: "Kroger API not configured",
+        message: "Real product data coming soon. Set KROGER_CLIENT_ID and KROGER_CLIENT_SECRET to enable."
+      });
+    }
+
+    const { term, brand, productId, locationId, fulfillment, limit, start } = req.query;
+    
+    const results = await kroger.searchProducts({
+      term,
+      brand,
+      productId,
+      locationId,
+      fulfillment,
+      limit: limit ? parseInt(limit) : 10,
+      start: start ? parseInt(start) : 1
+    });
+
+    // Transform products to app format
+    const groceryItems = results.data.map(product => KrogerService.toGroceryItem(product));
+
+    res.json({
+      success: true,
+      products: groceryItems,
+      rawData: results.data, // Include raw data for debugging
+      meta: results.meta
+    });
+  } catch (error) {
+    console.error("❌ Kroger search error:", error.message);
+    res.status(500).json({ 
+      error: "Product search failed",
+      message: error.message 
+    });
+  }
+});
+
+/**
+ * GET /api/kroger/product/:id
+ * Get detailed product information
+ * Query params: locationId (optional)
+ */
+app.get("/api/kroger/product/:id", async (req, res) => {
+  try {
+    const kroger = getKrogerService();
+    
+    if (!kroger.enabled) {
+      return res.status(503).json({ 
+        error: "Kroger API not configured"
+      });
+    }
+
+    const { id } = req.params;
+    const { locationId } = req.query;
+    
+    const result = await kroger.getProductDetails(id, locationId);
+    
+    // Transform to app format
+    const groceryItem = KrogerService.toGroceryItem(result.data);
+
+    res.json({
+      success: true,
+      product: groceryItem,
+      rawData: result.data
+    });
+  } catch (error) {
+    console.error("❌ Kroger product details error:", error.message);
+    res.status(error.response?.status || 500).json({ 
+      error: "Product lookup failed",
+      message: error.message 
+    });
+  }
+});
+
+/**
+ * GET /api/debug/kroger-config
+ * REMOVED FOR SECURITY - Debug endpoints should not be exposed in production
+ * 
+ * If you need debug info, create an admin-only endpoint instead
+ */
+// This endpoint has been removed. Use /api/health for basic health checks only.
+
+/**
  * GET /api/health
  * Health check endpoint
  */
@@ -275,7 +374,13 @@ app.listen(PORT, () => {
   console.log(`🚀 3C Mall Backend running on http://localhost:${PORT}`);
   console.log(`📧 Email reports to: ${process.env.REPORT_EMAIL}`);
   console.log(`🛡️ CORS enabled for: ${process.env.CORS_ORIGIN}`);
+  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log("Supabase URL loaded:", !!process.env.SUPABASE_URL);
   console.log("Service role key loaded:", !!process.env.SUPABASE_SERVICE_ROLE_KEY);
-
+  console.log("🛒 Kroger API configured:", !!(process.env.KROGER_CLIENT_ID && process.env.KROGER_CLIENT_SECRET));
+  
+  // Debug: Show first 4 characters of Kroger Client ID (safe to log)
+  if (process.env.KROGER_CLIENT_ID) {
+    console.log(`   Kroger Client ID starts with: ${process.env.KROGER_CLIENT_ID.substring(0, 4)}****`);
+  }
 });

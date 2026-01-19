@@ -438,6 +438,38 @@
   z-index: 1;
 }
 
+/* Home logo */
+.home-logo {
+  position: fixed;
+  top: 2rem;
+  left: 2rem;
+  z-index: 100;
+  animation: logoFloat 6s ease-in-out infinite;
+}
+
+.logo-image {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+  filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.5));
+  opacity: 0.95;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.home-logo:hover .logo-image {
+  transform: scale(1.1) rotate(5deg);
+  opacity: 1;
+}
+
+@keyframes logoFloat {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
 /* HERO: text + right column */
 
 .lp-hero {

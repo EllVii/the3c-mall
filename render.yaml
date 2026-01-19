@@ -14,6 +14,8 @@ services:
         value: ellviisauces@gmail.com
       - key: ADMIN_EMAIL
         value: ellviisauces@gmail.com
+      - key: ADMIN_TOKEN
+        scope: secret
       - key: CORS_ORIGIN
         value: https://the3cmall.com,https://www.the3cmall.com,https://the3cmall.app,https://www.the3cmall.app,http://localhost:5173
       - key: RATE_LIMIT_WINDOW_MS

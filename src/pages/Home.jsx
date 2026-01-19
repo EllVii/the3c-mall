@@ -4,6 +4,11 @@ import { Link } from "react-router-dom";
 export default function Home() {
   return (
     <section className="lp-page lp-page--watermark">
+      {/* Logo */}
+      <div className="home-logo">
+        <img src="/brand/3c-emblem.png" alt="3C Mall Logo" className="logo-image" />
+      </div>
+
       {/* Left: Hero text */}
       <div className="landing-hero">
         <div className="landing-pill">Concierge • Cost • Community</div>
