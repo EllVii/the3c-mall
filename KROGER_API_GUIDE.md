@@ -129,11 +129,15 @@ Create `server/services/krogerAPI.js`:
 const axios = require('axios');
 const NodeCache = require('node-cache');
 
+// Cache configuration constants
+const TOKEN_CACHE_TTL = 1500; // 25 minutes (tokens expire in 30)
+const PRODUCT_CACHE_TTL = 3600; // 1 hour
+
 // Cache tokens for 25 minutes (they expire in 30)
-const tokenCache = new NodeCache({ stdTTL: 1500 });
+const tokenCache = new NodeCache({ stdTTL: TOKEN_CACHE_TTL });
 
 // Cache product data for 1 hour
-const productCache = new NodeCache({ stdTTL: 3600 });
+const productCache = new NodeCache({ stdTTL: PRODUCT_CACHE_TTL });
 
 class KrogerAPI {
   constructor() {
@@ -277,7 +281,9 @@ class KrogerAPI {
     if (!product?.items?.length) return null;
     
     const item = product.items[0];
-    const price = item.price?.promo || item.price?.regular;
+    if (!item?.price) return null;
+    
+    const price = item.price.promo || item.price.regular;
     
     return price ? parseFloat(price) : null;
   }

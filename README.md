@@ -39,8 +39,8 @@ Currently using **demo pricing data** for:
 1. See [HOW_TO_CHECK_KROGER_APPROVAL.md](HOW_TO_CHECK_KROGER_APPROVAL.md) - **Quick answer to "when will I know?"**
 2. See [API_STATUS.md](API_STATUS.md) for detailed current status
 3. Log in to [Kroger Developer Portal](https://developer.kroger.com/)
-3. Check email for approval notifications
-4. Once approved, follow [KROGER_API_GUIDE.md](KROGER_API_GUIDE.md) for integration
+4. Check email for approval notifications
+5. Once approved, follow [KROGER_API_GUIDE.md](KROGER_API_GUIDE.md) for integration
 
 ## 🛠️ Tech Stack
 
