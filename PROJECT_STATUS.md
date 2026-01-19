@@ -305,6 +305,25 @@ All displayed in LandingPage video grid with:
 - [ ] User segmentation and tagging
 - [ ] A/B testing support
 - [ ] Backup and restore scripts
+- [ ] **Kroger API integration** (pending approval - see API_STATUS.md)
+- [ ] Real-time pricing from store APIs
+- [ ] Location-based store finder
+
+## 🏪 Third-Party API Integration Status
+
+### Kroger API
+- **Status:** 🟡 Pending Approval
+- **Purpose:** Real-time product pricing and availability
+- **Current State:** Using mock/demo pricing data
+- **Documentation:** See `API_STATUS.md` and `KROGER_API_GUIDE.md`
+- **How to Check Approval:** 
+  1. Log in to https://developer.kroger.com/
+  2. Check "My Applications" section
+  3. Watch for email notifications from Kroger
+- **Next Steps:** Once approved, follow `KROGER_API_GUIDE.md` for integration
+
+**Other Store APIs:** See `API_STATUS.md` for Walmart, Target, Costco, ALDI, and Safeway/Albertsons status.
+
 
 ## 🌐 Deployment Options
 
@@ -351,7 +370,9 @@ To do:
 2. **SERVER_QUICK_REF.md** - Developer quick reference
 3. **REPORTING_SETUP.md** - Email architecture details
 4. **server/README.md** - Full API documentation
-5. **This file** - Project status overview
+5. **API_STATUS.md** - Third-party API integration status and approval tracking
+6. **KROGER_API_GUIDE.md** - Kroger API integration implementation guide
+7. **This file** - Project status overview
 
 ## 🎯 Next Steps
 
