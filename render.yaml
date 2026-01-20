@@ -16,6 +16,9 @@ services:
         value: ellviisauces@gmail.com
       - key: ADMIN_TOKEN
         scope: secret
+      # CORS_ORIGIN: Using wildcard during Kroger approval phase
+      # TODO: After approval, lock down to specific domains:
+      # value: https://the3cmall.com,https://www.the3cmall.com,https://the3cmall.app,https://www.the3cmall.app
       - key: CORS_ORIGIN
         value: "*"
       - key: RATE_LIMIT_WINDOW_MS
