@@ -1,10 +1,12 @@
 import nodemailer from "nodemailer";
 import dotenv from "dotenv";
 import { formatMSTTimestamp } from "./timezone.js";
+import { getCANSPAMCompliance, EMAIL_CATEGORIES } from "./compliance/canSpamCompliance.js";
 
 dotenv.config();
 
 let transporter;
+const canspam = getCANSPAMCompliance();
 
 /**
  * Initialize email transporter based on configuration
@@ -49,12 +51,16 @@ function initTransporter() {
 
 /**
  * Send confirmation email to waitlist signup
+ * TOS Section 13: CAN-SPAM compliance with unsubscribe mechanism
  */
 export async function sendWaitlistEmail(recipientEmail) {
   try {
     if (!transporter) {
       transporter = initTransporter();
     }
+
+    // TOS Section 12: Record explicit consent for waitlist emails
+    await canspam.recordConsent(recipientEmail, [EMAIL_CATEGORIES.WAITLIST]);
 
     const waitlistFormUrl =
       process.env.WAITLIST_FORM_URL || process.env.VITE_WAITLIST_FORM_URL;
@@ -68,11 +74,10 @@ export async function sendWaitlistEmail(recipientEmail) {
           `
       : "";
 
-    const mailOptions = {
-      from: `3C Mall <${process.env.SENDER_EMAIL || process.env.SMTP_USER || "noreply@the3cmall.app"}>`,
-      to: recipientEmail,
-      subject: "✅ You're on the 3C Mall Beta Waitlist!",
-      html: `
+    // Generate unsubscribe footer per CAN-SPAM (TOS Section 13)
+    const unsubscribeFooter = canspam.generateUnsubscribeFooter(recipientEmail);
+
+    const emailContent = `
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <div style="background: linear-gradient(135deg, #1a1f2e 0%, #0f1419 100%); padding: 40px; border-radius: 12px; text-align: center; color: white;">
             <h1 style="margin: 0 0 10px; font-size: 28px;">Welcome to 3C Mall! 🎉</h1>
@@ -142,7 +147,32 @@ export async function sendWaitlistEmail(recipientEmail) {
             <p style="margin: 0;">© 2026 3C Mall. Concierge • Cost • Community</p>
           </div>
         </div>
-      `,
+        ${unsubscribeFooter}
+      `;
+
+    // Validate CAN-SPAM compliance (TOS Section 13)
+    const compliance = canspam.validateContent(emailContent, EMAIL_CATEGORIES.WAITLIST);
+    if (!compliance.compliant) {
+      console.warn('⚠️ Email content CAN-SPAM compliance issues:', compliance.issues);
+    }
+
+    // Generate CAN-SPAM compliant headers
+    const unsubscribeUrl = `${process.env.VITE_API_URL || 'http://localhost:3001'}/api/email/unsubscribe?email=${encodeURIComponent(recipientEmail)}`;
+    const headers = canspam.generateHeaders(recipientEmail, EMAIL_CATEGORIES.WAITLIST, unsubscribeUrl);
+
+    const mailOptions = {
+      from: headers['From'],
+      to: recipientEmail,
+      subject: "✅ You're on the 3C Mall Beta Waitlist!",
+      html: emailContent,
+      headers: {
+        'Reply-To': headers['Reply-To'],
+        'List-Unsubscribe': headers['List-Unsubscribe'],
+        'List-Unsubscribe-Post': headers['List-Unsubscribe-Post'],
+        'X-Mailer': headers['X-Mailer'],
+        'X-Email-Type': headers['X-Email-Type'],
+        'X-Consent-Status': headers['X-Consent-Status'],
+      },
     };
 
     await transporter.sendMail(mailOptions);
@@ -151,6 +181,20 @@ export async function sendWaitlistEmail(recipientEmail) {
   } catch (error) {
     console.error("Error sending waitlist email:", error);
     return false;
+  }
+}
+
+/**
+ * Handle email unsubscribe request
+ * TOS Section 13: Timely unsubscribe mechanism
+ */
+export async function handleUnsubscribe(email) {
+  try {
+    const result = await canspam.processUnsubscribe(email, [EMAIL_CATEGORIES.MARKETING, EMAIL_CATEGORIES.PROMOTIONAL, EMAIL_CATEGORIES.WAITLIST]);
+    return result;
+  } catch (error) {
+    console.error('Error handling unsubscribe:', error);
+    return { processed: false, error: error.message };
   }
 }
 

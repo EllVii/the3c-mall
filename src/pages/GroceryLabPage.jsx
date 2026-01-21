@@ -6,6 +6,8 @@ import { readJSON, writeJSON, nowISO, safeId } from "../utils/Storage";
 import { formatDateISO, formatTimeValue } from "../utils/Settings/dateTime";
 import { betaMessaging } from "../utils/betaMessaging";
 
+import { SAFE_LANGUAGE, createCompliantRoutingOption, formatCompliantPricingDisplay, generateStoreComparisonText } from "../utils/legalRoutingHelper";
+
 // NOTE: GroceryCartEditor.jsx exists in ../assets/components/grocery/ with full-featured cart management
 // (categories, substitutions, localStorage persistence). This page uses custom mealItems+extraItems logic.
 // Future consideration: Evaluate replacing custom cart logic with GroceryCartEditor component.
@@ -387,7 +389,7 @@ const [pricingSummary, setPricingSummary] = useState(() => normalizePricingSumma
     const storeId = profile?.defaultStoreId || strategy?.selectedStores?.[0] || null;
     const storeName = storeId ? (STORES.find((s) => s.id === storeId)?.name || "Store") : null;
     const modeKey = profile?.shoppingMode || (strategy?.shoppingMode === "single" ? "fastest" : "best_price");
-    const modeLabel = modeKey === "fastest" ? "Fastest" : modeKey === "balanced" ? "Balanced" : "Best price";
+    const modeLabel = modeKey === "fastest" ? "Fastest" : modeKey === "balanced" ? "Balanced" : "Lowest estimate";
     const firstName = (profile?.firstName || "").trim();
     const birthMonth = (profile?.birthMonth || "").trim();
     return { storeName, modeLabel, firstName, birthMonth };
@@ -789,7 +791,7 @@ setPricingSummary(normalizePricingSummary(summary));
                 <label className="gl-row">
                   <div className="gl-row-main">
                     <div className="gl-row-name">Multi-Store Optimization</div>
-                    <div className="gl-row-meta">Find the best price across allowed stores.</div>
+                    <div className="gl-row-meta">Compare estimated totals across allowed stores.</div>
                   </div>
                   <div className="gl-row-actions">
                     <input
@@ -995,17 +997,17 @@ setPricingSummary(normalizePricingSummary(summary));
 
             <div className="gl-card">
               <div className="gl-card-head">
-                <h3 className="gl-card-title">Daily Best Store (Demo)</h3>
+                <h3 className="gl-card-title">Daily Lowest Estimate (Demo)</h3>
                 <button className="gl-btn gl-btn-primary" type="button" onClick={runPricing} disabled={cartIsEmpty}>
                   Run Pricing
                 </button>
               </div>
 
               {!pricingSummary ? (
-                <p className="gl-muted">Run pricing to see today’s best store + totals.</p>
+                 <p className="gl-muted">{SAFE_LANGUAGE.ROUTING_INTRO} Run pricing to see estimated totals.</p>
               ) : (
                 <div className="gl-summary">
-                  <div className="gl-summary-row"><span className="gl-muted">Winner</span><span className="gl-strong">{pricingSummary.winnerStoreName}</span></div>
+                  <div className="gl-summary-row"><span className="gl-muted">Lowest Estimate</span><span className="gl-strong">{pricingSummary.winnerStoreName}</span></div>
                   <div className="gl-summary-row"><span className="gl-muted">Items</span><span>{pricingSummary.itemCount}</span></div>
                   <div className="gl-summary-row"><span className="gl-muted">Daily rotation</span><span>{Number(num(pricingSummary?.dailyMult,1).toFixed(2))}×</span></div>
                   <div className="gl-summary-row"><span className="gl-muted">Subtotal</span><span>${money2(pricingSummary?.subtotal)}</span></div>
@@ -1026,7 +1028,7 @@ setPricingSummary(normalizePricingSummary(summary));
                               writeJSON("groceryLabSortDesc", false);
                             }}
                           >
-                            Best Savings
+                              {SAFE_LANGUAGE.LOWEST_ESTIMATE}
                           </button>
                           <button
                             className={sortDesc ? "gl-pill-active" : "gl-pill"}
@@ -1036,7 +1038,7 @@ setPricingSummary(normalizePricingSummary(summary));
                               writeJSON("groceryLabSortDesc", true);
                             }}
                           >
-                            Most expensive
+                              {SAFE_LANGUAGE.HIGHEST_ESTIMATE}
                           </button>
                         </div>
                       </div>
@@ -1050,9 +1052,9 @@ setPricingSummary(normalizePricingSummary(summary));
                         </div>
                       ))}
                       {Number(pricingSummary.savingsVsNext || 0) > 0 ? (
-                        <p className="gl-note">
-                          Saves ${money2(pricingSummary.savingsVsNext)} vs {pricingSummary.nextBestStoreName}
-                        </p>
+                          <p className="gl-note">
+                            Based on estimated pricing, this option shows a difference of ${money2(pricingSummary.savingsVsNext)} compared to {pricingSummary.nextBestStoreName}.
+                          </p>
                       ) : (
                         <p className="gl-note">Reason: Best total among allowed stores today.</p>
                       )}
@@ -1218,7 +1220,7 @@ setPricingSummary(normalizePricingSummary(summary));
                           <div className="gl-summary-row"><span className="gl-muted">If always preferred</span><span>${money2(monthlySavings.preferredTotal)}</span></div>
                           <div className="gl-summary-row"><span className="gl-muted">With app choices</span><span>${money2(monthlySavings.actualTotal)}</span></div>
                           <div className="gl-summary-row gl-summary-total"><span>Savings</span><span>${money2(monthlySavings.savings)}</span></div>
-                          <p className="gl-note">Demo math: compares your preferred store to the best store per run.</p>
+                          <p className="gl-note">Demo math: compares your preferred store to the lowest estimated store per run.</p>
                         </div>
                       )}
                       <div className="gl-divider" />

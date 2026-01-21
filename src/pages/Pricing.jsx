@@ -15,7 +15,7 @@ export default function Pricing() {
       features: [
         "Meal Planner (MVP)",
         "Grocery Lab strategy (MVP)",
-        "Saved settings + handoff (Meal → Grocery)",
+          "Saved settings + handoff (Meal → Grocery), anonymized stores",
         "Limited tools / features during Beta",
       ],
       cta: "Start Free",
@@ -28,9 +28,9 @@ export default function Pricing() {
       period: "/mo",
       tagline: "Full workflow. Best value for individuals.",
       features: [
-        "Smart grocery routing (multi-store)",
+          "Smart estimated pricing comparison",
         "Advanced meal planning & templates",
-        "Grocery totals + store splits (MVP+)",
+          "Estimated grocery totals + store comparisons",
         "Priority access to new features",
       ],
       cta: "Go Pro",

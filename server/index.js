@@ -3,15 +3,21 @@ import cors from "cors";
 import dotenv from "dotenv";
 import rateLimit from "express-rate-limit";
 import validator from "validator";
-import { sendWaitlistEmail, sendAdminReport } from "./email.js";
+import { sendWaitlistEmail, sendAdminReport, handleUnsubscribe } from "./email.js";
 import { getMSTISOTimestamp } from "./timezone.js";
 import { supabase } from "./supabase.js";
 import { getKrogerService, KrogerService } from "./kroger.js";
+import { getComplianceMonitor } from "./compliance/apiCompliance.js";
+import { getCANSPAMCompliance } from "./compliance/canSpamCompliance.js";
+import { getDataDeletionService } from "./compliance/dataDeletion.js";
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+const compliance = getComplianceMonitor();
+const canspam = getCANSPAMCompliance();
+const dataDeletion = getDataDeletionService();
 
 // Middleware
 app.use(cors({
@@ -418,6 +424,212 @@ app.get("/api/health", (req, res) => {
 app.use((err, req, res, next) => {
   console.error(err);
   res.status(500).json({ error: "Internal server error" });
+});
+
+// ============================================
+// COMPLIANCE ENDPOINTS - TOS Implementation
+// ============================================
+
+/**
+ * GET /api/email/unsubscribe
+ * Handle email unsubscribe requests (TOS Section 13: CAN-SPAM)
+ */
+app.get("/api/email/unsubscribe", async (req, res) => {
+  try {
+    const { email } = req.query;
+    
+    if (!email || !validator.isEmail(email)) {
+      return res.status(400).json({ error: "Invalid email address" });
+    }
+
+    const result = await handleUnsubscribe(email);
+    
+    if (result.processed) {
+      return res.status(200).json({
+        success: true,
+        message: "You have been unsubscribed from all marketing emails",
+      });
+    } else {
+      return res.status(500).json({
+        error: "Failed to process unsubscribe request",
+      });
+    }
+  } catch (error) {
+    console.error("Unsubscribe error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+/**
+ * GET /api/compliance/status
+ * Get current compliance monitoring status (TOS Section 18)
+ */
+app.get("/api/compliance/status", (req, res) => {
+  try {
+    const complianceStatus = compliance.getStatus();
+    const canspamStatus = canspam.getStatus();
+
+    res.status(200).json({
+      compliance: complianceStatus,
+      canspam: canspamStatus,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error("Compliance status error:", error);
+    res.status(500).json({ error: "Failed to retrieve compliance status" });
+  }
+});
+
+/**
+ * GET /api/compliance/report
+ * Generate comprehensive compliance report (TOS Section 18)
+ */
+app.get("/api/compliance/report", (req, res) => {
+  try {
+    const report = compliance.getComplianceReport();
+    res.status(200).json(report);
+  } catch (error) {
+    console.error("Compliance report error:", error);
+    res.status(500).json({ error: "Failed to generate compliance report" });
+  }
+});
+
+/**
+ * GET /api/export/:exportId
+ * Download user data export (TOS Section 11: Data Portability)
+ */
+app.get("/api/export/:exportId", (req, res) => {
+  try {
+    const { exportId } = req.params;
+    const exportData = dataDeletion.getDataExport(exportId);
+
+    if (!exportData.success) {
+      return res.status(404).json({ error: exportData.error });
+    }
+
+    res.setHeader("Content-Type", "application/json");
+    res.setHeader("Content-Disposition", `attachment; filename="3cmall-data-${exportId}.json"`);
+    res.status(200).json(exportData.data);
+  } catch (error) {
+    console.error("Data export error:", error);
+    res.status(500).json({ error: "Failed to retrieve data export" });
+  }
+});
+
+/**
+ * POST /api/user/export
+ * Request user data export (TOS Section 11: Data Portability)
+ */
+app.post("/api/user/export", limiter, async (req, res) => {
+  try {
+    const { userId, email } = req.body;
+
+    if (!userId || !email || !validator.isEmail(email)) {
+      return res.status(400).json({ error: "Invalid user ID or email" });
+    }
+
+    const exportResult = await dataDeletion.requestDataExport(userId, email);
+
+    if (exportResult.success) {
+      return res.status(200).json({
+        success: true,
+        exportId: exportResult.exportId,
+        downloadUrl: exportResult.downloadUrl,
+        expiresAt: exportResult.expiresAt,
+        message: exportResult.message,
+      });
+    } else {
+      return res.status(500).json({
+        error: "Failed to generate data export",
+      });
+    }
+  } catch (error) {
+    console.error("Data export request error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+/**
+ * POST /api/user/delete-account
+ * Request account deletion (TOS Section 12)
+ */
+app.post("/api/user/delete-account", limiter, async (req, res) => {
+  try {
+    const { userId, email, reason } = req.body;
+
+    if (!userId || !email || !validator.isEmail(email)) {
+      return res.status(400).json({ error: "Invalid user ID or email" });
+    }
+
+    const deletionResult = await dataDeletion.requestAccountDeletion(userId, email, reason);
+
+    if (deletionResult.success) {
+      return res.status(200).json({
+        success: true,
+        message: deletionResult.message,
+        deletionId: deletionResult.deletionId,
+      });
+    } else {
+      return res.status(500).json({
+        error: "Failed to process account deletion request",
+      });
+    }
+  } catch (error) {
+    console.error("Account deletion request error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+/**
+ * POST /api/user/delete-account/confirm/:deletionId
+ * Confirm and execute account deletion (TOS Section 12)
+ */
+app.post("/api/user/delete-account/confirm/:deletionId", async (req, res) => {
+  try {
+    const { deletionId } = req.params;
+
+    const deletionResult = await dataDeletion.confirmAccountDeletion(deletionId);
+
+    if (deletionResult.success) {
+      return res.status(200).json({
+        success: true,
+        message: deletionResult.message,
+        completedAt: deletionResult.completedAt,
+      });
+    } else {
+      return res.status(500).json({
+        error: deletionResult.error || "Failed to confirm account deletion",
+      });
+    }
+  } catch (error) {
+    console.error("Account deletion confirmation error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+/**
+ * GET /api/user/email-consent/:email
+ * Get email consent status (TOS Section 12)
+ */
+app.get("/api/user/email-consent/:email", async (req, res) => {
+  try {
+    const { email } = req.params;
+
+    if (!validator.isEmail(email)) {
+      return res.status(400).json({ error: "Invalid email address" });
+    }
+
+    const consentSummary = await canspam.getConsentSummary(email);
+
+    if (!consentSummary) {
+      return res.status(500).json({ error: "Failed to retrieve consent information" });
+    }
+
+    res.status(200).json(consentSummary);
+  } catch (error) {
+    console.error("Email consent error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
 });
 
 // Start server

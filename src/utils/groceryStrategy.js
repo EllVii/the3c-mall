@@ -1,4 +1,14 @@
 // src/utils/groceryStrategy.js
+/**
+ * Legal Compliance Note:
+ * This module calculates pricing estimates to help users make informed shopping decisions.
+ * It does NOT guarantee prices, control routing, or process transactions.
+ * 
+ * All pricing is framed as "estimated" and subject to retailer variation.
+ * User always retains final choice of store.
+ * 
+ * See GROCERY_ROUTING_LEGAL_COMPLIANCE.md for complete legal positioning.
+ */
 import { readJSON, writeJSON, nowISO, safeId } from "./Storage";
 
 export const CART_KEY = "grocery.cart.v1";

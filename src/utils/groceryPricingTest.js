@@ -1,4 +1,17 @@
 // src/utils/groceryPricingTest.js
+/**
+ * Legal Compliance Note:
+ * This module calculates pricing estimates to help users compare store options.
+ * It does NOT guarantee prices, make purchasing decisions, or process transactions.
+ * 
+ * Key Principles:
+ * 1. All prices are estimates based on demo data (rotates daily)
+ * 2. Actual retailer prices may vary by location, time, availability
+ * 3. User explicitly chooses store; 3C does not auto-route
+ * 4. User completes purchase on retailer's website, not through 3C
+ * 
+ * See GROCERY_ROUTING_LEGAL_COMPLIANCE.md for complete legal positioning.
+ */
 import { readJSON, writeJSON, safeId, nowISO } from "./Storage";
 
 // Storage keys (keep consistent everywhere)

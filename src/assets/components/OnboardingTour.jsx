@@ -165,8 +165,8 @@ export default function OnboardingTour({
                   className={"ob-choice " + (shopMode === "best_price" ? "on" : "")}
                   onClick={() => setShopMode("best_price")}
                 >
-                  <div className="ob-choice-title">Best price across stores</div>
-                  <div className="ob-choice-desc">Let 3C route items where they're cheapest.</div>
+                    <div className="ob-choice-title">Compare estimated pricing</div>
+                    <div className="ob-choice-desc">See estimated totals across stores to help inform your choice.</div>
                 </button>
 
                 <button

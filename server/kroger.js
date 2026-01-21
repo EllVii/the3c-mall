@@ -1,11 +1,14 @@
 // server/kroger.js
 // Kroger Products API integration with OAuth2 authentication
+// Implements TOS compliance tracking per Section 11 (API Usage, Data Retention)
 
 import axios from 'axios';
 import { betaMessaging } from '../src/utils/betaMessaging.js';
+import { getComplianceMonitor } from './compliance/apiCompliance.js';
 
 const KROGER_BASE_URL = 'https://api.kroger.com';
 const KROGER_AUTH_URL = 'https://api.kroger.com/v1/connect/oauth2/token';
+const compliance = getComplianceMonitor();
 
 /**
  * Manages OAuth2 access token for Kroger API
@@ -83,10 +86,18 @@ export class KrogerService {
       throw new Error('Kroger API is not configured');
     }
 
-    const { lat, lng, radius = 10, limit = 15 } = options;
+    const { lat, lng, radius = 10, limit = 15, userId = null } = options;
 
     if (typeof lat !== 'number' || typeof lng !== 'number') {
       throw new Error('Latitude and longitude are required');
+    }
+
+    // TOS Section 11: Enforce API rate limits
+    const rateCheckResult = compliance.trackAPIRequest('KROGER', '/locations', userId);
+    if (!rateCheckResult.allowed) {
+      const error = new Error(rateCheckResult.reason);
+      error.status = 429; // Too Many Requests
+      throw error;
     }
 
     try {
@@ -129,11 +140,19 @@ export class KrogerService {
       throw new Error('Kroger API is not configured');
     }
 
-    const { term, brand, productId, locationId, fulfillment, limit = 10, start = 1 } = options;
+    const { term, brand, productId, locationId, fulfillment, limit = 10, start = 1, userId = null } = options;
 
     // Validate required search parameter
     if (!term && !brand && !productId) {
       throw new Error('Must provide at least one of: term, brand, or productId');
+    }
+
+    // TOS Section 11: Enforce API rate limits
+    const rateCheckResult = compliance.trackAPIRequest('KROGER', '/products/search', userId);
+    if (!rateCheckResult.allowed) {
+      const error = new Error(rateCheckResult.reason);
+      error.status = 429; // Too Many Requests
+      throw error;
     }
 
     try {

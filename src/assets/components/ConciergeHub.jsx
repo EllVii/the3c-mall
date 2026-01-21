@@ -186,7 +186,7 @@ export default function ConciergeHub({ minimized, onMinimize, onExpand, onClose 
             onClick={() => updateIntro({ pricePreference: "best" })}
             type="button"
           >
-            Best price per store
+            Lowest estimated total
           </button>
           <button
             className={"btn " + (intro.pricePreference === "loyal" ? "btn-primary" : "btn-secondary")}
