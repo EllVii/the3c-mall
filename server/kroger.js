@@ -70,6 +70,49 @@ export class KrogerService {
   }
 
   /**
+   * Find nearby Kroger family stores by coordinates
+   * @param {Object} options
+   * @param {number} options.lat - Latitude
+   * @param {number} options.lng - Longitude
+   * @param {number} options.radius - Search radius in miles (1-50)
+   * @param {number} options.limit - Max results (1-50)
+   * @returns {Promise<Object>} Nearby store results
+   */
+  async searchLocations(options = {}) {
+    if (!this.enabled) {
+      throw new Error('Kroger API is not configured');
+    }
+
+    const { lat, lng, radius = 10, limit = 15 } = options;
+
+    if (typeof lat !== 'number' || typeof lng !== 'number') {
+      throw new Error('Latitude and longitude are required');
+    }
+
+    try {
+      const token = await this.auth.getAccessToken();
+
+      const params = new URLSearchParams();
+      params.append('filter.latLong', `${lat},${lng}`);
+      params.append('filter.radiusInMiles', Math.min(Math.max(radius, 1), 50));
+      params.append('filter.limit', Math.min(Math.max(limit, 1), 50));
+      params.append('filter.chain', 'kroger');
+
+      const response = await axios.get(`${KROGER_BASE_URL}/v1/locations?${params.toString()}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
+        }
+      });
+
+      return response.data;
+    } catch (error) {
+      console.error('❌ Kroger location search failed:', error.response?.data || error.message);
+      throw error;
+    }
+  }
+
+  /**
    * Search for products by term, brand, or productId
    * @param {Object} options - Search parameters
    * @param {string} options.term - Search term (milk, bread, etc.)
@@ -224,6 +267,33 @@ export class KrogerService {
       source: 'kroger',
       sourceId: product.productId,
       aisle: product.aisleLocations?.[0]?.description || null
+    };
+  }
+
+  /**
+   * Helper: Transform Kroger location to simplified store object
+   * @param {Object} location - Location object from Kroger API
+   * @returns {Object} Normalized store info for frontend map
+   */
+  static toStoreLocation(location) {
+    const address = location.address || {};
+    const geo = location.geolocation || {};
+
+    return {
+      id: location.locationId,
+      name: location.name,
+      storeType: 'kroger',
+      chain: location.chain || 'kroger',
+      lat: geo.latitude,
+      lng: geo.longitude,
+      address: [
+        address.addressLine1,
+        address.addressLine2,
+        `${address.city || ''} ${address.state || ''} ${address.zipCode || ''}`.trim()
+      ].filter(Boolean).join(', '),
+      phone: location.phone || null,
+      hours: location.hours || null,
+      distanceMiles: location.distance,
     };
   }
 }

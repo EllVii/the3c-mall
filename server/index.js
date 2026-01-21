@@ -27,6 +27,13 @@ const limiter = rateLimit({
   message: "Too many requests, please try again later.",
 });
 
+// More permissive limiter for store lookups (map UX)
+const storeLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 30,
+  message: "Too many store lookups, please slow down.",
+});
+
 // Routes
 
 /**
@@ -306,6 +313,50 @@ app.get("/api/kroger/search", async (req, res) => {
     res.status(500).json({ 
       error: "Product search failed",
       message: error.message 
+    });
+  }
+});
+
+/**
+ * GET /api/stores/nearby
+ * Find nearby Kroger family stores by lat/lng
+ * Query params: lat, lng, radius (miles), limit
+ */
+app.get("/api/stores/nearby", storeLimiter, async (req, res) => {
+  try {
+    const kroger = getKrogerService();
+
+    if (!kroger.enabled) {
+      return res.status(503).json({
+        error: "Kroger API not configured",
+        message: "Set KROGER_CLIENT_ID and KROGER_CLIENT_SECRET to enable store lookup.",
+      });
+    }
+
+    const lat = parseFloat(req.query.lat);
+    const lng = parseFloat(req.query.lng);
+    const radius = parseFloat(req.query.radius || "10");
+    const limit = parseInt(req.query.limit || "15", 10);
+
+    if (Number.isNaN(lat) || Number.isNaN(lng)) {
+      return res.status(400).json({ error: "Latitude and longitude are required" });
+    }
+
+    const results = await kroger.searchLocations({ lat, lng, radius, limit });
+    const stores = (results?.data || [])
+      .map(KrogerService.toStoreLocation)
+      .filter((s) => s.lat && s.lng);
+
+    res.json({
+      success: true,
+      stores,
+      meta: results?.meta || null,
+    });
+  } catch (error) {
+    console.error("❌ Nearby stores error:", error.response?.data || error.message);
+    res.status(error.response?.status || 500).json({
+      error: "Store lookup failed",
+      message: error.message,
     });
   }
 });

@@ -33,6 +33,7 @@ import Cancel from "./pages/Cancel.jsx";
 // App pages (new)
 import CommunityPage from "./pages/CommunityPage.jsx";
 import FitnessZone from "./pages/FitnessZone.jsx";
+import StoreLocatorPage from "./pages/StoreLocatorPage.jsx";
 
 // Recipe Center Pages
 import RecipesPage from "./pages/RecipesPage.jsx";
@@ -109,6 +110,9 @@ export default function App() {
           {/* New routes */}
           <Route path="community" element={<CommunityPage />} />
           <Route path="fitness" element={<FitnessZone />} />
+          <Route path="stores" element={<StoreLocatorPage />} />
+          <Route path="store" element={<Navigate to="/app/stores" replace />} />
+          <Route path="stores" element={<StoreLocatorPage />} />
 
           <Route path="pt" element={<PTModePage />} />
           <Route path="settings" element={<SettingsPage />} />

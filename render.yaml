@@ -17,10 +17,20 @@ services:
       - key: ADMIN_TOKEN
         scope: secret
       - key: CORS_ORIGIN
-        value: https://the3cmall.com,https://www.the3cmall.com,https://the3cmall.app,https://www.the3cmall.app,http://localhost:5173
+        value: "*"
       - key: RATE_LIMIT_WINDOW_MS
         value: 900000
       - key: RATE_LIMIT_MAX_REQUESTS
         value: 10
       - key: TIMEZONE
         value: America/Phoenix
+      - key: RESEND_API_KEY
+        scope: secret
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        scope: secret
+      - key: KROGER_CLIENT_ID
+        scope: secret
+      - key: KROGER_CLIENT_SECRET
+        scope: secret

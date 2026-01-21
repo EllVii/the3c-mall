@@ -33,6 +33,7 @@ const PRICING_SUMMARY_KEY = "grocery.pricingSummary.v1";
 const SAVINGS_HISTORY_KEY = "grocery.savingsHistory.v1";
 
 const STORES = [
+  { id: "kroger", name: "Kroger" },
   { id: "costco", name: "Costco" },
   { id: "walmart", name: "Walmart" },
   { id: "aldi", name: "ALDI" },
@@ -182,7 +183,7 @@ function defaultStrategy() {
     // Quick Mode: how to shop today
     shoppingMode: "multi", // "multi" | "single"
     // Allowed stores (used by pricing + routing). In single mode, first entry is chosen store.
-    selectedStores: ["aldi", "walmart", "costco", "target", "sprouts"],
+    selectedStores: ["kroger", "aldi", "walmart", "costco", "target", "sprouts"],
     lastUpdated: nowISO(),
   };
 }
@@ -598,6 +599,10 @@ setPricingSummary(normalizePricingSummary(summary));
               ← Back
             </button>
           )}
+
+          <button className="gl-btn gl-btn-outline" onClick={() => nav("/app/stores")} type="button">
+            🗺️ Find Nearby Stores
+          </button>
 
           <button className="gl-btn gl-btn-primary" onClick={() => nav("/app")} type="button">
             Dashboard
