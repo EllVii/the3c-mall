@@ -53,9 +53,7 @@ class KrogerAuth {
       return this.accessToken;
     } catch (error) {
       console.error('❌ Failed to get Kroger access token:', error.response?.data || error.message);
-      // Use beta-safe messaging for Kroger API integration
-      console.info('ℹ️ Note:', betaMessaging.kroger.internal);
-      throw new Error('Kroger API authentication not available in beta');
+      throw new Error(`Kroger API authentication failed: ${error.response?.data?.error || error.message}`);
     }
   }
 }
