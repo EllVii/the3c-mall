@@ -51,7 +51,7 @@ export default function LandingPage() {
           <p className="lp-kicker">Concierge • Cost • Community</p>
           
           <h1>
-            Eat smarter, spend less, <span className="lp-highlight">never do it alone.</span>
+            Eat smarter, spend less, <span className="lp-highlight">you're not alone.</span>
           </h1>
           
           <p className="lp-subtitle">

@@ -139,7 +139,7 @@ export default function OnboardingGate({ open, onClose }) {
                   fontWeight: 600,
                 }}
               >
-                Start with Groceries (Recommended)
+                Start with Groceries
               </button>
 
               {/* Secondary CTA */}
