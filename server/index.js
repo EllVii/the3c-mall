@@ -43,6 +43,63 @@ const storeLimiter = rateLimit({
 // Routes
 
 /**
+ * GET /api/health/supabase
+ * Test endpoint to verify Supabase connection
+ * Returns diagnostic info about connection status
+ */
+app.get("/api/health/supabase", async (req, res) => {
+  try {
+    // Check if env vars are loaded
+    const hasUrl = !!process.env.SUPABASE_URL;
+    const hasKey = !!process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (!hasUrl || !hasKey) {
+      return res.status(400).json({
+        status: "error",
+        message: "Supabase env vars not configured",
+        env: {
+          SUPABASE_URL: hasUrl,
+          SUPABASE_SERVICE_ROLE_KEY: hasKey,
+        },
+      });
+    }
+
+    // Try to query a simple table
+    const { data, error } = await supabase
+      .from("email_consents")
+      .select("count", { count: "exact", head: true })
+      .limit(1);
+
+    if (error) {
+      return res.status(500).json({
+        status: "error",
+        message: "Supabase query failed",
+        error: error.message,
+        env: {
+          SUPABASE_URL: process.env.SUPABASE_URL?.substring(0, 40) + "...",
+        },
+      });
+    }
+
+    res.json({
+      status: "success",
+      message: "✅ Supabase connection verified",
+      supabase: {
+        url: process.env.SUPABASE_URL?.substring(0, 40) + "...",
+        connected: true,
+        timestamp: new Date().toISOString(),
+      },
+    });
+  } catch (err) {
+    res.status(500).json({
+      status: "error",
+      message: "Health check failed",
+      error: err.message,
+    });
+  }
+});
+
+/**
  * POST /api/report/waitlist
  * Add a new waitlist entry and send confirmation email
  */

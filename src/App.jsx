@@ -2,6 +2,9 @@
 import React, { useEffect } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 
+// Auth
+import { AuthProvider, useAuth } from "./context/AuthContext.jsx";
+
 // Beta Gate
 import BetaGate from "./assets/components/BetaGate.jsx";
 
@@ -39,7 +42,29 @@ import StoreLocatorPage from "./pages/StoreLocatorPage.jsx";
 import RecipesPage from "./pages/RecipesPage.jsx";
 import RecipeDetailPage from "./pages/RecipeDetailPage.jsx";
 
-export default function App() {
+// Dev/Diagnostic pages
+import SupabaseHealthCheck from "./pages/SupabaseHealthCheck.jsx";
+
+// Protected route wrapper
+function ProtectedRoute({ children }) {
+  const { isAuthenticated, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh" }}>
+        <p>Loading...</p>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
+}
+
+function AppContent() {
   const { pathname } = useLocation();
   const showAlphaChip = import.meta.env.VITE_ALPHA_CHIP !== "0";
   
@@ -96,10 +121,20 @@ export default function App() {
           <Route path="/comment-limit" element={<CommentLimitModal />} />
           <Route path="/terms" element={<TermsOfService />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
+          
+          {/* Dev/Diagnostic Routes */}
+          <Route path="/health/supabase" element={<SupabaseHealthCheck />} />
         </Route>
 
         {/* PRIVATE APP AREA */}
-        <Route path="/app" element={<AppLayout />}>
+        <Route
+          path="/app"
+          element={
+            <ProtectedRoute>
+              <AppLayout />
+            </ProtectedRoute>
+          }
+        >
           <Route index element={<DashboardPage />} />
           <Route path="meal-plans" element={<MealPlannerPage />} />
           <Route path="grocery-lab" element={<GroceryLabPage />} />
@@ -139,4 +174,12 @@ export default function App() {
   }
 
   return appContent;
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
+  );
 }
