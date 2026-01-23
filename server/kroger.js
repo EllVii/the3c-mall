@@ -6,8 +6,10 @@ import axios from 'axios';
 import { betaMessaging } from '../src/utils/betaMessaging.js';
 import { getComplianceMonitor } from './compliance/apiCompliance.js';
 
-const KROGER_BASE_URL = 'https://api.kroger.com';
-const KROGER_AUTH_URL = 'https://api.kroger.com/v1/connect/oauth2/token';
+// Use certification environment for testing (api-ce)
+// Change to api.kroger.com for production
+const KROGER_BASE_URL = 'https://api-ce.kroger.com';
+const KROGER_AUTH_URL = 'https://api-ce.kroger.com/v1/connect/oauth2/token';
 const compliance = getComplianceMonitor();
 
 /**
@@ -32,15 +34,19 @@ class KrogerAuth {
 
     // Fetch new token using Client Credentials flow
     try {
-      const credentials = Buffer.from(`${this.clientId}:${this.clientSecret}`).toString('base64');
+      // Kroger expects credentials as form parameters, not HTTP Basic Auth
+      const body = new URLSearchParams();
+      body.append('grant_type', 'client_credentials');
+      body.append('scope', 'product.compact');
+      body.append('client_id', this.clientId);
+      body.append('client_secret', this.clientSecret);
       
       const response = await axios.post(
         KROGER_AUTH_URL,
-        'grant_type=client_credentials&scope=product.compact',
+        body.toString(),
         {
           headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Authorization': `Basic ${credentials}`
+            'Content-Type': 'application/x-www-form-urlencoded'
           }
         }
       );
