@@ -15,7 +15,7 @@ export async function testSupabaseConnection() {
 
   try {
     const response = await fetch(`${apiBase}/api/health/supabase`);
-    const data = await response.json();
+    const data = await response.json();g 
 
     return {
       status: data.status,
