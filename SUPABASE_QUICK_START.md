@@ -33,10 +33,13 @@ SUPABASE_SERVICE_ROLE_KEY = Switch tab to "Service role" → copy key
 VITE_SUPABASE_URL=https://xxxx.supabase.co
 VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIs...
 VITE_API_BASE=https://your-render-app.onrender.com
+VITE_SITE_URL=http://localhost:5173
 VITE_REPORT_WAITLIST=true
 ```
 
-**Note:** `VITE_API_BASE` points to your Render backend URL (production-safe)
+**Note:** 
+- `VITE_API_BASE` points to your Render backend URL (production-safe)
+- `VITE_SITE_URL` is used for email verification redirects
 
 **File: `server/.env`**
 ```env
@@ -53,7 +56,30 @@ CORS_ORIGIN=http://localhost:5173,https://the3cmall.com,https://the3cmall.app
 
 **Note:** Backend is on Render (production). Frontend env uses Render URL for API calls.
 
-## 4. Run SQL Setup (1 min)
+## 4. Configure Redirect URLs (2 min)
+
+**Important:** Configure where email verification links should redirect.
+
+In Supabase dashboard:
+```
+→ Authentication (left menu)
+→ URL Configuration
+→ Site URL: http://localhost:5173
+→ Redirect URLs: Add these lines
+   http://localhost:5173/app
+   http://localhost:5173/auth/reset-password
+→ Click "Save"
+```
+
+**For Production:** Add your production URLs too:
+```
+→ Redirect URLs: Add these additional lines
+   https://the3cmall.com/app
+   https://the3cmall.com/auth/reset-password
+→ Update Site URL to: https://the3cmall.com
+```
+
+## 5. Run SQL Setup (1 min)
 
 In Supabase dashboard:
 ```
@@ -65,7 +91,7 @@ In Supabase dashboard:
 → Should see: "Success" messages
 ```
 
-## 5. Start Servers (2 min)
+## 6. Start Servers (2 min)
 
 **Terminal 1: Frontend Only** (backend is on Render)
 ```bash
@@ -73,7 +99,7 @@ npm run dev
 # Shows: "VITE v5.x.x ready in xxx ms"
 ```
 
-## 6. Test It (3 min)
+## 7. Test It (3 min)
 
 1. Open http://localhost:5173/login
 2. Click "Create Account"

@@ -1,4 +1,5 @@
 services:
+  # Backend API Service
   - type: web
     name: 3cmall-backend
     env: node
@@ -34,3 +35,22 @@ services:
         scope: secret
       - key: KROGER_CLIENT_SECRET
         scope: secret
+
+  # Frontend Service (if deploying to Render)
+  # Uncomment and configure if hosting frontend on Render
+  # - type: web
+  #   name: 3cmall-frontend
+  #   env: static
+  #   region: oregon
+  #   plan: free
+  #   buildCommand: npm install && npm run build
+  #   staticPublishPath: ./dist
+  #   envVars:
+  #     - key: VITE_SITE_URL
+  #       value: https://the3cmall.com
+  #     - key: VITE_API_BASE
+  #       value: https://threecmall-backend.onrender.com
+  #     - key: VITE_SUPABASE_URL
+  #       sync: false
+  #     - key: VITE_SUPABASE_ANON_KEY
+  #       scope: secret

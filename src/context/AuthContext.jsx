@@ -60,12 +60,14 @@ export function AuthProvider({ children }) {
   const signUp = async (email, password, metadata = {}) => {
     try {
       setError(null);
+      // Use environment variable if available, fallback to dynamic origin
+      const siteUrl = import.meta.env.VITE_SITE_URL || window.location.origin;
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: metadata,
-          emailRedirectTo: `${window.location.origin}/app`,
+          emailRedirectTo: `${siteUrl}/app`,
         },
       });
 
@@ -117,8 +119,10 @@ export function AuthProvider({ children }) {
   const resetPassword = async (email) => {
     try {
       setError(null);
+      // Use environment variable if available, fallback to dynamic origin
+      const siteUrl = import.meta.env.VITE_SITE_URL || window.location.origin;
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/reset-password`,
+        redirectTo: `${siteUrl}/auth/reset-password`,
       });
 
       if (error) throw error;
