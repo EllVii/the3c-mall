@@ -10,7 +10,7 @@ services:
     startCommand: npm start
     envVars:
       - key: SENDER_EMAIL
-        value: noreply@the3cmall.app
+        value: support@the3cmall.com
       - key: REPORT_EMAIL
         value: ellviisauces@gmail.com
       - key: ADMIN_EMAIL

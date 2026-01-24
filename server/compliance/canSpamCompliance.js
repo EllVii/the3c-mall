@@ -52,7 +52,7 @@ export class CANSPAMCompliance {
    */
   generateHeaders(email, emailType, unsubscribeUrl) {
     const headers = {
-      'From': `3C Mall <${process.env.SENDER_EMAIL || 'noreply@the3cmall.app'}>`,
+      'From': `3C Mall Support <${process.env.SENDER_EMAIL || 'noreply@the3cmall.app'}>`,
       'Reply-To': `support@the3cmall.app`,
       'List-Unsubscribe': `<${unsubscribeUrl}>, <mailto:unsubscribe@the3cmall.app?subject=unsubscribe>`,
       'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',

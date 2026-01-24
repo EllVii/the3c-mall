@@ -231,7 +231,7 @@ export async function sendAdminReport(type, data) {
     }
 
     const mailOptions = {
-      from: `3C Mall Reports <${process.env.SENDER_EMAIL || "noreply@the3cmall.app"}>`,
+      from: `3C Mall Support <${process.env.SENDER_EMAIL || "noreply@the3cmall.app"}>`,
       to: adminEmail,
       subject,
       html: `
@@ -290,7 +290,7 @@ export async function sendDailySummary(summary) {
     `;
 
     const mailOptions = {
-      from: `3C Mall Reports <${process.env.SENDER_EMAIL || process.env.SMTP_USER || "noreply@the3cmall.app"}>`,
+      from: `3C Mall Support <${process.env.SENDER_EMAIL || process.env.SMTP_USER || "noreply@the3cmall.app"}>`,
       to: adminEmail,
       subject: `3C Mall Daily Summary - ${new Date().toLocaleDateString()}`,
       html: htmlContent,
