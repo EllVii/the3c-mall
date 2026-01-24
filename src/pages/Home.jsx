@@ -11,6 +11,7 @@ export default function Home() {
 
       {/* Left: Hero text */}
       <div className="landing-hero">
+        <img src="/icons/3c-mall.png" alt="3C Logo" style={{ width: "80px", height: "80px", marginBottom: "1rem" }} />
         <div className="landing-pill">Concierge • Cost • Community</div>
 
         <h1 className="landing-title">
