@@ -52,6 +52,13 @@ const SCREENS = [
 export default function OnboardingTutorial({ open, onComplete }) {
   const [step, setStep] = useState(0);
 
+  // Reset to first step when tour reopens
+  React.useEffect(() => {
+    if (open) {
+      setStep(0);
+    }
+  }, [open]);
+
   if (!open) return null;
 
   const currentScreen = SCREENS[step];
@@ -76,7 +83,7 @@ export default function OnboardingTutorial({ open, onComplete }) {
   return (
     <div className="cc-overlay" role="dialog" aria-modal="true" aria-label="Welcome Tour">
       <div className="cc-backdrop" onClick={handleSkip} />
-      <div className="cc-panel cc-panel-onboarding">
+      <div className="cc-panel cc-panel-onboarding" style={{ maxHeight: "85vh", overflowY: "auto" }}>
         <div className="cc-onboarding-content">
           {/* PROGRESS BAR */}
           <div style={{ marginBottom: "1.5rem" }}>
@@ -161,10 +168,11 @@ export default function OnboardingTutorial({ open, onComplete }) {
                   key={idx}
                   className="cc-card"
                   style={{
-                    padding: ".75rem",
+                    padding: "1.25rem .75rem",
                     textAlign: "center",
                     background: currentScreen.color,
                     borderColor: currentScreen.borderColor,
+                    minHeight: "120px",
                   }}
                 >
                   <div style={{ fontSize: "1.5rem", marginBottom: ".25rem" }}>
@@ -178,6 +186,15 @@ export default function OnboardingTutorial({ open, onComplete }) {
                     style={{ fontSize: ".70rem", opacity: 0.7, marginTop: ".15rem" }}
                   >
                     {a.status}
+                  </div>
+                  <div
+                    className="small"
+                    style={{ fontSize: ".65rem", opacity: 0.6, marginTop: ".5rem", fontStyle: "italic" }}
+                  >
+                    {a.label === "Grocery Lab" && "Compare prices & save money"}
+                    {a.label === "Meal Planner" && "Plan your weekly meals"}
+                    {a.label === "Training" && "Movement & fitness tools"}
+                    {a.label === "Community" && "Connect & share support"}
                   </div>
                 </div>
               ))}
