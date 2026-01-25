@@ -10,6 +10,7 @@ import SettingsModal from "../assets/components/SettingsModal.jsx";
 import OnboardingGate from "../assets/components/OnboardingGate.jsx";
 import OnboardingTutorial, { TUTORIAL_SEEN_KEY } from "../assets/components/OnboardingTutorial.jsx";
 import ConciergeIntro from "../assets/components/ConciergeIntro.jsx";
+import RedCarpetIntro, { RED_CARPET_SEEN_KEY } from "../assets/components/RedCarpetIntro.jsx";
 import { readJSON, writeJSON } from "../utils/Storage";
 
 import {
@@ -63,20 +64,24 @@ export default function DashboardPage() {
   const [ccOpen, setCcOpen] = useState(true);
   const [ccMin, setCcMin] = useState(false);
 
-  // Onboarding Tutorial (animated intro) - shows ONCE on first visit
-  const [showTutorial, setShowTutorial] = useState(() => {
-    const hasSeen = readJSON(TUTORIAL_SEEN_KEY, null);
+  // Red Carpet Intro (luxury first-launch) - shows ONCE on very first visit
+  const [showRedCarpet, setShowRedCarpet] = useState(() => {
+    const hasSeenRedCarpet = readJSON(RED_CARPET_SEEN_KEY, null);
     const profile = readJSON("concierge.profile.v1", null);
-    return !profile && !hasSeen;
+    return !profile && !hasSeenRedCarpet;
   });
 
-  // Concierge Intro on first run (after tutorial)
+  // Onboarding Tutorial (animated intro) - DEPRECATED in favor of Red Carpet
+  const [showTutorial, setShowTutorial] = useState(false);
+
+  // Concierge Intro on first run (after Red Carpet)
   const [introOpen, setIntroOpen] = useState(() => {
     const profile = readJSON("concierge.profile.v1", null);
-    return !profile;
+    const hasSeenRedCarpet = readJSON(RED_CARPET_SEEN_KEY, null);
+    return !profile && hasSeenRedCarpet;
   });
 
-  // Onboarding gate (after tutorial)
+  // Onboarding gate (after Red Carpet)
   const isFirstTime = !readJSON("concierge.profile.v1", null);
 
   // Guided Assist
@@ -246,9 +251,29 @@ export default function DashboardPage() {
     setCcOpen(false);
   }
 
+  // If user has profile and has seen Red Carpet, redirect to map
+  useEffect(() => {
+    const profile = readJSON("concierge.profile.v1", null);
+    const hasSeenRedCarpet = readJSON(RED_CARPET_SEEN_KEY, null);
+    
+    if (profile && hasSeenRedCarpet) {
+      // User has completed onboarding, send them to the map
+      nav("/app/map", { replace: true });
+    }
+  }, [nav]);
+
   return (
     <section className="page db-shell">
-      {/* ONBOARDING TUTORIAL - shows once on first visit (animated intro) */}
+      {/* RED CARPET INTRO - luxury first-launch experience (10-14s) */}
+      <RedCarpetIntro
+        open={showRedCarpet}
+        onComplete={() => {
+          setShowRedCarpet(false);
+          // After Red Carpet, show onboarding gate for profile creation
+        }}
+      />
+
+      {/* ONBOARDING TUTORIAL - DEPRECATED (kept for compatibility) */}
       <OnboardingTutorial
         open={showTutorial}
         onComplete={() => {
@@ -257,11 +282,13 @@ export default function DashboardPage() {
         }}
       />
 
-      {/* ONBOARDING GATE - force name entry on first use */}
+      {/* ONBOARDING GATE - force name entry on first use (after Red Carpet) */}
       <OnboardingGate
-        open={isFirstTime && !showTutorial}
+        open={isFirstTime && !showRedCarpet && !showTutorial}
         onClose={() => {
           setIntroOpen(false);
+          // After profile creation, redirect to map
+          nav("/app/map", { replace: true });
         }}
       />
 

@@ -1,0 +1,195 @@
+/* src/assets/components/PT/PTMessaging.css */
+.pt-messaging {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  border-radius: 1rem;
+  border: 1px solid rgba(126, 224, 255, 0.3);
+  background: rgba(4, 8, 18, 0.92);
+  overflow: hidden;
+}
+
+.pt-messaging-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid rgba(126, 224, 255, 0.2);
+  background: rgba(5, 9, 18, 0.96);
+}
+
+.pt-messaging-title {
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: #f6dc8a;
+}
+
+.pt-messaging-status {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+  color: #8cf5c7;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #8cf5c7;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* SCROLLABLE MESSAGE AREA */
+.pt-messaging-scroll {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 1rem;
+  background: radial-gradient(circle at top right, rgba(126, 224, 255, 0.04), transparent 60%),
+    rgba(4, 8, 18, 0.7);
+  max-height: 450px; /* Ensures scroll within container */
+}
+
+.pt-messaging-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.pt-messaging-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #7b88a5;
+  font-size: 0.9rem;
+  text-align: center;
+  padding: 2rem 1rem;
+}
+
+/* MESSAGE BUBBLES */
+.pt-message {
+  display: flex;
+  flex-direction: column;
+  max-width: 75%;
+}
+
+.pt-message-client {
+  align-items: flex-start;
+}
+
+.pt-message-trainer {
+  align-items: flex-end;
+  align-self: flex-end;
+}
+
+.pt-message-bubble {
+  border-radius: 1rem;
+  padding: 0.65rem 0.85rem;
+  word-wrap: break-word;
+}
+
+.pt-message-client .pt-message-bubble {
+  background: rgba(126, 224, 255, 0.12);
+  border: 1px solid rgba(126, 224, 255, 0.3);
+  color: #e4ebff;
+}
+
+.pt-message-trainer .pt-message-bubble {
+  background: rgba(246, 220, 138, 0.15);
+  border: 1px solid rgba(246, 220, 138, 0.4);
+  color: #fff;
+}
+
+.pt-message-text {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin-bottom: 0.3rem;
+}
+
+.pt-message-time {
+  font-size: 0.7rem;
+  color: #9ca3c0;
+  text-align: right;
+}
+
+/* INPUT AREA (FIXED AT BOTTOM) */
+.pt-messaging-input-area {
+  padding: 0.85rem;
+  border-top: 1px solid rgba(126, 224, 255, 0.2);
+  background: rgba(5, 9, 18, 0.98);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.pt-messaging-input {
+  width: 100%;
+  background: rgba(4, 8, 18, 0.96);
+  border-radius: 0.75rem;
+  border: 1px solid rgba(126, 224, 255, 0.45);
+  padding: 0.6rem 0.75rem;
+  font-size: 0.88rem;
+  color: #e4ebff;
+  font-family: inherit;
+  resize: none;
+  transition: border-color 0.2s;
+}
+
+.pt-messaging-input:focus {
+  outline: none;
+  border-color: rgba(126, 224, 255, 0.7);
+}
+
+.pt-messaging-input::placeholder {
+  color: #7b88a5;
+}
+
+.pt-messaging-send {
+  align-self: flex-end;
+  border-radius: 999px;
+  border: none;
+  background: linear-gradient(135deg, #7ee0ff, #f6dc8a);
+  color: #101010;
+  padding: 0.55rem 1.3rem;
+  font-size: 0.85rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: transform 0.2s, opacity 0.2s;
+}
+
+.pt-messaging-send:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+
+.pt-messaging-send:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Scrollbar styling for message area */
+.pt-messaging-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.pt-messaging-scroll::-webkit-scrollbar-track {
+  background: rgba(4, 8, 18, 0.5);
+  border-radius: 4px;
+}
+
+.pt-messaging-scroll::-webkit-scrollbar-thumb {
+  background: rgba(126, 224, 255, 0.3);
+  border-radius: 4px;
+}
+
+.pt-messaging-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(126, 224, 255, 0.5);
+}

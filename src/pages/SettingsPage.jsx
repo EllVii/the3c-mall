@@ -163,18 +163,29 @@ export default function SettingsPage() {
 
       {/* GUIDED TOUR */}
       <div className="card glass settings-block">
-        <h3 className="settings-h3">Guided Tour</h3>
+        <h3 className="settings-h3">Experience & Onboarding</h3>
         <p className="small">
-          Re-run the first-time walkthrough (Mall concept + personalization).
+          Re-run the introductory experiences.
         </p>
 
-        <div className="nav-row">
+        <div className="nav-row" style={{ flexDirection: "column", gap: "10px", alignItems: "stretch" }}>
           <button className="btn btn-primary" onClick={handleRerunTour}>
-            Re-run Tour
+            Re-run Guided Tour
           </button>
-          <button className="btn btn-secondary" onClick={() => nav("/app")}>
-            Back to Dashboard
+          <button 
+            className="btn btn-secondary" 
+            onClick={() => {
+              localStorage.removeItem("redCarpet.seen.v1");
+              localStorage.removeItem("concierge.profile.v1");
+              nav("/app");
+              window.location.reload();
+            }}
+          >
+            Replay Red Carpet Intro
           </button>
+          <p className="small" style={{ marginTop: "0.5rem", opacity: 0.7, fontStyle: "italic" }}>
+            Note: Replaying the Red Carpet intro will reset your onboarding state.
+          </p>
         </div>
       </div>
 

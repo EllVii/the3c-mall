@@ -115,9 +115,11 @@ export default function ConciergeHub({ minimized, onMinimize, onExpand, onClose 
         </div>
       </div>
 
-      <div className="card glass" style={{ marginTop: ".7rem" }}>
-        <div className="small">
-          <strong>3C Mall AI:</strong> Your preferences stay on-device (Alpha). Cloud sync + advanced AI comes later (Beta). Low Data Mode keeps everything local.
+      {/* SCROLLABLE BODY */}
+      <div className="concierge-body">
+        <div className="card glass" style={{ marginTop: ".7rem" }}>
+          <div className="small">
+            <strong>3C Mall AI:</strong> Your preferences stay on-device (Alpha). Cloud sync + advanced AI comes later (Beta). Low Data Mode keeps everything local.
         </div>
 
         <div className="nav-row" style={{ marginTop: ".65rem" }}>
@@ -242,6 +244,7 @@ export default function ConciergeHub({ minimized, onMinimize, onExpand, onClose 
           <button className="btn btn-secondary" onClick={() => chooseFocus("community")}>Community</button>
         </div>
       </div>
+      </div> {/* End concierge-body */}
     </div>
   );
 }
