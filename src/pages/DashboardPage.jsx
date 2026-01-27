@@ -8,7 +8,6 @@ import ConciergeOverlay from "../assets/components/ConciergeOverlay.jsx";
 import GuidedAssistOverlay from "../assets/components/GuidedAssistOverlay.jsx";
 import SettingsModal from "../assets/components/SettingsModal.jsx";
 import OnboardingGate from "../assets/components/OnboardingGate.jsx";
-import OnboardingTutorial, { TUTORIAL_SEEN_KEY } from "../assets/components/OnboardingTutorial.jsx";
 import ConciergeIntro from "../assets/components/ConciergeIntro.jsx";
 import VideoIntro, { VIDEO_INTRO_SEEN_KEY } from "../assets/components/VideoIntro.jsx";
 import { readJSON, writeJSON } from "../utils/Storage";
@@ -69,9 +68,6 @@ export default function DashboardPage() {
     const hasSeenIntro = readJSON(VIDEO_INTRO_SEEN_KEY, null);
     return !hasSeenIntro; // Show if never seen
   });
-
-  // Onboarding Tutorial (animated intro) - DEPRECATED in favor of Video Intro
-  const [showTutorial, setShowTutorial] = useState(false);
 
   // Concierge Intro on first run (after Video Intro)
   const [introOpen, setIntroOpen] = useState(() => {
@@ -271,18 +267,9 @@ export default function DashboardPage() {
         }}
       />
 
-      {/* ONBOARDING TUTORIAL - DEPRECATED (kept for compatibility) */}
-      <OnboardingTutorial
-        open={showTutorial}
-        onComplete={() => {
-          setShowTutorial(false);
-          // Proceed to name entry (OnboardingGate will show because isFirstTime is still true)
-        }}
-      />
-
       {/* ONBOARDING GATE - force name entry on first use (after Video Intro) */}
       <OnboardingGate
-        open={isFirstTime && !showVideoIntro && !showTutorial}
+        open={isFirstTime && !showVideoIntro}
         onClose={() => {
           setIntroOpen(false);
           // After profile creation, redirect to map
