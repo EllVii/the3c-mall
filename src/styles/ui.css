@@ -771,6 +771,25 @@ html, body, #root,
   color: #fff;
   box-shadow: 0 18px 44px rgba(0,0,0,.45);
   cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.cc-pill-floating {
+  animation: float-concierge 3s ease-in-out infinite;
+}
+
+.cc-pill:hover {
+  transform: scale(1.05);
+  box-shadow: 0 24px 56px rgba(0,0,0,.6);
+}
+
+@keyframes float-concierge {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
 }
 
 .cc-pill-badge{

@@ -33,6 +33,7 @@ import PTModePage from "./pages/PTModePage.jsx";
 import SettingsPage from "./pages/SettingsPage.jsx";
 import Cancel from "./pages/Cancel.jsx";
 import UserProfilePage from "./pages/UserProfilePage.jsx";
+import ProfilePage from "./pages/ProfilePage.jsx";
 
 // Onboarding & navigation
 import MapHomeScreen from "./assets/components/MapHomeScreen.jsx";
@@ -141,7 +142,8 @@ function AppContent() {
         >
           <Route index element={<DashboardPage />} />
           <Route path="map" element={<MapHomeScreen />} />
-          <Route path="profile" element={<UserProfilePage />} />
+          <Route path="profile" element={<ProfilePage />} />
+          <Route path="user-profile" element={<UserProfilePage />} />
           <Route path="meal-planner" element={<MealPlannerPage />} />
           <Route path="meal-plans" element={<Navigate to="/app/meal-planner" replace />} />
           <Route path="grocery-lab" element={<GroceryLabPage />} />

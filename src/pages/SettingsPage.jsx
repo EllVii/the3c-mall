@@ -63,34 +63,6 @@ export default function SettingsPage() {
     nav("/app");
   }
 
-  // Dev reset function
-  const handleDevReset = () => {
-    const isDev = import.meta.env.MODE === 'development';
-    if (!isDev) return;
-
-    const LAST_RESET_KEY = "dev.lastOnboardingReset";
-    const COOLDOWN_MS = 30 * 60 * 1000; // 30 minutes
-
-    const lastReset = parseInt(localStorage.getItem(LAST_RESET_KEY) || "0", 10);
-    const now = Date.now();
-    const timeSinceReset = now - lastReset;
-
-    if (timeSinceReset < COOLDOWN_MS) {
-      const minutesLeft = Math.ceil((COOLDOWN_MS - timeSinceReset) / 60000);
-      alert(`DEV: Onboarding reset is on cooldown. Wait ${minutesLeft} more minute(s).`);
-      return;
-    }
-
-    const confirm = window.confirm("DEV MODE: Reset onboarding and clear profile?\n\nThis will:\n- Clear your name and preferences\n- Show the welcome screen again\n- Allow re-entering all info\n\nCooldown: 30 minutes");
-    
-    if (confirm) {
-      localStorage.removeItem("concierge.profile.v1");
-      localStorage.removeItem("grocery.strategy.v1");
-      localStorage.setItem(LAST_RESET_KEY, now.toString());
-      window.location.reload();
-    }
-  };
-
   return (
     <section className="page settings-page">
       <header className="settings-header">
@@ -172,20 +144,6 @@ export default function SettingsPage() {
           <button className="btn btn-primary" onClick={handleRerunTour}>
             Re-run Guided Tour
           </button>
-          <button 
-            className="btn btn-secondary" 
-            onClick={() => {
-              localStorage.removeItem("videoIntro.seen.v1");
-              localStorage.removeItem("concierge.profile.v1");
-              nav("/app");
-              window.location.reload();
-            }}
-          >
-            Replay Video Intro
-          </button>
-          <p className="small" style={{ marginTop: "0.5rem", opacity: 0.7, fontStyle: "italic" }}>
-            Note: Replaying the Red Carpet intro will reset your onboarding state.
-          </p>
         </div>
       </div>
 
@@ -288,26 +246,6 @@ export default function SettingsPage() {
           This page, the background, and all cards update instantly when you switch themes.
         </p>
       </div>
-
-      {/* DEV RESET BUTTON - only shows in development mode */}
-      {import.meta.env.MODE === 'development' && (
-        <div className="card glass settings-block" style={{ marginTop: "2rem", borderColor: "rgba(255, 107, 143, 0.35)", background: "rgba(255, 107, 143, 0.05)" }}>
-          <h3 className="settings-h3" style={{ color: "#ff6b8f" }}>🔧 Developer Reset</h3>
-          <p className="small">Clear onboarding and profile to test the initial flow again. 30-minute cooldown applies.</p>
-
-          <button
-            className="btn btn-secondary"
-            onClick={handleDevReset}
-            style={{
-              marginTop: ".75rem",
-              borderColor: "rgba(255, 107, 143, 0.50)",
-              color: "#ff6b8f",
-            }}
-          >
-            Reset Onboarding & Profile
-          </button>
-        </div>
-      )}
     </section>
   );
 }

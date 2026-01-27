@@ -1,5 +1,8 @@
 // src/assets/components/ConciergeOverlay.jsx
-import React, { useMemo } from "react";
+import React, { useMemo, useState, useEffect } from "react";
+import { readJSON } from "../../utils/Storage";
+
+const CONCIERGE_HIDDEN_KEY = "concierge.hidden.v1";
 
 export default function ConciergeOverlay({
   open,
@@ -14,17 +17,43 @@ export default function ConciergeOverlay({
   userName = null,
 }) {
   const visible = open && !minimized;
+  
+  // Check if concierge is hidden from profile settings
+  const [isHidden, setIsHidden] = useState(() => readJSON(CONCIERGE_HIDDEN_KEY, false));
+  
+  // Listen for storage changes to update hide/show state
+  useEffect(() => {
+    const handleStorageChange = () => {
+      setIsHidden(readJSON(CONCIERGE_HIDDEN_KEY, false));
+    };
+    
+    window.addEventListener("storage", handleStorageChange);
+    // Check periodically for same-tab changes
+    const interval = setInterval(handleStorageChange, 500);
+    
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      clearInterval(interval);
+    };
+  }, []);
 
   // Feng shui: never exceed 6 visible actions
   const safeOptions = useMemo(() => options.slice(0, 6), [options]);
 
   /* ============================
-     MINIMIZED STATE (PILL)
+     HIDDEN STATE - Don't show anything
+     ============================ */
+  if (isHidden) {
+    return null;
+  }
+
+  /* ============================
+     MINIMIZED STATE (FLOATING PILL)
      ============================ */
   if (!visible) {
     return (
       <button
-        className="cc-pill"
+        className="cc-pill cc-pill-floating"
         onClick={onOpen}
         aria-label="Open Concierge"
         type="button"

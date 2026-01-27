@@ -169,23 +169,7 @@ export default function UserProfilePage() {
                   </div>
                 </button>
 
-                <button
-                  className="settings-option"
-                  onClick={() => {
-                    localStorage.removeItem("videoIntro.seen.v1");
-                    localStorage.removeItem(PROFILE_KEY);
-                    nav("/app");
-                    window.location.reload();
-                  }}
-                >
-                  <span className="settings-option-icon">↻</span>
-                  <div className="settings-option-content">
-                    <div className="settings-option-label">Replay Intro Experience</div>
-                    <div className="settings-option-hint">
-                      See the Red Carpet welcome again
-                    </div>
-                  </div>
-                </button>
+
               </div>
             </div>
           )}
