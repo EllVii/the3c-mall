@@ -37,6 +37,31 @@ export default function RedCarpetIntro({ open, onComplete }) {
 
   return (
     <div className="red-carpet-overlay">
+      {/* Background Video */}
+      <video 
+        className="rc-background-video"
+        autoPlay 
+        muted 
+        playsInline
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+          zIndex: 0,
+          opacity: scene >= 0 ? 0.4 : 0,
+          transition: 'opacity 2s ease',
+          filter: 'contrast(1.15) brightness(1.05) saturate(1.1)',
+          imageRendering: 'crisp-edges',
+          transform: 'translateZ(0)',
+          backfaceVisibility: 'hidden'
+        }}
+      >
+        <source src="/RUIDb230dc15b18c43e88c3dd4db8d70a06f.mp4" type="video/mp4" />
+      </video>
+
       {/* Scene 0-1: Arrival (0-3s) */}
       <div className={`rc-scene rc-arrival ${scene >= 0 ? "active" : ""}`}>
         <div className="rc-building">

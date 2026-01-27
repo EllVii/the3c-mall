@@ -7,69 +7,84 @@ const LAST_DESTINATION_KEY = "lastDestination.v1";
 
 /**
  * The Map Is the Home Screen
- * Luxury is repetition with permission, not force.
+ * Luxury mall directory kiosk interface
  * Users choose their destination — no forced workflows.
  */
 export default function MapHomeScreen() {
   const nav = useNavigate();
   const [lastDestination, setLastDestination] = useState(null);
-  const [selectedNode, setSelectedNode] = useState(null);
+  const [selectedZone, setSelectedZone] = useState(null);
+  const [hoveredZone, setHoveredZone] = useState(null);
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   useEffect(() => {
     const last = readJSON(LAST_DESTINATION_KEY, null);
     setLastDestination(last);
   }, []);
 
-  const destinations = [
+  // Mall zones with their locations and destinations
+  const zones = [
     {
-      id: "grocery-lab",
-      label: "Grocery Lab",
-      route: "/app/grocery-lab",
-      icon: "🛒",
-      color: "rgba(0, 217, 255, 0.15)",
-      position: { top: "20%", left: "50%" },
+      id: "north-wing",
+      name: "North Wing",
+      section: "NORTH",
+      stores: [
+        { id: "grocery-lab", label: "Grocery Stores", icon: "🛒", route: "/app/grocery-lab" },
+      ],
     },
     {
-      id: "meal-planner",
-      label: "Meal Planning",
-      route: "/app/meal-planner",
-      icon: "🍽️",
-      color: "rgba(255, 187, 0, 0.15)",
-      position: { top: "50%", right: "15%" },
+      id: "east-wing",
+      name: "East Wing",
+      section: "EAST",
+      stores: [
+        { id: "meal-planner", label: "Meal Planning", icon: "🍽️", route: "/app/meal-planner" },
+      ],
     },
     {
-      id: "fitness",
-      label: "Workout",
-      route: "/app/fitness",
-      icon: "💪",
-      color: "rgba(126, 224, 255, 0.15)",
-      position: { top: "50%", left: "15%" },
+      id: "west-wing",
+      name: "West Wing",
+      section: "WEST",
+      stores: [
+        { id: "fitness", label: "Fitness Zone", icon: "💪", route: "/app/fitness" },
+      ],
     },
     {
-      id: "community",
-      label: "Community",
-      route: "/app/community",
-      icon: "👥",
-      color: "rgba(178, 102, 255, 0.15)",
-      position: { bottom: "20%", left: "50%" },
+      id: "south-wing",
+      name: "South Wing",
+      section: "SOUTH",
+      stores: [
+        { id: "community", label: "Community", icon: "👥", route: "/app/community" },
+      ],
     },
   ];
 
-  const handleDestinationClick = (dest) => {
-    setSelectedNode(dest.id);
+  // Flatten all stores for quick access
+  const allStores = zones.flatMap(zone => 
+    zone.stores.map(store => ({ ...store, zone: zone.id, zoneName: zone.name }))
+  );
+
+  const handleStoreClick = (store) => {
+    setSelectedZone(store.id);
     
     // Save as last destination
     writeJSON(LAST_DESTINATION_KEY, {
-      id: dest.id,
-      label: dest.label,
-      route: dest.route,
+      id: store.id,
+      label: store.label,
+      route: store.route,
       visitedAt: new Date().toISOString(),
     });
 
     // Small delay for visual feedback, then navigate
     setTimeout(() => {
-      nav(dest.route);
+      nav(store.route);
     }, 400);
+  };
+
+  const handleZoneClick = (zone) => {
+    // If zone has only one store, go directly there
+    if (zone.stores.length === 1) {
+      handleStoreClick(zone.stores[0]);
+    }
   };
 
   const handleContinue = () => {
@@ -78,11 +93,15 @@ export default function MapHomeScreen() {
     }
   };
 
+  const isStoreLastVisited = (storeId) => {
+    return lastDestination?.id === storeId;
+  };
+
   return (
     <div className="map-home-screen">
       {/* Subtle top bar with profile access */}
       <div className="map-header">
-        <div className="map-brand">3C Mall</div>
+        <div className="map-brand">3C MALL</div>
         <button 
           className="map-profile-btn"
           onClick={() => nav("/app/profile")}
@@ -92,38 +111,109 @@ export default function MapHomeScreen() {
         </button>
       </div>
 
-      {/* Main map container */}
+      {/* Main mall directory container */}
       <div className="map-container">
-        <div className="map-canvas">
-          {destinations.map((dest) => (
-            <button
-              key={dest.id}
-              className={`map-node ${selectedNode === dest.id ? "selected" : ""} ${
-                lastDestination?.id === dest.id ? "last-visited" : ""
-              }`}
-              style={{
-                ...dest.position,
-                background: dest.color,
-              }}
-              onClick={() => handleDestinationClick(dest)}
-              aria-label={`Navigate to ${dest.label}`}
-            >
-              <span className="map-node-icon">{dest.icon}</span>
-              <span className="map-node-label">{dest.label}</span>
-              {lastDestination?.id === dest.id && (
-                <span className="map-node-badge">Last</span>
-              )}
-            </button>
-          ))}
+        <div className="directory-kiosk">
+          {/* Directory Header */}
+          <div className="directory-header">
+            <div className="directory-title">DIRECTORY</div>
+          </div>
 
-          {/* Connection lines (subtle) */}
-          <svg className="map-connections" viewBox="0 0 100 100" preserveAspectRatio="none">
-            <line x1="50" y1="20" x2="15" y2="50" stroke="rgba(255, 215, 0, 0.1)" strokeWidth="0.5" />
-            <line x1="50" y1="20" x2="85" y2="50" stroke="rgba(255, 215, 0, 0.1)" strokeWidth="0.5" />
-            <line x1="50" y1="20" x2="50" y2="80" stroke="rgba(255, 215, 0, 0.1)" strokeWidth="0.5" />
-            <line x1="15" y1="50" x2="50" y2="80" stroke="rgba(255, 215, 0, 0.1)" strokeWidth="0.5" />
-            <line x1="85" y1="50" x2="50" y2="80" stroke="rgba(255, 215, 0, 0.1)" strokeWidth="0.5" />
-          </svg>
+          {/* Mall Floor Plan (3D isometric style) */}
+          <div className="directory-display" style={{
+            backgroundImage: imageLoaded ? 'url(/RUIDd533a251cbb24608833e7205326c34bd.png)' : 'none',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+            position: 'relative'
+          }}>
+            {/* Preload image */}
+            <img 
+              src="/RUIDd533a251cbb24608833e7205326c34bd.png" 
+              alt=""
+              onLoad={() => setImageLoaded(true)}
+              style={{ display: 'none' }}
+            />
+            
+            {/* Overlay for better text readability */}
+            <div style={{
+              position: 'absolute',
+              inset: 0,
+              background: 'linear-gradient(135deg, rgba(15, 15, 15, 0.85) 0%, rgba(26, 26, 26, 0.75) 100%)',
+              zIndex: 0
+            }} />
+            
+            <div className="floor-plan">
+              {/* North Wing - Top */}
+              <div 
+                className={`floor-wing floor-north ${hoveredZone === 'north-wing' ? 'hovered' : ''}`}
+                onClick={() => handleZoneClick(zones[0])}
+                onMouseEnter={() => setHoveredZone('north-wing')}
+                onMouseLeave={() => setHoveredZone(null)}
+              >
+                <div className="wing-zone-label">GROCERY STORES</div>
+                <div className="wing-icon">🛒</div>
+                {isStoreLastVisited('grocery-lab') && <div className="wing-indicator">●</div>}
+              </div>
+
+              {/* West Wing - Left */}
+              <div 
+                className={`floor-wing floor-west ${hoveredZone === 'west-wing' ? 'hovered' : ''}`}
+                onClick={() => handleZoneClick(zones[2])}
+                onMouseEnter={() => setHoveredZone('west-wing')}
+                onMouseLeave={() => setHoveredZone(null)}
+              >
+                <div className="wing-zone-label">FITNESS ZONE</div>
+                <div className="wing-icon">💪</div>
+                {isStoreLastVisited('fitness') && <div className="wing-indicator">●</div>}
+              </div>
+
+              {/* Center Atrium */}
+              <div className="floor-center">
+                <div className="center-icon">✦</div>
+                <div className="center-label">YOU ARE HERE</div>
+              </div>
+
+              {/* East Wing - Right */}
+              <div 
+                className={`floor-wing floor-east ${hoveredZone === 'east-wing' ? 'hovered' : ''}`}
+                onClick={() => handleZoneClick(zones[1])}
+                onMouseEnter={() => setHoveredZone('east-wing')}
+                onMouseLeave={() => setHoveredZone(null)}
+              >
+                <div className="wing-zone-label">MEAL PLANNING</div>
+                <div className="wing-icon">🍽️</div>
+                {isStoreLastVisited('meal-planner') && <div className="wing-indicator">●</div>}
+              </div>
+
+              {/* South Wing - Bottom */}
+              <div 
+                className={`floor-wing floor-south ${hoveredZone === 'south-wing' ? 'hovered' : ''}`}
+                onClick={() => handleZoneClick(zones[3])}
+                onMouseEnter={() => setHoveredZone('south-wing')}
+                onMouseLeave={() => setHoveredZone(null)}
+              >
+                <div className="wing-zone-label">COMMUNITY</div>
+                <div className="wing-icon">👥</div>
+                {isStoreLastVisited('community') && <div className="wing-indicator">●</div>}
+              </div>
+            </div>
+          </div>
+
+          {/* Directory Navigation Buttons */}
+          <div className="directory-nav">
+            {allStores.map((store) => (
+              <button
+                key={store.id}
+                className={`directory-btn ${isStoreLastVisited(store.id) ? 'active' : ''} ${selectedZone === store.id ? 'selected' : ''}`}
+                onClick={() => handleStoreClick(store)}
+              >
+                <span className="btn-icon">{store.icon}</span>
+                <span className="btn-label">{store.label}</span>
+                {isStoreLastVisited(store.id) && <span className="btn-indicator">●</span>}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -131,7 +221,7 @@ export default function MapHomeScreen() {
       <div className="map-footer">
         {lastDestination && (
           <button
-            className="map-action-btn map-continue-btn"
+            className="map-action-btn"
             onClick={handleContinue}
           >
             Continue where I left off
@@ -149,7 +239,7 @@ export default function MapHomeScreen() {
           left: 0;
           width: 100vw;
           height: 100vh;
-          background: linear-gradient(180deg, #0a0a0a 0%, #1a1a1a 100%);
+          background: linear-gradient(180deg, #f5f5f5 0%, #e8e8e8 100%);
           display: flex;
           flex-direction: column;
           overflow: hidden;
@@ -160,19 +250,21 @@ export default function MapHomeScreen() {
           justify-content: space-between;
           align-items: center;
           padding: 1.5rem 2rem;
-          border-bottom: 1px solid rgba(255, 215, 0, 0.1);
+          background: rgba(0, 0, 0, 0.85);
+          border-bottom: 2px solid #d4af37;
         }
 
         .map-brand {
           font-size: 1.25rem;
           font-weight: 700;
-          color: var(--gold, #ffd700);
-          letter-spacing: 0.5px;
+          color: #d4af37;
+          letter-spacing: 2px;
+          text-transform: uppercase;
         }
 
         .map-profile-btn {
-          background: rgba(255, 215, 0, 0.1);
-          border: 1px solid rgba(255, 215, 0, 0.3);
+          background: rgba(212, 175, 55, 0.15);
+          border: 2px solid #d4af37;
           border-radius: 50%;
           width: 44px;
           height: 44px;
@@ -184,8 +276,7 @@ export default function MapHomeScreen() {
         }
 
         .map-profile-btn:hover {
-          background: rgba(255, 215, 0, 0.2);
-          border-color: rgba(255, 215, 0, 0.5);
+          background: rgba(212, 175, 55, 0.3);
           transform: scale(1.05);
         }
 
@@ -200,97 +291,267 @@ export default function MapHomeScreen() {
           justify-content: center;
           padding: 2rem;
           position: relative;
+          overflow-y: auto;
         }
 
-        .map-canvas {
+        /* Directory Kiosk */
+        .directory-kiosk {
+          background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%);
+          border: 4px solid #d4af37;
+          border-radius: 16px;
+          box-shadow: 
+            0 20px 60px rgba(0, 0, 0, 0.5),
+            inset 0 1px 0 rgba(212, 175, 55, 0.5);
+          max-width: 800px;
+          width: 100%;
+          overflow: hidden;
+        }
+
+        .directory-header {
+          background: linear-gradient(180deg, #2a2a2a 0%, #1a1a1a 100%);
+          border-bottom: 3px solid #d4af37;
+          padding: 1.5rem;
+          text-align: center;
           position: relative;
-          width: 100%;
-          max-width: 600px;
-          height: 100%;
-          max-height: 500px;
         }
 
-        .map-connections {
+        .directory-header::before,
+        .directory-header::after {
+          content: '';
           position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          pointer-events: none;
-          z-index: 0;
+          top: 50%;
+          width: 30px;
+          height: 30px;
+          border: 2px solid #d4af37;
+          border-radius: 50%;
+          transform: translateY(-50%);
         }
 
-        .map-node {
+        .directory-header::before {
+          left: 2rem;
+        }
+
+        .directory-header::after {
+          right: 2rem;
+        }
+
+        .directory-title {
+          font-size: 2rem;
+          font-weight: 900;
+          color: #d4af37;
+          letter-spacing: 4px;
+          text-transform: uppercase;
+          text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Display Area */
+        .directory-display {
+          background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%);
+          padding: 2.5rem;
+          min-height: 400px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-bottom: 2px solid rgba(212, 175, 55, 0.3);
+        }
+
+        /* Floor Plan (3D isometric style) */
+        .floor-plan {
+          position: relative;
+          display: grid;
+          grid-template-columns: 140px 180px 140px;
+          grid-template-rows: 100px 180px 100px;
+          gap: 15px;
+          perspective: 1000px;
+        }
+
+        .floor-wing {
+          background: linear-gradient(135deg, rgba(212, 175, 55, 0.1), rgba(212, 175, 55, 0.05));
+          border: 2px solid rgba(212, 175, 55, 0.4);
+          border-radius: 8px;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          position: relative;
+          overflow: hidden;
+          transform-style: preserve-3d;
+        }
+
+        .floor-wing::before {
+          content: '';
           position: absolute;
-          transform: translate(-50%, -50%);
-          width: 120px;
-          height: 120px;
-          border: 2px solid rgba(255, 215, 0, 0.4);
+          inset: 0;
+          background: linear-gradient(135deg, transparent, rgba(212, 175, 55, 0.1));
+          opacity: 0;
+          transition: opacity 0.3s ease;
+        }
+
+        .floor-wing:hover::before {
+          opacity: 1;
+        }
+
+        .floor-wing:hover {
+          border-color: #d4af37;
+          transform: translateY(-4px) scale(1.02);
+          box-shadow: 
+            0 8px 24px rgba(212, 175, 55, 0.4),
+            inset 0 0 30px rgba(212, 175, 55, 0.1);
+        }
+
+        .floor-wing.hovered {
+          border-width: 3px;
+          border-color: #d4af37;
+        }
+
+        .floor-north { grid-column: 2; grid-row: 1; }
+        .floor-west { grid-column: 1; grid-row: 2; }
+        .floor-center { 
+          grid-column: 2; 
+          grid-row: 2;
+          background: radial-gradient(circle, rgba(212, 175, 55, 0.2) 0%, rgba(212, 175, 55, 0.05) 100%);
+          border: 2px solid rgba(212, 175, 55, 0.5);
           border-radius: 50%;
           display: flex;
           flex-direction: column;
           align-items: center;
           justify-content: center;
           gap: 0.5rem;
-          cursor: pointer;
-          transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-          box-shadow: 0 0 30px rgba(255, 215, 0, 0.2);
-          z-index: 1;
-          background-clip: padding-box;
+          pointer-events: none;
+          box-shadow: 0 0 30px rgba(212, 175, 55, 0.3);
         }
+        .floor-east { grid-column: 3; grid-row: 2; }
+        .floor-south { grid-column: 2; grid-row: 3; }
 
-        .map-node:hover {
-          transform: translate(-50%, -50%) scale(1.1);
-          border-color: rgba(255, 215, 0, 0.7);
-          box-shadow: 0 0 50px rgba(255, 215, 0, 0.4);
-        }
-
-        .map-node.selected {
-          transform: translate(-50%, -50%) scale(0.95);
-          border-color: rgba(255, 215, 0, 0.9);
-        }
-
-        .map-node.last-visited {
-          border-width: 3px;
-        }
-
-        .map-node-icon {
-          font-size: 2rem;
-        }
-
-        .map-node-label {
-          font-size: 0.85rem;
-          font-weight: 600;
-          color: rgba(255, 255, 255, 0.9);
+        .wing-zone-label {
+          font-size: 0.7rem;
+          font-weight: 700;
+          color: #d4af37;
+          text-transform: uppercase;
+          letter-spacing: 1px;
           text-align: center;
-          letter-spacing: 0.3px;
+          margin-bottom: 0.25rem;
+          z-index: 1;
         }
 
-        .map-node-badge {
+        .wing-icon {
+          font-size: 1.5rem;
+          z-index: 1;
+        }
+
+        .wing-indicator {
           position: absolute;
           top: 8px;
           right: 8px;
-          background: rgba(255, 215, 0, 0.9);
-          color: #0a0a0a;
-          font-size: 0.65rem;
-          font-weight: 700;
-          padding: 2px 6px;
-          border-radius: 10px;
-          letter-spacing: 0.5px;
+          color: #d4af37;
+          font-size: 1.2rem;
+          animation: pulse 2s ease-in-out infinite;
         }
 
+        .center-icon {
+          font-size: 2rem;
+          color: #d4af37;
+        }
+
+        .center-label {
+          font-size: 0.65rem;
+          font-weight: 700;
+          color: rgba(212, 175, 55, 0.8);
+          text-transform: uppercase;
+          letter-spacing: 1px;
+        }
+
+        /* Directory Navigation Buttons */
+        .directory-nav {
+          background: linear-gradient(180deg, #1a1a1a 0%, #0f0f0f 100%);
+          padding: 1.5rem;
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+          gap: 0.75rem;
+        }
+
+        .directory-btn {
+          background: rgba(212, 175, 55, 0.05);
+          border: 2px solid rgba(212, 175, 55, 0.3);
+          border-radius: 8px;
+          padding: 1rem;
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          position: relative;
+          overflow: hidden;
+        }
+
+        .directory-btn::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(135deg, transparent, rgba(212, 175, 55, 0.1));
+          opacity: 0;
+          transition: opacity 0.3s ease;
+        }
+
+        .directory-btn:hover::before {
+          opacity: 1;
+        }
+
+        .directory-btn:hover {
+          background: rgba(212, 175, 55, 0.15);
+          border-color: rgba(212, 175, 55, 0.6);
+          transform: translateX(4px);
+          box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+        }
+
+        .directory-btn.active {
+          background: rgba(212, 175, 55, 0.2);
+          border-color: #d4af37;
+          box-shadow: 0 0 20px rgba(212, 175, 55, 0.4);
+        }
+
+        .directory-btn.selected {
+          transform: scale(0.98);
+        }
+
+        .btn-icon {
+          font-size: 1.5rem;
+          flex-shrink: 0;
+          z-index: 1;
+        }
+
+        .btn-label {
+          flex: 1;
+          font-size: 0.95rem;
+          font-weight: 600;
+          color: rgba(255, 255, 255, 0.9);
+          text-align: left;
+          z-index: 1;
+        }
+
+        .btn-indicator {
+          color: #d4af37;
+          font-size: 1.2rem;
+          animation: pulse 2s ease-in-out infinite;
+          z-index: 1;
+        }
+
+        /* Footer */
         .map-footer {
-          padding: 1.5rem 2rem 2rem;
+          padding: 1.5rem 2rem;
           display: flex;
           flex-direction: column;
           align-items: center;
           gap: 1rem;
-          border-top: 1px solid rgba(255, 215, 0, 0.1);
+          background: rgba(0, 0, 0, 0.85);
+          border-top: 2px solid #d4af37;
         }
 
         .map-action-btn {
-          background: rgba(255, 215, 0, 0.1);
-          border: 1px solid rgba(255, 215, 0, 0.4);
+          background: rgba(212, 175, 55, 0.15);
+          border: 2px solid #d4af37;
           border-radius: 8px;
           padding: 0.75rem 1.5rem;
           color: rgba(255, 255, 255, 0.9);
@@ -305,9 +566,9 @@ export default function MapHomeScreen() {
         }
 
         .map-action-btn:hover {
-          background: rgba(255, 215, 0, 0.2);
-          border-color: rgba(255, 215, 0, 0.6);
+          background: rgba(212, 175, 55, 0.3);
           transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(212, 175, 55, 0.4);
         }
 
         .action-hint {
@@ -319,9 +580,26 @@ export default function MapHomeScreen() {
         .map-tagline {
           font-size: 1.1rem;
           font-weight: 300;
-          color: rgba(255, 215, 0, 0.8);
-          letter-spacing: 0.5px;
+          color: #d4af37;
+          letter-spacing: 1px;
           text-align: center;
+        }
+
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.5; }
+        }
+
+        @media (max-width: 1024px) {
+          .directory-kiosk {
+            max-width: 600px;
+          }
+
+          .floor-plan {
+            grid-template-columns: 110px 150px 110px;
+            grid-template-rows: 85px 150px 85px;
+            gap: 12px;
+          }
         }
 
         @media (max-width: 768px) {
@@ -330,29 +608,61 @@ export default function MapHomeScreen() {
           }
 
           .map-brand {
-            font-size: 1.1rem;
+            font-size: 1rem;
           }
 
-          .map-canvas {
-            max-width: 400px;
-            max-height: 400px;
+          .map-container {
+            padding: 1rem;
           }
 
-          .map-node {
-            width: 90px;
-            height: 90px;
+          .directory-title {
+            font-size: 1.5rem;
+            letter-spacing: 3px;
           }
 
-          .map-node-icon {
+          .directory-header::before,
+          .directory-header::after {
+            width: 24px;
+            height: 24px;
+          }
+
+          .directory-header::before { left: 1rem; }
+          .directory-header::after { right: 1rem; }
+
+          .directory-display {
+            padding: 1.5rem;
+            min-height: 320px;
+          }
+
+          .floor-plan {
+            grid-template-columns: 90px 130px 90px;
+            grid-template-rows: 75px 130px 75px;
+            gap: 10px;
+          }
+
+          .wing-zone-label {
+            font-size: 0.6rem;
+          }
+
+          .wing-icon {
+            font-size: 1.25rem;
+          }
+
+          .center-icon {
             font-size: 1.5rem;
           }
 
-          .map-node-label {
-            font-size: 0.75rem;
+          .center-label {
+            font-size: 0.55rem;
+          }
+
+          .directory-nav {
+            grid-template-columns: 1fr;
+            padding: 1rem;
           }
 
           .map-footer {
-            padding: 1rem 1.5rem 1.5rem;
+            padding: 1rem 1.5rem;
           }
 
           .map-tagline {
@@ -361,17 +671,41 @@ export default function MapHomeScreen() {
         }
 
         @media (max-width: 480px) {
-          .map-node {
-            width: 75px;
-            height: 75px;
+          .directory-title {
+            font-size: 1.2rem;
+            letter-spacing: 2px;
           }
 
-          .map-node-icon {
-            font-size: 1.3rem;
+          .directory-header::before,
+          .directory-header::after {
+            width: 20px;
+            height: 20px;
           }
 
-          .map-node-label {
-            font-size: 0.7rem;
+          .floor-plan {
+            grid-template-columns: 75px 110px 75px;
+            grid-template-rows: 65px 110px 65px;
+            gap: 8px;
+          }
+
+          .wing-zone-label {
+            font-size: 0.5rem;
+          }
+
+          .wing-icon {
+            font-size: 1rem;
+          }
+
+          .directory-btn {
+            padding: 0.75rem;
+          }
+
+          .btn-icon {
+            font-size: 1.25rem;
+          }
+
+          .btn-label {
+            font-size: 0.85rem;
           }
         }
       `}</style>
