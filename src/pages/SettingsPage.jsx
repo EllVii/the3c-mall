@@ -175,13 +175,13 @@ export default function SettingsPage() {
           <button 
             className="btn btn-secondary" 
             onClick={() => {
-              localStorage.removeItem("redCarpet.seen.v1");
+              localStorage.removeItem("videoIntro.seen.v1");
               localStorage.removeItem("concierge.profile.v1");
               nav("/app");
               window.location.reload();
             }}
           >
-            Replay Red Carpet Intro
+            Replay Video Intro
           </button>
           <p className="small" style={{ marginTop: "0.5rem", opacity: 0.7, fontStyle: "italic" }}>
             Note: Replaying the Red Carpet intro will reset your onboarding state.

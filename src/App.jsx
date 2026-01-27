@@ -34,8 +34,7 @@ import SettingsPage from "./pages/SettingsPage.jsx";
 import Cancel from "./pages/Cancel.jsx";
 import UserProfilePage from "./pages/UserProfilePage.jsx";
 
-// Luxury onboarding & navigation
-import RedCarpetIntro from "./assets/components/RedCarpetIntro.jsx";
+// Onboarding & navigation
 import MapHomeScreen from "./assets/components/MapHomeScreen.jsx";
 
 // App pages (new)

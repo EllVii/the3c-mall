@@ -125,7 +125,10 @@ export default function MapHomeScreen() {
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             backgroundRepeat: 'no-repeat',
-            position: 'relative'
+            position: 'relative',
+            imageRendering: 'auto',
+            WebkitFontSmoothing: 'antialiased',
+            WebkitBackfaceVisibility: 'hidden'
           }}>
             {/* Preload image */}
             <img 
@@ -353,6 +356,9 @@ export default function MapHomeScreen() {
           align-items: center;
           justify-content: center;
           border-bottom: 2px solid rgba(212, 175, 55, 0.3);
+          image-rendering: auto;
+          -webkit-font-smoothing: antialiased;
+          -webkit-backface-visibility: hidden;
         }
 
         /* Floor Plan (3D isometric style) */
@@ -411,8 +417,8 @@ export default function MapHomeScreen() {
         .floor-center { 
           grid-column: 2; 
           grid-row: 2;
-          background: radial-gradient(circle, rgba(212, 175, 55, 0.2) 0%, rgba(212, 175, 55, 0.05) 100%);
-          border: 2px solid rgba(212, 175, 55, 0.5);
+          background: radial-gradient(circle, rgba(212, 175, 55, 0.3) 0%, rgba(212, 175, 55, 0.1) 100%);
+          border: 3px solid #d4af37;
           border-radius: 50%;
           display: flex;
           flex-direction: column;
@@ -420,7 +426,24 @@ export default function MapHomeScreen() {
           justify-content: center;
           gap: 0.5rem;
           pointer-events: none;
-          box-shadow: 0 0 30px rgba(212, 175, 55, 0.3);
+          box-shadow: 0 0 40px rgba(212, 175, 55, 0.5), inset 0 0 20px rgba(212, 175, 55, 0.2);
+          animation: you-are-here-pulse 2s ease-in-out infinite;
+          position: relative;
+        }
+
+        @keyframes you-are-here-pulse {
+          0% {
+            box-shadow: 0 0 40px rgba(212, 175, 55, 0.5), inset 0 0 20px rgba(212, 175, 55, 0.2);
+            transform: scale(1);
+          }
+          50% {
+            box-shadow: 0 0 60px rgba(212, 175, 55, 0.7), inset 0 0 30px rgba(212, 175, 55, 0.3);
+            transform: scale(1.05);
+          }
+          100% {
+            box-shadow: 0 0 40px rgba(212, 175, 55, 0.5), inset 0 0 20px rgba(212, 175, 55, 0.2);
+            transform: scale(1);
+          }
         }
         .floor-east { grid-column: 3; grid-row: 2; }
         .floor-south { grid-column: 2; grid-row: 3; }
@@ -451,16 +474,28 @@ export default function MapHomeScreen() {
         }
 
         .center-icon {
-          font-size: 2rem;
+          font-size: 2.5rem;
           color: #d4af37;
+          animation: pin-bounce 1.5s ease-in-out infinite;
+          filter: drop-shadow(0 0 8px rgba(212, 175, 55, 0.6));
+        }
+
+        @keyframes pin-bounce {
+          0%, 100% {
+            transform: translateY(0);
+          }
+          50% {
+            transform: translateY(-8px);
+          }
         }
 
         .center-label {
-          font-size: 0.65rem;
-          font-weight: 700;
-          color: rgba(212, 175, 55, 0.8);
+          font-size: 0.7rem;
+          font-weight: 800;
+          color: #d4af37;
           text-transform: uppercase;
-          letter-spacing: 1px;
+          letter-spacing: 1.5px;
+          text-shadow: 0 0 10px rgba(212, 175, 55, 0.4);
         }
 
         /* Directory Navigation Buttons */

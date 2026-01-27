@@ -172,7 +172,7 @@ export default function UserProfilePage() {
                 <button
                   className="settings-option"
                   onClick={() => {
-                    localStorage.removeItem("redCarpet.seen.v1");
+                    localStorage.removeItem("videoIntro.seen.v1");
                     localStorage.removeItem(PROFILE_KEY);
                     nav("/app");
                     window.location.reload();
