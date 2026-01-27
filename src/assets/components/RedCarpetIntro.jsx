@@ -50,8 +50,8 @@ export default function RedCarpetIntro({ open, onComplete }) {
           width: '100%',
           height: '100%',
           objectFit: 'cover',
-          zIndex: 0,
-          opacity: scene >= 0 ? 0.4 : 0,
+          zIndex: 1,
+          opacity: scene >= 0 ? 0.85 : 0,
           transition: 'opacity 2s ease',
           filter: 'contrast(1.15) brightness(1.05) saturate(1.1)',
           imageRendering: 'crisp-edges',
@@ -129,15 +129,21 @@ export default function RedCarpetIntro({ open, onComplete }) {
           display: flex;
           align-items: center;
           justify-content: center;
+          z-index: 2;
         }
 
         .rc-scene.active {
-          opacity: 1;
+          opacity: 0.7;
         }
 
         /* Scene 1: Arrival */
         .rc-arrival {
-          background: linear-gradient(180deg, #1a1a1a 0%, #0a0a0a 100%);
+          background: transparent;
+          opacity: 1;
+        }
+
+        .rc-arrival.active {
+          opacity: 0.5;
         }
 
         .rc-building {
@@ -178,7 +184,7 @@ export default function RedCarpetIntro({ open, onComplete }) {
 
         /* Scene 2: Doors Open */
         .rc-doors {
-          background: #0f0f0f;
+          background: transparent;
         }
 
         .rc-door-container {
@@ -236,7 +242,7 @@ export default function RedCarpetIntro({ open, onComplete }) {
 
         /* Scene 3: Unmarked Stores */
         .rc-stores {
-          background: #0a0a0a;
+          background: transparent;
         }
 
         .rc-interior {
@@ -278,7 +284,7 @@ export default function RedCarpetIntro({ open, onComplete }) {
 
         /* Scene 4: Map Reveal */
         .rc-map {
-          background: radial-gradient(circle at center, #1a1a1a 0%, #0a0a0a 100%);
+          background: transparent;
         }
 
         .rc-map-container {
@@ -358,7 +364,7 @@ export default function RedCarpetIntro({ open, onComplete }) {
 
         /* Scene 5: Entry Moment */
         .rc-entry {
-          background: #0a0a0a;
+          background: transparent;
         }
 
         .rc-entry-text {
