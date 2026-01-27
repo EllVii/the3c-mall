@@ -65,11 +65,8 @@ export default function DashboardPage() {
   const [ccMin, setCcMin] = useState(false);
 
   // Red Carpet Intro (luxury first-launch) - shows ONCE on very first visit
-  const [showRedCarpet, setShowRedCarpet] = useState(() => {
-    const hasSeenRedCarpet = readJSON(RED_CARPET_SEEN_KEY, null);
-    const profile = readJSON("concierge.profile.v1", null);
-    return !profile && !hasSeenRedCarpet;
-  });
+  // DISABLED: Temporarily disabled to prevent blocking map/video content
+  const [showRedCarpet, setShowRedCarpet] = useState(false);
 
   // Onboarding Tutorial (animated intro) - DEPRECATED in favor of Red Carpet
   const [showTutorial, setShowTutorial] = useState(false);
@@ -251,12 +248,11 @@ export default function DashboardPage() {
     setCcOpen(false);
   }
 
-  // If user has profile and has seen Red Carpet, redirect to map
+  // If user has profile, redirect to map (skip dashboard entirely)
   useEffect(() => {
     const profile = readJSON("concierge.profile.v1", null);
-    const hasSeenRedCarpet = readJSON(RED_CARPET_SEEN_KEY, null);
     
-    if (profile && hasSeenRedCarpet) {
+    if (profile) {
       // User has completed onboarding, send them to the map
       nav("/app/map", { replace: true });
     }
