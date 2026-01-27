@@ -59,7 +59,7 @@ export default function RedCarpetIntro({ open, onComplete }) {
           backfaceVisibility: 'hidden'
         }}
       >
-        <source src="/RUIDb230dc15b18c43e88c3dd4db8d70a06f.mp4" type="video/mp4" />
+        <source src="/src/assets/videos/groceries.mp4" type="video/mp4" />
       </video>
 
       {/* Scene 0-1: Arrival (0-3s) */}
@@ -114,8 +114,9 @@ export default function RedCarpetIntro({ open, onComplete }) {
           width: 100vw;
           height: 100vh;
           background: #0a0a0a;
-          z-index: 10000;
+          z-index: 9999;
           overflow: hidden;
+          pointer-events: auto;
         }
 
         .rc-scene {
