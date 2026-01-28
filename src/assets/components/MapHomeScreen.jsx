@@ -149,7 +149,7 @@ export default function MapHomeScreen() {
             <div className="floor-plan">
               {/* North Wing - Top */}
               <div 
-                className={`floor-wing floor-north ${hoveredZone === 'north-wing' ? 'hovered' : ''}`}
+                className={`floor-wing floor-north ${hoveredZone === 'north-wing' ? 'hovered' : ''} ${selectedZone === 'grocery-lab' ? 'selected' : ''}`}
                 onClick={() => handleZoneClick(zones[0])}
                 onMouseEnter={() => setHoveredZone('north-wing')}
                 onMouseLeave={() => setHoveredZone(null)}
@@ -161,7 +161,7 @@ export default function MapHomeScreen() {
 
               {/* West Wing - Left */}
               <div 
-                className={`floor-wing floor-west ${hoveredZone === 'west-wing' ? 'hovered' : ''}`}
+                className={`floor-wing floor-west ${hoveredZone === 'west-wing' ? 'hovered' : ''} ${selectedZone === 'fitness' ? 'selected' : ''}`}
                 onClick={() => handleZoneClick(zones[2])}
                 onMouseEnter={() => setHoveredZone('west-wing')}
                 onMouseLeave={() => setHoveredZone(null)}
@@ -179,7 +179,7 @@ export default function MapHomeScreen() {
 
               {/* East Wing - Right */}
               <div 
-                className={`floor-wing floor-east ${hoveredZone === 'east-wing' ? 'hovered' : ''}`}
+                className={`floor-wing floor-east ${hoveredZone === 'east-wing' ? 'hovered' : ''} ${selectedZone === 'meal-planner' ? 'selected' : ''}`}
                 onClick={() => handleZoneClick(zones[1])}
                 onMouseEnter={() => setHoveredZone('east-wing')}
                 onMouseLeave={() => setHoveredZone(null)}
@@ -191,7 +191,7 @@ export default function MapHomeScreen() {
 
               {/* South Wing - Bottom */}
               <div 
-                className={`floor-wing floor-south ${hoveredZone === 'south-wing' ? 'hovered' : ''}`}
+                className={`floor-wing floor-south ${hoveredZone === 'south-wing' ? 'hovered' : ''} ${selectedZone === 'community' ? 'selected' : ''}`}
                 onClick={() => handleZoneClick(zones[3])}
                 onMouseEnter={() => setHoveredZone('south-wing')}
                 onMouseLeave={() => setHoveredZone(null)}
@@ -232,7 +232,7 @@ export default function MapHomeScreen() {
           </button>
         )}
         
-        <div className="map-tagline">Choose your destination.</div>
+        <div className="map-tagline">Choose your directory.</div>
       </div>
 
       <style>{`
@@ -361,38 +361,43 @@ export default function MapHomeScreen() {
           -webkit-backface-visibility: hidden;
         }
 
-        /* Floor Plan (3D isometric style) */
+        /* Floor Plan (Circular layout) */
         .floor-plan {
           position: relative;
-          display: grid;
-          grid-template-columns: 140px 180px 140px;
-          grid-template-rows: 100px 180px 100px;
-          gap: 15px;
+          width: 450px;
+          height: 450px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
           perspective: 1000px;
         }
 
         .floor-wing {
-          background: linear-gradient(135deg, rgba(212, 175, 55, 0.1), rgba(212, 175, 55, 0.05));
+          width: 120px;
+          height: 120px;
+          background: linear-gradient(135deg, rgba(212, 175, 55, 0.15), rgba(212, 175, 55, 0.08));
           border: 2px solid rgba(212, 175, 55, 0.4);
-          border-radius: 8px;
+          border-radius: 50%;
           cursor: pointer;
           transition: all 0.3s ease;
           display: flex;
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          position: relative;
+          position: absolute;
           overflow: hidden;
           transform-style: preserve-3d;
+          box-shadow: 0 0 20px rgba(212, 175, 55, 0.2);
         }
 
         .floor-wing::before {
           content: '';
           position: absolute;
           inset: 0;
-          background: linear-gradient(135deg, transparent, rgba(212, 175, 55, 0.1));
+          background: radial-gradient(circle, transparent, rgba(212, 175, 55, 0.1));
           opacity: 0;
           transition: opacity 0.3s ease;
+          border-radius: 50%;
         }
 
         .floor-wing:hover::before {
@@ -401,23 +406,51 @@ export default function MapHomeScreen() {
 
         .floor-wing:hover {
           border-color: #d4af37;
-          transform: translateY(-4px) scale(1.02);
+          transform: scale(1.12);
           box-shadow: 
-            0 8px 24px rgba(212, 175, 55, 0.4),
-            inset 0 0 30px rgba(212, 175, 55, 0.1);
+            0 0 40px rgba(212, 175, 55, 0.6),
+            inset 0 0 30px rgba(212, 175, 55, 0.2);
         }
 
         .floor-wing.hovered {
           border-width: 3px;
           border-color: #d4af37;
+          transform: scale(1.1);
         }
 
-        .floor-north { grid-column: 2; grid-row: 1; }
-        .floor-west { grid-column: 1; grid-row: 2; }
+        .floor-wing.selected {
+          animation: wing-pulse 0.6s ease-out;
+        }
+
+        @keyframes wing-pulse {
+          0% {
+            transform: scale(1);
+            box-shadow: 0 0 20px rgba(212, 175, 55, 0.2);
+          }
+          50% {
+            transform: scale(1.2);
+            box-shadow: 0 0 60px rgba(212, 175, 55, 0.8), inset 0 0 30px rgba(212, 175, 55, 0.3);
+          }
+          100% {
+            transform: scale(1);
+            box-shadow: 0 0 40px rgba(212, 175, 55, 0.5);
+          }
+        }
+
+        .floor-north { 
+          top: 0;
+          left: 50%;
+          transform: translateX(-50%);
+        }
+        .floor-west { 
+          left: 0;
+          top: 50%;
+          transform: translateY(-50%);
+        }
         .floor-center { 
-          grid-column: 2; 
-          grid-row: 2;
-          background: radial-gradient(circle, rgba(212, 175, 55, 0.3) 0%, rgba(212, 175, 55, 0.1) 100%);
+          width: 150px;
+          height: 150px;
+          background: radial-gradient(circle, rgba(212, 175, 55, 0.25) 0%, rgba(212, 175, 55, 0.08) 100%);
           border: 3px solid #d4af37;
           border-radius: 50%;
           display: flex;
@@ -426,27 +459,36 @@ export default function MapHomeScreen() {
           justify-content: center;
           gap: 0.5rem;
           pointer-events: none;
-          box-shadow: 0 0 40px rgba(212, 175, 55, 0.5), inset 0 0 20px rgba(212, 175, 55, 0.2);
-          animation: you-are-here-pulse 2s ease-in-out infinite;
+          box-shadow: 0 0 50px rgba(212, 175, 55, 0.6), inset 0 0 25px rgba(212, 175, 55, 0.25);
+          animation: you-are-here-pulse 2.5s ease-in-out infinite;
           position: relative;
+          z-index: 2;
         }
 
         @keyframes you-are-here-pulse {
           0% {
-            box-shadow: 0 0 40px rgba(212, 175, 55, 0.5), inset 0 0 20px rgba(212, 175, 55, 0.2);
+            box-shadow: 0 0 50px rgba(212, 175, 55, 0.6), inset 0 0 25px rgba(212, 175, 55, 0.25);
             transform: scale(1);
           }
           50% {
-            box-shadow: 0 0 60px rgba(212, 175, 55, 0.7), inset 0 0 30px rgba(212, 175, 55, 0.3);
-            transform: scale(1.05);
+            box-shadow: 0 0 80px rgba(212, 175, 55, 0.8), inset 0 0 40px rgba(212, 175, 55, 0.4);
+            transform: scale(1.08);
           }
           100% {
-            box-shadow: 0 0 40px rgba(212, 175, 55, 0.5), inset 0 0 20px rgba(212, 175, 55, 0.2);
+            box-shadow: 0 0 50px rgba(212, 175, 55, 0.6), inset 0 0 25px rgba(212, 175, 55, 0.25);
             transform: scale(1);
           }
         }
-        .floor-east { grid-column: 3; grid-row: 2; }
-        .floor-south { grid-column: 2; grid-row: 3; }
+        .floor-east { 
+          right: 0;
+          top: 50%;
+          transform: translateY(-50%);
+        }
+        .floor-south { 
+          bottom: 0;
+          left: 50%;
+          transform: translateX(-50%);
+        }
 
         .wing-zone-label {
           font-size: 0.7rem;
@@ -631,9 +673,13 @@ export default function MapHomeScreen() {
           }
 
           .floor-plan {
-            grid-template-columns: 110px 150px 110px;
-            grid-template-rows: 85px 150px 85px;
-            gap: 12px;
+            width: 380px;
+            height: 380px;
+          }
+
+          .floor-wing {
+            width: 100px;
+            height: 100px;
           }
         }
 
@@ -670,9 +716,13 @@ export default function MapHomeScreen() {
           }
 
           .floor-plan {
-            grid-template-columns: 90px 130px 90px;
-            grid-template-rows: 75px 130px 75px;
-            gap: 10px;
+            width: 320px;
+            height: 320px;
+          }
+
+          .floor-wing {
+            width: 90px;
+            height: 90px;
           }
 
           .wing-zone-label {
@@ -681,6 +731,11 @@ export default function MapHomeScreen() {
 
           .wing-icon {
             font-size: 1.25rem;
+          }
+
+          .floor-center {
+            width: 130px;
+            height: 130px;
           }
 
           .center-icon {
@@ -718,9 +773,13 @@ export default function MapHomeScreen() {
           }
 
           .floor-plan {
-            grid-template-columns: 75px 110px 75px;
-            grid-template-rows: 65px 110px 65px;
-            gap: 8px;
+            width: 260px;
+            height: 260px;
+          }
+
+          .floor-wing {
+            width: 75px;
+            height: 75px;
           }
 
           .wing-zone-label {
@@ -729,6 +788,11 @@ export default function MapHomeScreen() {
 
           .wing-icon {
             font-size: 1rem;
+          }
+
+          .floor-center {
+            width: 110px;
+            height: 110px;
           }
 
           .directory-btn {
