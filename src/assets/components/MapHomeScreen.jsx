@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { readJSON, writeJSON } from "../../utils/Storage";
+import VideoIntro, { VIDEO_INTRO_SEEN_KEY } from "./VideoIntro.jsx";
 
 const LAST_DESTINATION_KEY = "lastDestination.v1";
 
@@ -9,6 +10,7 @@ const LAST_DESTINATION_KEY = "lastDestination.v1";
  * The Map Is the Home Screen
  * Luxury mall directory kiosk interface
  * Users choose their destination — no forced workflows.
+ * VideoIntro is the main entry point before the directory.
  */
 export default function MapHomeScreen() {
   const nav = useNavigate();
@@ -16,6 +18,10 @@ export default function MapHomeScreen() {
   const [selectedZone, setSelectedZone] = useState(null);
   const [hoveredZone, setHoveredZone] = useState(null);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [showVideoIntro, setShowVideoIntro] = useState(() => {
+    const seen = readJSON(VIDEO_INTRO_SEEN_KEY, null);
+    return !seen;
+  });
 
   useEffect(() => {
     const last = readJSON(LAST_DESTINATION_KEY, null);
@@ -98,7 +104,15 @@ export default function MapHomeScreen() {
   };
 
   return (
-    <div className="map-home-screen">
+    <>
+      {/* Video Intro — Main Entry Experience */}
+      <VideoIntro 
+        open={showVideoIntro}
+        onComplete={() => setShowVideoIntro(false)}
+      />
+
+      {/* Main Directory Screen */}
+      <div className="map-home-screen">
       {/* Subtle top bar with profile access */}
       <div className="map-header">
         <div className="map-brand">3C MALL</div>
@@ -542,11 +556,14 @@ export default function MapHomeScreen() {
 
         /* Directory Navigation Buttons */
         .directory-nav {
-          background: linear-gradient(180deg, #1a1a1a 0%, #0f0f0f 100%);
+          background: 
+            linear-gradient(180deg, rgba(26, 26, 26, 0.92) 0%, rgba(15, 15, 15, 0.92) 100%),
+            url(/RUIDd533a251cbb24608833e7205326c34bd.png) center/cover no-repeat;
           padding: 1.5rem;
           display: grid;
           grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
           gap: 0.75rem;
+          position: relative;
         }
 
         .directory-btn {
@@ -808,6 +825,7 @@ export default function MapHomeScreen() {
           }
         }
       `}</style>
-    </div>
+      </div>
+    </>
   );
 }
