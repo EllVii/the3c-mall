@@ -3,12 +3,20 @@ import React, { useState } from "react";
 import "../styles/LandingPage.css";
 import { reportWaitlistSignup } from "../utils/reportingService";
 import { betaMessaging } from "../utils/betaMessaging";
+import VideoIntro, { VIDEO_INTRO_SEEN_KEY } from "../assets/components/VideoIntro.jsx";
+import { readJSON } from "../utils/Storage";
 
 export default function LandingPage() {
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  
+  // Show video intro on first visit
+  const [showVideoIntro, setShowVideoIntro] = useState(() => {
+    const hasSeenIntro = readJSON(VIDEO_INTRO_SEEN_KEY, null);
+    return !hasSeenIntro; // Show if never seen
+  });
 
   const handleWaitlist = async (e) => {
     e.preventDefault();
@@ -45,6 +53,15 @@ export default function LandingPage() {
 
   return (
     <main className="landing-page">
+      {/* VIDEO INTRO - first-time visitors only (PRE-AUTH) */}
+      <VideoIntro
+        open={showVideoIntro}
+        onComplete={() => {
+          setShowVideoIntro(false);
+          // Video complete - user can now interact with landing page
+        }}
+      />
+      
       {/* Hero Section */}
       <section className="lp-hero">
         <div className="lp-hero-left">

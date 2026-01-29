@@ -9,7 +9,6 @@ import GuidedAssistOverlay from "../assets/components/GuidedAssistOverlay.jsx";
 import SettingsModal from "../assets/components/SettingsModal.jsx";
 import OnboardingGate from "../assets/components/OnboardingGate.jsx";
 import ConciergeIntro from "../assets/components/ConciergeIntro.jsx";
-import VideoIntro, { VIDEO_INTRO_SEEN_KEY } from "../assets/components/VideoIntro.jsx";
 import { readJSON, writeJSON } from "../utils/Storage";
 
 import {
@@ -63,17 +62,10 @@ export default function DashboardPage() {
   const [ccOpen, setCcOpen] = useState(true);
   const [ccMin, setCcMin] = useState(false);
 
-  // Video Intro - shows ONCE on very first visit
-  const [showVideoIntro, setShowVideoIntro] = useState(() => {
-    const hasSeenIntro = readJSON(VIDEO_INTRO_SEEN_KEY, null);
-    return !hasSeenIntro; // Show if never seen
-  });
-
-  // Concierge Intro on first run (after Video Intro)
+  // Concierge Intro on first run (NOTE: Video Intro is now on landing page, pre-auth)
   const [introOpen, setIntroOpen] = useState(() => {
     const profile = readJSON("concierge.profile.v1", null);
-    const hasSeenIntro = readJSON(VIDEO_INTRO_SEEN_KEY, null);
-    return !profile && hasSeenIntro;
+    return !profile; // Show if no profile yet
   });
 
   // Onboarding gate (after Video Intro)
@@ -258,18 +250,9 @@ export default function DashboardPage() {
 
   return (
     <section className="page db-shell">
-      {/* VIDEO INTRO - first-launch experience */}
-      <VideoIntro
-        open={showVideoIntro}
-        onComplete={() => {
-          setShowVideoIntro(false);
-          // After video intro, show onboarding gate for profile creation
-        }}
-      />
-
-      {/* ONBOARDING GATE - force name entry on first use (after Video Intro) */}
+      {/* ONBOARDING GATE - force name entry on first use (Video Intro already shown on landing page) */}
       <OnboardingGate
-        open={isFirstTime && !showVideoIntro}
+        open={isFirstTime}
         onClose={() => {
           setIntroOpen(false);
           // After profile creation, redirect to map
