@@ -112,7 +112,7 @@ export default function VideoIntro({ open, onComplete }) {
           transition: 'opacity 0.3s ease',
         }}
       >
-        <source src="/RUIDb230dc15b18c43e88c3dd4db8d70a06f.mp4" type="video/mp4" />
+        <source src="/brand/RUIDb230dc15b18c43e88c3dd4db8d70a06f.mp4" type="video/mp4" />
         Your browser does not support the video tag.
       </video>
 

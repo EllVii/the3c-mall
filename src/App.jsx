@@ -93,12 +93,19 @@ function AppContent() {
       return;
     }
 
+    // Redirect .com login to .app login
+    if (isDotCom && pathname === "/login") {
+      const target = `https://the3cmall.app/login${window.location.search}${window.location.hash}`;
+      window.location.replace(target);
+      return;
+    }
+
     // Keep login on .app domain (moved from .com to .app)
     // No redirect needed - login stays on .app
 
-    // Redirect .app marketing routes to .com domain
+    // Redirect .app marketing routes to /app on .app domain
     if (isDotApp && marketingRoutes.includes(pathname)) {
-      const target = `https://the3cmall.com${pathname}${window.location.search}${window.location.hash}`;
+      const target = `https://the3cmall.app/app${window.location.search}${window.location.hash}`;
       window.location.replace(target);
       return;
     }
@@ -147,8 +154,9 @@ function AppContent() {
             </ProtectedRoute>
           }
         >
-          <Route index element={<DashboardPage />} />
+          <Route index element={<MapHomeScreen />} />
           <Route path="map" element={<MapHomeScreen />} />
+          <Route path="dashboard" element={<DashboardPage />} />
           <Route path="profile" element={<ProfilePage />} />
           <Route path="user-profile" element={<UserProfilePage />} />
           <Route path="meal-planner" element={<MealPlannerPage />} />
@@ -184,8 +192,8 @@ function AppContent() {
     </div>
   );
 
-  // Apply BetaGate only on .app domain
-  if (isDotApp) {
+  // Apply BetaGate only on .app domain (exclude /login so video intro can show)
+  if (isDotApp && pathname !== "/login") {
     return <BetaGate>{appContent}</BetaGate>;
   }
 

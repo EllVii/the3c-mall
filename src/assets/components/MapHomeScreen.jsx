@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { readJSON, writeJSON } from "../../utils/Storage";
-import VideoIntro, { VIDEO_INTRO_SEEN_KEY } from "./VideoIntro.jsx";
 
 const LAST_DESTINATION_KEY = "lastDestination.v1";
 
@@ -10,7 +9,7 @@ const LAST_DESTINATION_KEY = "lastDestination.v1";
  * The Map Is the Home Screen
  * Luxury mall directory kiosk interface
  * Users choose their destination — no forced workflows.
- * VideoIntro is the main entry point before the directory.
+ * Directory is the main entry point.
  */
 export default function MapHomeScreen() {
   const nav = useNavigate();
@@ -18,10 +17,6 @@ export default function MapHomeScreen() {
   const [selectedZone, setSelectedZone] = useState(null);
   const [hoveredZone, setHoveredZone] = useState(null);
   const [imageLoaded, setImageLoaded] = useState(false);
-  const [showVideoIntro, setShowVideoIntro] = useState(() => {
-    const seen = readJSON(VIDEO_INTRO_SEEN_KEY, null);
-    return !seen;
-  });
 
   useEffect(() => {
     const last = readJSON(LAST_DESTINATION_KEY, null);
@@ -105,12 +100,6 @@ export default function MapHomeScreen() {
 
   return (
     <>
-      {/* Video Intro — Main Entry Experience */}
-      <VideoIntro 
-        open={showVideoIntro}
-        onComplete={() => setShowVideoIntro(false)}
-      />
-
       {/* Main Directory Screen */}
       <div className="map-home-screen">
       {/* Subtle top bar with profile access */}
@@ -135,7 +124,7 @@ export default function MapHomeScreen() {
 
           {/* Mall Floor Plan (3D isometric style) */}
           <div className="directory-display" style={{
-            backgroundImage: imageLoaded ? 'url(/RUIDd533a251cbb24608833e7205326c34bd.png)' : 'none',
+            backgroundImage: imageLoaded ? 'url(/brand/RUIDd533a251cbb24608833e7205326c34bd.png)' : 'none',
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             backgroundRepeat: 'no-repeat',
@@ -146,7 +135,7 @@ export default function MapHomeScreen() {
           }}>
             {/* Preload image */}
             <img 
-              src="/RUIDd533a251cbb24608833e7205326c34bd.png" 
+              src="/brand/RUIDd533a251cbb24608833e7205326c34bd.png" 
               alt=""
               onLoad={() => setImageLoaded(true)}
               style={{ display: 'none' }}
