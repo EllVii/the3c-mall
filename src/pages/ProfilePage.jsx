@@ -90,7 +90,7 @@ export default function ProfilePage() {
   }
 
   const handleBack = () => {
-    nav("/app/map");
+    nav("/app/directory");
   };
 
   const handleSettings = () => {

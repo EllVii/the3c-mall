@@ -251,7 +251,7 @@ export default function DashboardPage() {
     
     if (profile) {
       // User has completed onboarding, send them to the map
-      nav("/app/map", { replace: true });
+      nav("/app/directory", { replace: true });
     }
   }, [nav]);
 
@@ -274,7 +274,7 @@ export default function DashboardPage() {
         onClose={() => {
           setIntroOpen(false);
           // After profile creation, redirect to map
-          nav("/app/map", { replace: true });
+          nav("/app/directory", { replace: true });
         }}
       />
 
