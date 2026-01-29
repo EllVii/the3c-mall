@@ -6,6 +6,7 @@ import { getPrefsSafe, setNavMode, resetOnboarding } from "../utils/prefs";
 import { THEMES, getThemeId, setThemeId, applyTheme } from "../utils/Settings/theme.js";
 import { getDateFormat, setDateFormat, getTimeFormat, setTimeFormat } from "../utils/Settings/dateTime.js";
 import { writeJSON } from "../utils/Storage";
+import { useTutorial } from "../context/TutorialContext.jsx";
 
 /**
  * OPTIONAL SETTINGS MODULES
@@ -18,6 +19,7 @@ import FastingTimer from "../assets/components/FastingTimer.jsx";
 
 export default function SettingsPage() {
   const nav = useNavigate();
+  const { startTutorial } = useTutorial();
 
   const [prefs, setPrefs] = useState(() => getPrefsSafe());
   const [theme, setTheme] = useState(() => getThemeId());
@@ -137,12 +139,15 @@ export default function SettingsPage() {
       <div className="card glass settings-block">
         <h3 className="settings-h3">Experience & Onboarding</h3>
         <p className="small">
-          Re-run the introductory experiences.
+          Re-run the introductory experiences. The Quick Tutorial is a 30-second guided walkthrough of key features.
         </p>
 
         <div className="nav-row" style={{ flexDirection: "column", gap: "10px", alignItems: "stretch" }}>
-          <button className="btn btn-primary" onClick={handleRerunTour}>
-            Re-run Guided Tour
+          <button className="btn btn-primary" onClick={startTutorial}>
+            ▶ Re-run Quick Tutorial (30 sec)
+          </button>
+          <button className="btn btn-secondary" onClick={handleRerunTour}>
+            Re-run Full Onboarding Tour
           </button>
         </div>
       </div>
