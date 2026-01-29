@@ -81,18 +81,17 @@ function AppContent() {
     const isDotCom = host === "the3cmall.com" || host.endsWith(".the3cmall.com");
     const marketingRoutes = ["/", "/features", "/pricing"];
 
+    // Redirect .com /app routes to .app domain
     if (isDotCom && pathname.startsWith("/app")) {
-      const target = `https://the3cmall.com${window.location.search}${window.location.hash}`;
+      const target = `https://the3cmall.app${pathname}${window.location.search}${window.location.hash}`;
       window.location.replace(target);
       return;
     }
 
-    if (isDotCom && pathname === "/login") {
-      const target = `https://the3cmall.com${window.location.search}${window.location.hash}`;
-      window.location.replace(target);
-      return;
-    }
+    // Keep login on .app domain (moved from .com to .app)
+    // No redirect needed - login stays on .app
 
+    // Redirect .app marketing routes to .com domain
     if (isDotApp && marketingRoutes.includes(pathname)) {
       const target = `https://the3cmall.com${pathname}${window.location.search}${window.location.hash}`;
       window.location.replace(target);

@@ -103,18 +103,13 @@ function Login() {
 
         {/* Login Form at Bottom Center */}
         <div className="login-form-container">
-          <div className="login-branding">
-            <h1>3C MALL</h1>
-            <p className="login-tagline">Concierge • Cost • Community</p>
-          </div>
-
           <form
             className="login-form"
             onSubmit={mode === "login" ? handleLogin : handleSignUp}
           >
-            {/* Username (Email) - Above Password */}
+            {/* Email - Above Password */}
             <div className="form-group">
-              <label htmlFor="email">Username (Email)</label>
+              <label htmlFor="email">Email</label>
               <input
                 id="email"
                 type="email"

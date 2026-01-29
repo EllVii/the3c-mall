@@ -9,6 +9,7 @@ import GuidedAssistOverlay from "../assets/components/GuidedAssistOverlay.jsx";
 import SettingsModal from "../assets/components/SettingsModal.jsx";
 import OnboardingGate from "../assets/components/OnboardingGate.jsx";
 import ConciergeIntro from "../assets/components/ConciergeIntro.jsx";
+import VideoIntro, { VIDEO_INTRO_SEEN_KEY } from "../assets/components/VideoIntro.jsx";
 import { readJSON, writeJSON } from "../utils/Storage";
 
 import {
@@ -58,11 +59,17 @@ export default function DashboardPage() {
     return Array.isArray(history) && history.length > 0;
   }, []);
 
+  // Video Intro - shows on first visit to /app
+  const [showVideoIntro, setShowVideoIntro] = useState(() => {
+    const hasSeenIntro = readJSON(VIDEO_INTRO_SEEN_KEY, null);
+    return !hasSeenIntro; // Show if never seen
+  });
+
   // Concierge overlay — OPEN BY DEFAULT
   const [ccOpen, setCcOpen] = useState(true);
   const [ccMin, setCcMin] = useState(false);
 
-  // Concierge Intro on first run (NOTE: Video Intro is now on landing page, pre-auth)
+  // Concierge Intro on first run
   const [introOpen, setIntroOpen] = useState(() => {
     const profile = readJSON("concierge.profile.v1", null);
     return !profile; // Show if no profile yet
@@ -250,6 +257,17 @@ export default function DashboardPage() {
 
   return (
     <section className="page db-shell">
+      {/* VIDEO INTRO - shows on first visit to /app */}
+      {showVideoIntro && (
+        <VideoIntro
+          open={showVideoIntro}
+          onComplete={() => {
+            setShowVideoIntro(false);
+            writeJSON(VIDEO_INTRO_SEEN_KEY, true);
+          }}
+        />
+      )}
+
       {/* ONBOARDING GATE - force name entry on first use (Video Intro already shown on landing page) */}
       <OnboardingGate
         open={isFirstTime}
