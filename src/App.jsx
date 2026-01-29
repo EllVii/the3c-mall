@@ -5,6 +5,10 @@ import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 // Auth
 import { AuthProvider, useAuth } from "./context/AuthContext.jsx";
 
+// Tutorial
+import { TutorialProvider, useTutorial } from "./context/TutorialContext.jsx";
+import QuickTutorial from "./assets/components/QuickTutorial.jsx";
+
 // Beta Gate
 import BetaGate from "./assets/components/BetaGate.jsx";
 
@@ -71,6 +75,7 @@ function ProtectedRoute({ children }) {
 
 function AppContent() {
   const { pathname } = useLocation();
+  const { showTutorial, completeTutorial } = useTutorial();
   const showAlphaChip = import.meta.env.VITE_ALPHA_CHIP !== "0";
   
   // Check if we're on the .app domain
@@ -114,6 +119,9 @@ function AppContent() {
   const appContent = (
     <div className="app-shell">
       {showAlphaChip && <AlphaRouteChip />}
+
+      {/* Quick Tutorial - shows on first load or when triggered from Settings */}
+      <QuickTutorial open={showTutorial} onComplete={completeTutorial} />
 
       <Routes>
         {/* PUBLIC SITE */}
@@ -187,7 +195,9 @@ function AppContent() {
 export default function App() {
   return (
     <AuthProvider>
-      <AppContent />
+      <TutorialProvider>
+        <AppContent />
+      </TutorialProvider>
     </AuthProvider>
   );
 }
