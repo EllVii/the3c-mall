@@ -193,8 +193,8 @@ function AppContent() {
     </div>
   );
 
-  // Apply BetaGate only on .app domain (exclude /login so video intro can show)
-  if (isDotApp && pathname !== "/login") {
+  // Apply BetaGate only on .app domain
+  if (isDotApp) {
     return <BetaGate>{appContent}</BetaGate>;
   }
 

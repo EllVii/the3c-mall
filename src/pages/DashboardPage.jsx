@@ -6,7 +6,6 @@ import "../styles/DashboardPage.css";
 import FeedbackPanel from "../assets/components/FeedbackPanel.jsx";
 import ConciergeOverlay from "../assets/components/ConciergeOverlay.jsx";
 import GuidedAssistOverlay from "../assets/components/GuidedAssistOverlay.jsx";
-import SettingsModal from "../assets/components/SettingsModal.jsx";
 import OnboardingGate from "../assets/components/OnboardingGate.jsx";
 import ConciergeIntro from "../assets/components/ConciergeIntro.jsx";
 import VideoIntro, { VIDEO_INTRO_SEEN_KEY } from "../assets/components/VideoIntro.jsx";
@@ -84,8 +83,6 @@ export default function DashboardPage() {
   // Feedback
   const [feedbackOpen, setFeedbackOpen] = useState(false);
 
-  // Settings Pop-out (modal)
-  const [settingsOpen, setSettingsOpen] = useState(false);
 
   useEffect(() => {
     setPrefsState(getPrefsSafe());
@@ -223,18 +220,12 @@ export default function DashboardPage() {
       { id: "meals", label: "Meal planning", hint: "Fast meal + snack flow", route: "/app/meal-plans" },
       { id: "workout", label: "Training", hint: "Strength + recovery", route: "/app/coming-soon" },
       { id: "community", label: "Community", hint: "Support without pressure", route: "/app/community" },
-      { id: "settings", label: "Settings", hint: "Theme + navigation", route: "__modal__" },
       { id: "explore", label: "Surprise me 🎲", hint: "Explore one zone", route: explorePick.route },
     ],
     [explorePick.route]
   );
 
   function onConciergePick(x) {
-    if (x.id === "settings") {
-      setSettingsOpen(true);
-      return;
-    }
-
     if (x.id === "explore") {
       chooseFocus(explorePick.id);
       nav(explorePick.route);
@@ -329,14 +320,6 @@ export default function DashboardPage() {
           setGaOpen(false);
         }}
         iconText="3C"
-      />
-
-      {/* SETTINGS POP-OUT MODAL */}
-      <SettingsModal
-        open={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
-        prefs={prefs}
-        onChange={(nextPrefs) => setPrefsState(nextPrefs)}
       />
 
       {/* CONTENT */}

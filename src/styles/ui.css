@@ -45,6 +45,7 @@ html.app-mode, body.app-mode{
 /* EXCEPTION: Settings, Pricing, and other scrollable pages need vertical scroll */
 html.app-mode .settings-page,
 html.app-mode .pricing-page,
+html.app-mode .pt-page,
 html.app-mode .pt-dashboard {
   overflow-y: auto !important;
 }

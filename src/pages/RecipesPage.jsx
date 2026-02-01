@@ -113,6 +113,8 @@ export default function RecipesPage() {
   const nav = useNavigate();
   const [query, setQuery] = useState("");
   const [onlyFav, setOnlyFav] = useState(false);
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   const summaries = useMemo(() => loadRecipeSummaries(), []);
   const [list, setList] = useState(summaries);
@@ -123,6 +125,52 @@ export default function RecipesPage() {
       .filter((r) => (onlyFav ? !!r.favorites : true))
       .filter((r) => (!q ? true : (r.title || "").toLowerCase().includes(q)));
   }, [list, query, onlyFav]);
+
+  // Predictive search - generate suggestions as user types
+  const predictiveSuggestions = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q || q.length < 2) return [];
+    
+    // Search in title, description, and ingredient names
+    const matches = list
+      .map((recipe) => {
+        const fullRecipe = loadRecipe(recipe.id);
+        if (!fullRecipe) return null;
+        
+        const titleMatch = (recipe.title || "").toLowerCase().includes(q);
+        const descMatch = (recipe.description || "").toLowerCase().includes(q);
+        const ingredientMatch = fullRecipe.ingredients?.some(ing => 
+          (ing.name || "").toLowerCase().includes(q)
+        );
+        const tagMatch = fullRecipe.lifestyle?.tags?.some(tag => 
+          tag.toLowerCase().includes(q)
+        );
+        
+        if (titleMatch || descMatch || ingredientMatch || tagMatch) {
+          return {
+            ...recipe,
+            matchType: titleMatch ? 'title' : descMatch ? 'description' : ingredientMatch ? 'ingredient' : 'tag',
+            ingredients: fullRecipe.ingredients
+          };
+        }
+        return null;
+      })
+      .filter(Boolean)
+      .slice(0, 5); // Limit to top 5 suggestions
+    
+    return matches;
+  }, [query, list]);
+
+  function handleQueryChange(value) {
+    setQuery(value);
+    setShowSuggestions(value.trim().length >= 2);
+  }
+
+  function selectSuggestion(recipe) {
+    setQuery(recipe.title);
+    setShowSuggestions(false);
+    nav(`/app/recipes/${recipe.id}`);
+  }
 
   function persist(next) {
     setList(next);
@@ -221,16 +269,75 @@ export default function RecipesPage() {
         </button>
       </div>
 
-      <div className="card" style={{ marginTop: "1rem" }}>
+      <div className="card" style={{ marginTop: "1rem", position: "relative" }}>
         <label className="label">Search recipes</label>
         <input
           className="input"
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Type a recipe name…"
+          onChange={(e) => handleQueryChange(e.target.value)}
+          onFocus={() => setShowSuggestions(query.trim().length >= 2)}
+          onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+          placeholder="Search by recipe name, ingredient, or tag…"
         />
+        
+        {/* Predictive Search Suggestions */}
+        {showSuggestions && predictiveSuggestions.length > 0 && (
+          <div style={{
+            position: "absolute",
+            top: "calc(100% - 1rem)",
+            left: "0",
+            right: "0",
+            background: "rgba(20, 20, 20, 0.98)",
+            border: "1px solid rgba(255, 215, 0, 0.3)",
+            borderRadius: "0 0 8px 8px",
+            maxHeight: "300px",
+            overflowY: "auto",
+            zIndex: 100,
+            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.5)"
+          }}>
+            <div style={{ padding: "0.5rem 0" }}>
+              {predictiveSuggestions.map((recipe) => (
+                <button
+                  key={recipe.id}
+                  onClick={() => selectSuggestion(recipe)}
+                  style={{
+                    width: "100%",
+                    padding: "0.75rem 1rem",
+                    background: "transparent",
+                    border: "none",
+                    textAlign: "left",
+                    cursor: "pointer",
+                    color: "var(--text)",
+                    transition: "background 0.2s",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "0.25rem"
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255, 215, 0, 0.1)"}
+                  onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+                >
+                  <div style={{ fontWeight: 600, color: "var(--gold)" }}>
+                    {recipe.title}
+                  </div>
+                  <div style={{ fontSize: "0.85rem", opacity: 0.7 }}>
+                    {recipe.description}
+                  </div>
+                  <div style={{ fontSize: "0.75rem", opacity: 0.5, marginTop: "0.15rem" }}>
+                    Match: {recipe.matchType}
+                    {recipe.matchType === 'ingredient' && recipe.ingredients && (
+                      <span> • {recipe.ingredients.filter(ing => 
+                        ing.name.toLowerCase().includes(query.toLowerCase())
+                      ).map(ing => ing.name).join(', ')}</span>
+                    )}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+        
         <p className="small" style={{ marginTop: ".6rem" }}>
-          Beta: manual recipes. v2: URL import comes later.
+          Predictive search: searches recipe names, ingredients, and tags. v2: URL import coming.
         </p>
       </div>
 

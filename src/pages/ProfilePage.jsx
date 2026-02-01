@@ -2,21 +2,34 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { readJSON, writeJSON } from "../utils/Storage";
+import { useAuth } from "../context/AuthContext.jsx";
 import VideoIntro, { VIDEO_INTRO_SEEN_KEY } from "../assets/components/VideoIntro.jsx";
 import "../styles/ProfilePage.css";
 
 const PROFILE_KEY = "concierge.profile.v1";
 const CONCIERGE_HIDDEN_KEY = "concierge.hidden.v1";
 const ACTIVITY_KEY = "userActivity.v1";
+const PROFILE_IMAGE_KEY = "profile.image.v1";
+
+const AVATAR_PRESETS = {
+  female: ['👩', '👩‍🦰', '👱‍♀️', '👩‍🦱', '🧑‍🦰'],
+  male: ['👨', '👨‍🦰', '👱‍♂️', '👨‍🦱', '🧔'],
+  girl: ['👧', '👧🏻', '👧🏽'],
+  boy: ['👦', '👦🏻', '👦🏽']
+};
 
 export default function ProfilePage() {
   const nav = useNavigate();
+  const { signOut } = useAuth();
   const [profile, setProfile] = useState(() => readJSON(PROFILE_KEY, null));
   const [conciergeHidden, setConciergeHidden] = useState(() => 
     readJSON(CONCIERGE_HIDDEN_KEY, false)
   );
   const [activity, setActivity] = useState(() => readJSON(ACTIVITY_KEY, []));
   const [activeTab, setActiveTab] = useState("overview");
+  const [profileImage, setProfileImage] = useState(() => readJSON(PROFILE_IMAGE_KEY, null));
+  const [showImageUpload, setShowImageUpload] = useState(false);
+  const [uploadMode, setUploadMode] = useState('avatar'); // 'avatar' or 'upload'
 
   // Video Intro - shows on first visit to /app/profile
   const [showVideoIntro, setShowVideoIntro] = useState(() => {
@@ -97,6 +110,70 @@ export default function ProfilePage() {
     nav("/app/settings");
   };
 
+  const handleImageUpload = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file');
+      return;
+    }
+    
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      alert('Image must be smaller than 2MB');
+      return;
+    }
+    
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64String = reader.result;
+      setProfileImage(base64String);
+      writeJSON(PROFILE_IMAGE_KEY, base64String);
+      setShowImageUpload(false);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveImage = () => {
+    if (window.confirm('Remove profile picture?')) {
+      setProfileImage(null);
+      writeJSON(PROFILE_IMAGE_KEY, null);
+    }
+  };
+
+  const handleSelectAvatar = (emoji) => {
+    const avatarData = `avatar:${emoji}`;
+    setProfileImage(avatarData);
+    writeJSON(PROFILE_IMAGE_KEY, avatarData);
+    setShowImageUpload(false);
+  };
+
+  const handleLogout = async () => {
+    if (window.confirm('Are you sure you want to sign out?')) {
+      try {
+        // Sign out from Supabase
+        await signOut();
+        
+        // Clear all localStorage data
+        localStorage.clear();
+        
+        // Redirect to login
+        nav('/login', { replace: true });
+      } catch (error) {
+        console.error('Logout error:', error);
+        // Even if Supabase logout fails, clear local data and redirect
+        localStorage.clear();
+        nav('/login', { replace: true });
+      }
+    }
+  };
+
+  const handleRewatchIntro = () => {
+    setShowVideoIntro(true);
+  };
+
   const toggleConciergeVisibility = () => {
     const newState = !conciergeHidden;
     setConciergeHidden(newState);
@@ -156,9 +233,52 @@ export default function ProfilePage() {
         {/* Profile Header with Enhanced Design */}
         <div className="profile-header">
           <div className="profile-header-main">
-            <div className="profile-avatar">
-              <span className="profile-avatar-icon">👤</span>
+            <div className="profile-avatar" style={{ position: 'relative' }}>
+              {profileImage ? (
+                profileImage.startsWith('avatar:') ? (
+                  <span className="profile-avatar-icon" style={{ fontSize: '3.5rem' }}>
+                    {profileImage.replace('avatar:', '')}
+                  </span>
+                ) : (
+                  <img 
+                    src={profileImage} 
+                    alt="Profile" 
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      borderRadius: '50%'
+                    }}
+                  />
+                )
+              ) : (
+                <span className="profile-avatar-icon">👤</span>
+              )}
               <div className="profile-avatar-ring"></div>
+              <button
+                onClick={() => setShowImageUpload(true)}
+                style={{
+                  position: 'absolute',
+                  bottom: '0',
+                  right: '0',
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '50%',
+                  background: 'rgba(255, 215, 0, 0.9)',
+                  border: '2px solid #0a0a0a',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '1rem',
+                  transition: 'all 0.2s'
+                }}
+                title="Change profile picture"
+                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 215, 0, 1)'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255, 215, 0, 0.9)'}
+              >
+                📷
+              </button>
             </div>
             
             <div className="profile-info">
@@ -271,7 +391,7 @@ export default function ProfilePage() {
                   <div className="profile-action-icon">📖</div>
                   <div className="profile-action-content">
                     <div className="profile-action-title">Recipes</div>
-                    <div className="profile-action-desc">Browse recipes</div>
+                    <div className="profile-action-desc">Search & browse recipes</div>
                   </div>
                 </button>
 
@@ -355,6 +475,14 @@ export default function ProfilePage() {
                   </div>
                 </button>
 
+                <button className="profile-action-card" onClick={handleRewatchIntro}>
+                  <div className="profile-action-icon">🎬</div>
+                  <div className="profile-action-content">
+                    <div className="profile-action-title">Rewatch Intro Video</div>
+                    <div className="profile-action-desc">Watch the welcome video again</div>
+                  </div>
+                </button>
+
                 <button className="profile-action-card" onClick={() => nav('/app')}>
                   <div className="profile-action-icon">🏠</div>
                   <div className="profile-action-content">
@@ -365,18 +493,272 @@ export default function ProfilePage() {
 
                 <button 
                   className="profile-action-card profile-action-danger" 
-                  onClick={() => {
-                    if (window.confirm('Are you sure you want to sign out?')) {
-                      localStorage.clear();
-                      nav('/login');
-                    }
-                  }}
+                  onClick={handleLogout}
                 >
                   <div className="profile-action-icon">🚪</div>
                   <div className="profile-action-content">
                     <div className="profile-action-title">Sign Out</div>
                     <div className="profile-action-desc">Exit your account</div>
                   </div>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Image Upload Modal */}
+        {showImageUpload && (
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.8)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '1rem',
+            overflowY: 'auto'
+          }}>
+            <div style={{
+              background: '#1a1a1a',
+              border: '1px solid rgba(255, 215, 0, 0.3)',
+              borderRadius: '12px',
+              padding: '2rem',
+              maxWidth: '600px',
+              width: '100%',
+              margin: '2rem auto'
+            }}>
+              <h2 style={{ margin: 0, marginBottom: '1rem', color: 'var(--gold)' }}>
+                Profile Picture
+              </h2>
+              
+              {/* Current Picture Preview */}
+              {profileImage && (
+                <div style={{ marginBottom: '1.5rem', textAlign: 'center' }}>
+                  <div style={{ fontSize: '0.9rem', marginBottom: '0.5rem', opacity: 0.8 }}>
+                    Current Picture:
+                  </div>
+                  {profileImage.startsWith('avatar:') ? (
+                    <div style={{
+                      width: '120px',
+                      height: '120px',
+                      margin: '0 auto',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '5rem',
+                      background: 'rgba(255, 215, 0, 0.1)',
+                      borderRadius: '50%',
+                      border: '2px solid rgba(255, 215, 0, 0.3)'
+                    }}>
+                      {profileImage.replace('avatar:', '')}
+                    </div>
+                  ) : (
+                    <img 
+                      src={profileImage} 
+                      alt="Current profile" 
+                      style={{
+                        width: '120px',
+                        height: '120px',
+                        objectFit: 'cover',
+                        borderRadius: '50%',
+                        border: '2px solid rgba(255, 215, 0, 0.3)'
+                      }}
+                    />
+                  )}
+                </div>
+              )}
+              
+              {/* Mode Selection Tabs */}
+              <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem' }}>
+                <button 
+                  className={`btn ${uploadMode === 'avatar' ? 'btn-primary' : 'btn-secondary'}`}
+                  onClick={() => setUploadMode('avatar')}
+                >
+                  Choose Avatar
+                </button>
+                <button 
+                  className={`btn ${uploadMode === 'upload' ? 'btn-primary' : 'btn-secondary'}`}
+                  onClick={() => setUploadMode('upload')}
+                >
+                  Upload Image
+                </button>
+              </div>
+              
+              {/* Avatar Selection */}
+              {uploadMode === 'avatar' && (
+                <div style={{ marginBottom: '1.5rem' }}>
+                  {/* Female Avatars */}
+                  <div style={{ marginBottom: '1.5rem' }}>
+                    <div style={{ fontSize: '0.9rem', marginBottom: '0.75rem', fontWeight: 600, color: 'var(--gold)' }}>
+                      Women
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(70px, 1fr))', gap: '0.75rem' }}>
+                      {AVATAR_PRESETS.female.map((emoji, idx) => (
+                        <button
+                          key={`female-${idx}`}
+                          onClick={() => handleSelectAvatar(emoji)}
+                          style={{
+                            width: '100%',
+                            aspectRatio: '1',
+                            fontSize: '2.5rem',
+                            background: profileImage === `avatar:${emoji}` ? 'rgba(255, 215, 0, 0.2)' : 'rgba(255, 215, 0, 0.05)',
+                            border: profileImage === `avatar:${emoji}` ? '2px solid rgba(255, 215, 0, 0.6)' : '1px solid rgba(255, 215, 0, 0.2)',
+                            borderRadius: '50%',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
+                          onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  {/* Male Avatars */}
+                  <div style={{ marginBottom: '1.5rem' }}>
+                    <div style={{ fontSize: '0.9rem', marginBottom: '0.75rem', fontWeight: 600, color: 'var(--gold)' }}>
+                      Men
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(70px, 1fr))', gap: '0.75rem' }}>
+                      {AVATAR_PRESETS.male.map((emoji, idx) => (
+                        <button
+                          key={`male-${idx}`}
+                          onClick={() => handleSelectAvatar(emoji)}
+                          style={{
+                            width: '100%',
+                            aspectRatio: '1',
+                            fontSize: '2.5rem',
+                            background: profileImage === `avatar:${emoji}` ? 'rgba(255, 215, 0, 0.2)' : 'rgba(255, 215, 0, 0.05)',
+                            border: profileImage === `avatar:${emoji}` ? '2px solid rgba(255, 215, 0, 0.6)' : '1px solid rgba(255, 215, 0, 0.2)',
+                            borderRadius: '50%',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
+                          onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  {/* Girl Avatars */}
+                  <div style={{ marginBottom: '1.5rem' }}>
+                    <div style={{ fontSize: '0.9rem', marginBottom: '0.75rem', fontWeight: 600, color: 'var(--gold)' }}>
+                      Girls
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(70px, 1fr))', gap: '0.75rem' }}>
+                      {AVATAR_PRESETS.girl.map((emoji, idx) => (
+                        <button
+                          key={`girl-${idx}`}
+                          onClick={() => handleSelectAvatar(emoji)}
+                          style={{
+                            width: '100%',
+                            aspectRatio: '1',
+                            fontSize: '2.5rem',
+                            background: profileImage === `avatar:${emoji}` ? 'rgba(255, 215, 0, 0.2)' : 'rgba(255, 215, 0, 0.05)',
+                            border: profileImage === `avatar:${emoji}` ? '2px solid rgba(255, 215, 0, 0.6)' : '1px solid rgba(255, 215, 0, 0.2)',
+                            borderRadius: '50%',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
+                          onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  {/* Boy Avatars */}
+                  <div style={{ marginBottom: '1.5rem' }}>
+                    <div style={{ fontSize: '0.9rem', marginBottom: '0.75rem', fontWeight: 600, color: 'var(--gold)' }}>
+                      Boys
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(70px, 1fr))', gap: '0.75rem' }}>
+                      {AVATAR_PRESETS.boy.map((emoji, idx) => (
+                        <button
+                          key={`boy-${idx}`}
+                          onClick={() => handleSelectAvatar(emoji)}
+                          style={{
+                            width: '100%',
+                            aspectRatio: '1',
+                            fontSize: '2.5rem',
+                            background: profileImage === `avatar:${emoji}` ? 'rgba(255, 215, 0, 0.2)' : 'rgba(255, 215, 0, 0.05)',
+                            border: profileImage === `avatar:${emoji}` ? '2px solid rgba(255, 215, 0, 0.6)' : '1px solid rgba(255, 215, 0, 0.2)',
+                            borderRadius: '50%',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
+                          onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {/* Image Upload */}
+              {uploadMode === 'upload' && (
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <label 
+                    htmlFor="profile-image-input"
+                    className="btn btn-primary"
+                    style={{ display: 'inline-block', cursor: 'pointer' }}
+                  >
+                    Choose Image File
+                  </label>
+                  <input
+                    id="profile-image-input"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    style={{ display: 'none' }}
+                  />
+                  <p className="small" style={{ marginTop: '0.5rem', opacity: 0.7 }}>
+                    Max 2MB • JPG, PNG, GIF
+                  </p>
+                </div>
+              )}
+              
+              {/* Action Buttons */}
+              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', borderTop: '1px solid rgba(255, 215, 0, 0.2)', paddingTop: '1.5rem' }}>
+                {profileImage && (
+                  <button 
+                    className="btn btn-secondary"
+                    onClick={handleRemoveImage}
+                  >
+                    Remove Picture
+                  </button>
+                )}
+                <button 
+                  className="btn btn-ghost"
+                  onClick={() => setShowImageUpload(false)}
+                >
+                  Close
                 </button>
               </div>
             </div>

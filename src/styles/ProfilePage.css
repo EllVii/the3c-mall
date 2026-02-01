@@ -10,6 +10,8 @@
   background-attachment: fixed;
   padding: 2rem 1rem;
   position: relative;
+  overflow-y: auto !important; /* Allow scrolling on profile page */
+  overflow-x: hidden;
 }
 
 .profile-container {

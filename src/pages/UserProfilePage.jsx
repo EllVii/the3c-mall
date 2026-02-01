@@ -18,7 +18,6 @@ export default function UserProfilePage() {
   const nav = useNavigate();
   const [profile, setProfile] = useState(() => readJSON(PROFILE_KEY, null));
   const [activity, setActivity] = useState(() => readJSON(ACTIVITY_KEY, []));
-  const [showSettings, setShowSettings] = useState(false);
 
   const todayCompletions = useMemo(() => {
     const today = new Date().toDateString();
@@ -30,10 +29,6 @@ export default function UserProfilePage() {
 
   const handleBack = () => {
     nav("/app");
-  };
-
-  const handleEditProfile = () => {
-    nav("/app/settings");
   };
 
   if (!profile) {
@@ -130,50 +125,6 @@ export default function UserProfilePage() {
           )}
         </div>
 
-        {/* 3. Settings Toggle (Below the Fold) */}
-        <div className="profile-settings-section">
-          <button
-            className="profile-settings-toggle"
-            onClick={() => setShowSettings(!showSettings)}
-          >
-            <span>Settings</span>
-            <span className="toggle-icon">{showSettings ? "−" : "+"}</span>
-          </button>
-
-          {showSettings && (
-            <div className="profile-settings-content">
-              <div className="settings-group">
-                <button
-                  className="settings-option"
-                  onClick={handleEditProfile}
-                >
-                  <span className="settings-option-icon">✏️</span>
-                  <div className="settings-option-content">
-                    <div className="settings-option-label">Edit Profile</div>
-                    <div className="settings-option-hint">
-                      Update name, store, preferences
-                    </div>
-                  </div>
-                </button>
-
-                <button
-                  className="settings-option"
-                  onClick={() => nav("/app/settings")}
-                >
-                  <span className="settings-option-icon">⚙️</span>
-                  <div className="settings-option-content">
-                    <div className="settings-option-label">App Settings</div>
-                    <div className="settings-option-hint">
-                      Theme, notifications, display
-                    </div>
-                  </div>
-                </button>
-
-
-              </div>
-            </div>
-          )}
-        </div>
       </div>
 
       <style>{`

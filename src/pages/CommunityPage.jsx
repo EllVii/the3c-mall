@@ -31,9 +31,6 @@ export default function CommunityPage() {
         <button className="btn btn-secondary" onClick={() => nav("/app/grocery-lab")}>
           Grocery Lab →
         </button>
-        <button className="btn btn-ghost" onClick={() => nav("/app/settings")}>
-          Settings →
-        </button>
       </div>
 
       <div className="grid">

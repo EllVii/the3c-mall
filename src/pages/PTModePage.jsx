@@ -11,6 +11,7 @@ const DEMO_CLIENTS = [
 export default function PTModePage() {
   const nav = useNavigate();
   const [clients] = useState(DEMO_CLIENTS);
+  const [showNextBlocks, setShowNextBlocks] = useState(false);
 
   return (
     <section className="page">
@@ -38,7 +39,16 @@ export default function PTModePage() {
         </div>
       </header>
 
-      <div className="grid" style={{ marginTop: "1rem" }}>
+      <div
+        className="grid"
+        style={{
+          marginTop: "1rem",
+          maxHeight: "50vh",
+          overflowY: "auto",
+          overflowX: "hidden",
+          paddingRight: "0.35rem",
+        }}
+      >
         {clients.map((c) => (
           <div className="card" key={c.id}>
             <div style={{ display: "flex", justifyContent: "space-between", gap: "1rem" }}>
@@ -66,14 +76,27 @@ export default function PTModePage() {
       </div>
 
       <div className="card" style={{ marginTop: "1rem" }}>
-        <div style={{ fontWeight: 900, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--blue)" }}>
-          Next PT Mode Blocks
-        </div>
-        <ul style={{ marginTop: ".5rem", paddingLeft: "1.1rem", color: "var(--muted)" }}>
-          <li>Client profile view (goals, streaks, meal adherence)</li>
-          <li>“Push plan” button → writes to client plan</li>
-          <li>Message thread stub (later: real chat)</li>
-        </ul>
+        <button
+          className="btn btn-secondary"
+          type="button"
+          onClick={() => setShowNextBlocks((v) => !v)}
+          aria-expanded={showNextBlocks}
+        >
+          {showNextBlocks ? "Hide" : "Show"} Next PT Mode Blocks
+        </button>
+
+        {showNextBlocks && (
+          <div style={{ marginTop: "0.85rem" }}>
+            <div style={{ fontWeight: 900, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--blue)" }}>
+              Next PT Mode Blocks
+            </div>
+            <ul style={{ marginTop: ".5rem", paddingLeft: "1.1rem", color: "var(--muted)" }}>
+              <li>Client profile view (goals, streaks, meal adherence)</li>
+              <li>“Push plan” button → writes to client plan</li>
+              <li>Message thread stub (later: real chat)</li>
+            </ul>
+          </div>
+        )}
       </div>
     </section>
   );

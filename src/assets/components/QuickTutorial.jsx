@@ -71,8 +71,6 @@ export default function QuickTutorial({ open, onComplete }) {
   const [step, setStep] = useState(0);
   const [autoProgress, setAutoProgress] = useState(false);
 
-  if (!open) return null;
-
   const slide = TUTORIAL_SLIDES[step];
   const isLast = step === TUTORIAL_SLIDES.length - 1;
 
@@ -103,6 +101,8 @@ export default function QuickTutorial({ open, onComplete }) {
     const timer = setTimeout(handleNext, 3500);
     return () => clearTimeout(timer);
   }, [autoProgress, step]);
+
+  if (!open) return null;
 
   return (
     <div className="qt-overlay" role="dialog" aria-modal="true" aria-label="Quick Tutorial">

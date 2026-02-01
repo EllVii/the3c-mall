@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { readJSON, writeJSON } from "../../utils/Storage";
+import VideoIntro, { VIDEO_INTRO_SEEN_KEY } from "./VideoIntro.jsx";
 
 const LAST_DESTINATION_KEY = "lastDestination.v1";
 
@@ -17,6 +18,10 @@ export default function MapHomeScreen() {
   const [selectedZone, setSelectedZone] = useState(null);
   const [hoveredZone, setHoveredZone] = useState(null);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [showVideoIntro, setShowVideoIntro] = useState(() => {
+    const seen = readJSON(VIDEO_INTRO_SEEN_KEY, null);
+    return !seen;
+  });
 
   useEffect(() => {
     const last = readJSON(LAST_DESTINATION_KEY, null);
@@ -100,6 +105,12 @@ export default function MapHomeScreen() {
 
   return (
     <>
+      {/* Video Intro — One-time entry experience */}
+      <VideoIntro
+        open={showVideoIntro}
+        onComplete={() => setShowVideoIntro(false)}
+      />
+
       {/* Main Directory Screen */}
       <div className="map-home-screen">
       {/* Subtle top bar with profile access */}

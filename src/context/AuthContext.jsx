@@ -9,6 +9,11 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const isEmailVerified = (authUser) => {
+    if (!authUser) return false;
+    return Boolean(authUser.email_confirmed_at || authUser.confirmed_at);
+  };
+
   // Initialize session on mount
   useEffect(() => {
     const initAuth = async () => {
@@ -16,6 +21,13 @@ export function AuthProvider({ children }) {
         // Get current session
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.user) {
+          if (!isEmailVerified(session.user)) {
+            await supabase.auth.signOut();
+            setUser(null);
+            localStorage.removeItem("auth.session.v1");
+            setError("Please verify your email before logging in.");
+            return;
+          }
           setUser(session.user);
           // Store session ID locally for reference
           writeJSON("auth.session.v1", {
@@ -38,6 +50,14 @@ export function AuthProvider({ children }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         if (session?.user) {
+          if (!isEmailVerified(session.user)) {
+            supabase.auth.signOut();
+            setUser(null);
+            localStorage.removeItem("auth.session.v1");
+            setError("Please verify your email before logging in.");
+            setLoading(false);
+            return;
+          }
           setUser(session.user);
           writeJSON("auth.session.v1", {
             userId: session.user.id,
@@ -90,6 +110,15 @@ export function AuthProvider({ children }) {
       });
 
       if (error) throw error;
+
+      if (!isEmailVerified(data.user)) {
+        await supabase.auth.signOut();
+        setUser(null);
+        localStorage.removeItem("auth.session.v1");
+        const message = "Please verify your email before logging in.";
+        setError(message);
+        return { user: null, error: message };
+      }
 
       setUser(data.user);
       return { user: data.user, error: null };

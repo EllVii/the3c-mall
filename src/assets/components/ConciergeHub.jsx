@@ -127,10 +127,6 @@ export default function ConciergeHub({ minimized, onMinimize, onExpand, onClose 
               onClick={() => persistPrefs({ ...prefs, lowDataMode: !prefs.lowDataMode })}>
             Local Mode: {prefs.lowDataMode ? "ON" : "OFF"}
           </button>
-
-          <button className="btn btn-secondary" onClick={() => nav("/app/settings")}>
-            Preferences
-          </button>
         </div>
       </div>
 
