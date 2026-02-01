@@ -2,6 +2,39 @@
 -- Run these SQL queries in your Supabase SQL editor to set up the required tables
 
 -- ============================================
+-- Waitlist & Beta Code Tracking (Reporting)
+-- ============================================
+CREATE TABLE IF NOT EXISTS waitlist (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email TEXT NOT NULL,
+  timestamp TIMESTAMP WITH TIME ZONE NOT NULL,
+  user_agent TEXT,
+  referrer TEXT,
+  client_ip INET,
+  
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_waitlist_email ON waitlist(email);
+CREATE INDEX IF NOT EXISTS idx_waitlist_timestamp ON waitlist(timestamp DESC);
+
+-- Beta code usage attempts
+CREATE TABLE IF NOT EXISTS beta_attempts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  code TEXT NOT NULL,
+  success BOOLEAN NOT NULL,
+  timestamp TIMESTAMP WITH TIME ZONE NOT NULL,
+  user_agent TEXT,
+  client_ip INET,
+  
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_beta_attempts_code ON beta_attempts(code);
+CREATE INDEX IF NOT EXISTS idx_beta_attempts_success ON beta_attempts(success);
+CREATE INDEX IF NOT EXISTS idx_beta_attempts_timestamp ON beta_attempts(timestamp DESC);
+
+-- ============================================
 -- Email Consent Tracking (CAN-SPAM Compliance)
 -- ============================================
 CREATE TABLE IF NOT EXISTS email_consents (

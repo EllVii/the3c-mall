@@ -78,9 +78,9 @@ function AppContent() {
   const { showTutorial, completeTutorial } = useTutorial();
   const showAlphaChip = import.meta.env.VITE_ALPHA_CHIP !== "0";
   
-  // Check if we're on the .app domain
+  // Check if we're on the .app domain (or localhost for local dev)
   const host = window.location.hostname.toLowerCase();
-  const isDotApp = host === "the3cmall.app" || host.endsWith(".the3cmall.app");
+  const isDotApp = host === "the3cmall.app" || host.endsWith(".the3cmall.app") || host === "localhost" || host === "127.0.0.1";
 
   useEffect(() => {
     const isDotCom = host === "the3cmall.com" || host.endsWith(".the3cmall.com");

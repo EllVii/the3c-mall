@@ -40,6 +40,32 @@ const storeLimiter = rateLimit({
   message: "Too many store lookups, please slow down.",
 });
 
+const getSupabaseErrorResponse = (error, tableName) => {
+  if (error?.code === "42P01") {
+    return {
+      status: 500,
+      message: `Database not initialized: missing table ${tableName}`,
+    };
+  }
+
+  return {
+    status: 500,
+    message: "Supabase query failed",
+  };
+};
+
+const ensureSupabaseConfigured = (res) => {
+  const hasUrl = !!process.env.SUPABASE_URL;
+  const hasKey = !!process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!hasUrl || !hasKey) {
+    res.status(500).json({ error: "Supabase env vars not configured" });
+    return false;
+  }
+
+  return true;
+};
+
 // Routes
 
 /**
@@ -107,6 +133,10 @@ app.post("/api/report/waitlist", limiter, async (req, res) => {
   try {
     const { email } = req.body;
 
+    if (!ensureSupabaseConfigured(res)) {
+      return;
+    }
+
     // Validate email
     if (!email || !validator.isEmail(email)) {
       return res.status(400).json({ error: "Invalid email address" });
@@ -132,7 +162,8 @@ app.post("/api/report/waitlist", limiter, async (req, res) => {
 
     if (error) {
       console.error("Supabase insert error:", error);
-      return res.status(500).json({ error: "Failed to add to waitlist" });
+      const response = getSupabaseErrorResponse(error, "waitlist");
+      return res.status(response.status).json({ error: response.message });
     }
 
     // Send confirmation email
@@ -161,6 +192,10 @@ app.post("/api/report/beta-code", limiter, async (req, res) => {
   try {
     const { code, success, timestamp, userAgent } = req.body;
 
+    if (!ensureSupabaseConfigured(res)) {
+      return;
+    }
+
     if (!code) {
       return res.status(400).json({ error: "Code required" });
     }
@@ -183,7 +218,8 @@ app.post("/api/report/beta-code", limiter, async (req, res) => {
 
     if (error) {
       console.error("Supabase beta insert error:", error);
-      return res.status(500).json({ error: "Failed to log beta code attempt" });
+      const response = getSupabaseErrorResponse(error, "beta_attempts");
+      return res.status(response.status).json({ error: response.message });
     }
 
     // Track failed attempts
@@ -212,6 +248,10 @@ app.post("/api/report/beta-code", limiter, async (req, res) => {
  */
 app.get("/api/report/summary", (req, res) => {
   try {
+    if (!ensureSupabaseConfigured(res)) {
+      return;
+    }
+
     // Implement admin token verification
     const adminToken = process.env.ADMIN_TOKEN;
     const authHeader = req.headers.authorization;
