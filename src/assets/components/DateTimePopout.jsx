@@ -6,6 +6,9 @@ function pad(n) {
 }
 
 function toISODate(d) {
+  if (!(d instanceof Date) || isNaN(d.getTime())) {
+    return null;
+  }
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
@@ -22,20 +25,48 @@ export default function DateTimePopout({
   const today = new Date();
 
   const [cursor, setCursor] = useState(() => {
-    if (valueISO) {
-      const [y, m] = valueISO.split("-").map(Number);
-      return new Date(y, (m || 1) - 1, 1);
+    if (valueISO && typeof valueISO === "string") {
+      try {
+        const [y, m] = valueISO.split("-").map(Number);
+        if (y && m) {
+          return new Date(y, (m || 1) - 1, 1);
+        }
+      } catch (e) {
+        console.warn("Invalid valueISO:", valueISO, e);
+      }
     }
     return new Date(today.getFullYear(), today.getMonth(), 1);
   });
+  
+  // Safe cursor update wrapper
+  const safeCursorUpdate = (updater) => {
+    setCursor((prev) => {
+      if (!(prev instanceof Date) || isNaN(prev.getTime())) {
+        prev = new Date(today.getFullYear(), today.getMonth(), 1);
+      }
+      const next = updater(prev);
+      if (!(next instanceof Date) || isNaN(next.getTime())) {
+        return new Date(today.getFullYear(), today.getMonth(), 1);
+      }
+      return next;
+    });
+  };
 
   const monthLabel = useMemo(() => {
-    return cursor.toLocaleString(undefined, { month: "long", year: "numeric" });
-  }, [cursor]);
+    let validCursor = cursor;
+    if (!(validCursor instanceof Date) || isNaN(validCursor.getTime())) {
+      validCursor = new Date(today.getFullYear(), today.getMonth(), 1);
+    }
+    return validCursor.toLocaleString(undefined, { month: "long", year: "numeric" });
+  }, [cursor, today]);
 
   const calendar = useMemo(() => {
-    const year = cursor.getFullYear();
-    const month = cursor.getMonth();
+    let validCursor = cursor;
+    if (!(validCursor instanceof Date) || isNaN(validCursor.getTime())) {
+      validCursor = new Date(today.getFullYear(), today.getMonth(), 1);
+    }
+    const year = validCursor.getFullYear();
+    const month = validCursor.getMonth();
     const first = new Date(year, month, 1);
     const startDow = first.getDay(); // 0..6
     const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -47,7 +78,7 @@ export default function DateTimePopout({
     }
     while (cells.length % 7 !== 0) cells.push(null);
     return cells;
-  }, [cursor]);
+  }, [cursor, today]);
 
   const times = useMemo(() => {
     const out = [];
@@ -85,7 +116,7 @@ export default function DateTimePopout({
                   type="button"
                   className="dtp-nav"
                   onClick={() =>
-                    setCursor((d) => new Date(d.getFullYear(), d.getMonth() - 1, 1))
+                    safeCursorUpdate((d) => new Date(d.getFullYear(), d.getMonth() - 1, 1))
                   }
                 >
                   ‹
@@ -95,7 +126,7 @@ export default function DateTimePopout({
                   type="button"
                   className="dtp-nav"
                   onClick={() =>
-                    setCursor((d) => new Date(d.getFullYear(), d.getMonth() + 1, 1))
+                    safeCursorUpdate((d) => new Date(d.getFullYear(), d.getMonth() + 1, 1))
                   }
                 >
                   ›
@@ -112,8 +143,10 @@ export default function DateTimePopout({
                 {calendar.map((d, idx) => {
                   if (!d) return <div key={idx} className="dtp-cell empty" />;
                   const iso = toISODate(d);
+                  if (!iso) return <div key={idx} className="dtp-cell empty" />;
+                  const todayISO = toISODate(today);
                   const active = iso === valueISO;
-                  const isToday = iso === toISODate(today);
+                  const isToday = iso === todayISO;
 
                   return (
                     <button
@@ -143,8 +176,11 @@ export default function DateTimePopout({
                   type="button"
                   className="btn btn-blue"
                   onClick={() => {
-                    onChangeISO?.(toISODate(today));
-                    setOpen(false);
+                    const todayISO = toISODate(today);
+                    if (todayISO) {
+                      onChangeISO?.(todayISO);
+                      setOpen(false);
+                    }
                   }}
                 >
                   Today

@@ -107,7 +107,7 @@ export default function ProfilePage() {
   };
 
   const handleSettings = () => {
-    nav("/app/settings");
+    setActiveTab('settings');
   };
 
   const handleImageUpload = (event) => {

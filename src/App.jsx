@@ -175,7 +175,6 @@ function AppContent() {
           <Route path="stores" element={<StoreLocatorPage />} />
 
           <Route path="pt" element={<PTModePage />} />
-          <Route path="settings" element={<SettingsPage />} />
 
           {/* Recipes */}
           <Route path="recipes" element={<RecipesPage />} />
