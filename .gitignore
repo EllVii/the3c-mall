@@ -1,5 +1,8 @@
 node_modules/
 dist/
 .vscode/y*.deb.env
+.env
 .env.local
 .env.*.local
+server/.env
+server/.env.*

@@ -13,6 +13,12 @@ export default function VideoIntro({ open, onComplete }) {
   const [loading, setLoading] = useState(true);
   const [videoError, setVideoError] = useState(false);
   const [showSkip, setShowSkip] = useState(false);
+  const baseUrl = import.meta.env.BASE_URL || "/";
+  const normalizedBaseUrl = baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`;
+  const videoSources = [
+    `${normalizedBaseUrl}brand/RUIDb230dc15b18c43e88c3dd4db8d70a06f.mp4`,
+    `${normalizedBaseUrl}RUIDb230dc15b18c43e88c3dd4db8d70a06f.mp4`,
+  ];
 
   useEffect(() => {
     if (!open) return;
@@ -95,6 +101,7 @@ export default function VideoIntro({ open, onComplete }) {
         autoPlay 
         muted 
         playsInline
+        preload="auto"
         onEnded={handleVideoEnd}
         onError={handleVideoError}
         onLoadedData={() => setLoading(false)}
@@ -112,7 +119,9 @@ export default function VideoIntro({ open, onComplete }) {
           transition: 'opacity 0.3s ease',
         }}
       >
-        <source src="/brand/RUIDb230dc15b18c43e88c3dd4db8d70a06f.mp4" type="video/mp4" />
+        {videoSources.map((src) => (
+          <source key={src} src={src} type="video/mp4" />
+        ))}
         Your browser does not support the video tag.
       </video>
 
