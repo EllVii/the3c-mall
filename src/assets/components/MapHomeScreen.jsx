@@ -364,6 +364,7 @@ export default function MapHomeScreen() {
           align-items: center;
           justify-content: center;
           perspective: 1000px;
+          margin-top: 40px;
         }
 
         .floor-wing {
@@ -432,9 +433,9 @@ export default function MapHomeScreen() {
         }
 
         .floor-north { 
-          top: 0;
-          left: 50%;
-          transform: translateX(-50%);
+          top: 20%;
+          right: 15%;
+          transform: translate(0, -50%);
         }
         .floor-west { 
           left: 0;
@@ -474,12 +475,12 @@ export default function MapHomeScreen() {
           }
         }
         .floor-east { 
-          right: 0;
+          right: 15%;
           top: 50%;
           transform: translateY(-50%);
         }
         .floor-south { 
-          bottom: 0;
+          bottom: 20%;
           left: 50%;
           transform: translateX(-50%);
         }
