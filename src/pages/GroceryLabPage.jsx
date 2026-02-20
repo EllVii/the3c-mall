@@ -136,7 +136,12 @@ const PANELS = [
 
 const clamp = (n, min, max) => Math.min(max, Math.max(min, n));
 
+function isValidDate(d) {
+  return d instanceof Date && !isNaN(d.getTime());
+}
+
 function dayKeyLocal(d = new Date()) {
+  if (!isValidDate(d)) d = new Date();
   const yr = d.getFullYear();
   const mo = String(d.getMonth() + 1).padStart(2, "0");
   const da = String(d.getDate()).padStart(2, "0");
@@ -144,6 +149,7 @@ function dayKeyLocal(d = new Date()) {
 }
 
 function monthKeyLocal(d = new Date()) {
+  if (!isValidDate(d)) d = new Date();
   const yr = d.getFullYear();
   const mo = String(d.getMonth() + 1).padStart(2, "0");
   return `${yr}-${mo}`;
@@ -211,7 +217,7 @@ function isValidName(name) {
 // -------------------------------
 function getDailyMultiplier(date = new Date()) {
   // Defensive check: ensure date is a valid Date object
-  if (!date || typeof date.getFullYear !== 'function') {
+  if (!isValidDate(date)) {
     date = new Date();
   }
   

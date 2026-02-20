@@ -28,8 +28,13 @@ const MEALS = [
   { id: "one-meal", label: "One Meal a Day (OMAD)", defaultTime: "17:00" },
 ];
 
+function isValidDate(d) {
+  return d instanceof Date && !isNaN(d.getTime());
+}
+
 function todayISO() {
   const d = new Date();
+  if (!isValidDate(d)) return null;
   const yyyy = d.getFullYear();
   const mm = String(d.getMonth() + 1).padStart(2, "0");
   const dd = String(d.getDate()).padStart(2, "0");

@@ -5,11 +5,20 @@ function pad(n) {
   return String(n).padStart(2, "0");
 }
 
+function isValidDate(d) {
+  return d instanceof Date && !isNaN(d.getTime());
+}
+
 function toISODate(d) {
-  if (!(d instanceof Date) || isNaN(d.getTime())) {
+  if (!isValidDate(d)) {
     return null;
   }
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  try {
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  } catch (e) {
+    console.warn("Error converting date to ISO:", e);
+    return null;
+  }
 }
 
 export default function DateTimePopout({
@@ -29,11 +38,17 @@ export default function DateTimePopout({
       try {
         const [y, m] = valueISO.split("-").map(Number);
         if (y && m) {
-          return new Date(y, (m || 1) - 1, 1);
+          const date = new Date(y, (m || 1) - 1, 1);
+          if (isValidDate(date)) {
+            return date;
+          }
         }
       } catch (e) {
         console.warn("Invalid valueISO:", valueISO, e);
       }
+    }
+    if (!isValidDate(today)) {
+      return new Date();
     }
     return new Date(today.getFullYear(), today.getMonth(), 1);
   });
@@ -41,43 +56,58 @@ export default function DateTimePopout({
   // Safe cursor update wrapper
   const safeCursorUpdate = (updater) => {
     setCursor((prev) => {
-      if (!(prev instanceof Date) || isNaN(prev.getTime())) {
-        prev = new Date(today.getFullYear(), today.getMonth(), 1);
+      if (!isValidDate(prev)) {
+        prev = isValidDate(today) ? new Date(today.getFullYear(), today.getMonth(), 1) : new Date();
       }
-      const next = updater(prev);
-      if (!(next instanceof Date) || isNaN(next.getTime())) {
-        return new Date(today.getFullYear(), today.getMonth(), 1);
+      try {
+        const next = updater(prev);
+        if (!isValidDate(next)) {
+          return isValidDate(today) ? new Date(today.getFullYear(), today.getMonth(), 1) : new Date();
+        }
+        return next;
+      } catch (e) {
+        console.warn("Error in cursor update:", e);
+        return isValidDate(today) ? new Date(today.getFullYear(), today.getMonth(), 1) : new Date();
       }
-      return next;
     });
   };
 
   const monthLabel = useMemo(() => {
     let validCursor = cursor;
-    if (!(validCursor instanceof Date) || isNaN(validCursor.getTime())) {
-      validCursor = new Date(today.getFullYear(), today.getMonth(), 1);
+    if (!isValidDate(validCursor)) {
+      validCursor = isValidDate(today) ? new Date(today.getFullYear(), today.getMonth(), 1) : new Date();
     }
-    return validCursor.toLocaleString(undefined, { month: "long", year: "numeric" });
+    try {
+      return validCursor.toLocaleString(undefined, { month: "long", year: "numeric" });
+    } catch (e) {
+      console.warn("Error formatting month label:", e);
+      return "Month";
+    }
   }, [cursor, today]);
 
   const calendar = useMemo(() => {
     let validCursor = cursor;
-    if (!(validCursor instanceof Date) || isNaN(validCursor.getTime())) {
-      validCursor = new Date(today.getFullYear(), today.getMonth(), 1);
+    if (!isValidDate(validCursor)) {
+      validCursor = isValidDate(today) ? new Date(today.getFullYear(), today.getMonth(), 1) : new Date();
     }
-    const year = validCursor.getFullYear();
-    const month = validCursor.getMonth();
-    const first = new Date(year, month, 1);
-    const startDow = first.getDay(); // 0..6
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    try {
+      const year = validCursor.getFullYear();
+      const month = validCursor.getMonth();
+      const first = new Date(year, month, 1);
+      const startDow = first.getDay(); // 0..6
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-    const cells = [];
-    for (let i = 0; i < startDow; i++) cells.push(null);
-    for (let day = 1; day <= daysInMonth; day++) {
-      cells.push(new Date(year, month, day));
+      const cells = [];
+      for (let i = 0; i < startDow; i++) cells.push(null);
+      for (let day = 1; day <= daysInMonth; day++) {
+        cells.push(new Date(year, month, day));
+      }
+      while (cells.length % 7 !== 0) cells.push(null);
+      return cells;
+    } catch (e) {
+      console.warn("Error building calendar:", e);
+      return [];
     }
-    while (cells.length % 7 !== 0) cells.push(null);
-    return cells;
   }, [cursor, today]);
 
   const times = useMemo(() => {
