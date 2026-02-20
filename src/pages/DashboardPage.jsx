@@ -25,7 +25,6 @@ import {
 const ZONES = [
   { id: "grocery", title: "Save money on groceries", desc: "Build a cart optimized automatically.", route: "/app/grocery-lab" },
   { id: "meals", title: "Plan meals fast", desc: "Choose a date → time → meal. Snacks included.", route: "/app/meal-plans" },
-  { id: "workout", title: "Training & performance", desc: "Strength goals + recovery pacing (Beta preview).", route: "/app/coming-soon" },
   { id: "community", title: "Community support", desc: "Encouragement without pressure (Beta preview).", route: "/app/community" },
 ];
 
@@ -218,7 +217,6 @@ export default function DashboardPage() {
     () => [
       { id: "grocery", label: "Groceries only", hint: "Best value cart strategy", route: "/app/grocery-lab" },
       { id: "meals", label: "Meal planning", hint: "Fast meal + snack flow", route: "/app/meal-plans" },
-      { id: "workout", label: "Training", hint: "Strength + recovery", route: "/app/coming-soon" },
       { id: "community", label: "Community", hint: "Support without pressure", route: "/app/community" },
       { id: "explore", label: "Surprise me 🎲", hint: "Explore one zone", route: explorePick.route },
     ],
@@ -230,7 +228,7 @@ export default function DashboardPage() {
       chooseFocus(explorePick.id);
       nav(explorePick.route);
     } else {
-      if (["grocery", "meals", "workout", "community"].includes(x.id)) chooseFocus(x.id);
+      if (["grocery", "meals", "community"].includes(x.id)) chooseFocus(x.id);
       nav(x.route);
     }
     setCcOpen(false);
@@ -347,7 +345,7 @@ export default function DashboardPage() {
                   handleNudgeSeen();
                   setPrefsState(setNavMode("full"));
                 }}
-                title="Show all zones (Groceries, Meals, Training, Community)"
+                title="Show all zones (Groceries, Meals, Community)"
               >
                 Show me more
               </button>

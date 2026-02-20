@@ -5,7 +5,6 @@ export default function Features() {
     { title: "Meal Plans", desc: "Plan meals by time, household, and eating style." },
     { title: "Grocery Lab", desc: "Delivery OR pickup. Use the app in-store and check off your list." },
     { title: "Community", desc: "Momentum tools, streak rewards, and real people." },
-    { title: "PT Mode", desc: "Trainer dashboard + client control tools." },
   ];
 
   return (

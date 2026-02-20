@@ -47,14 +47,6 @@ export default function MapHomeScreen() {
       ],
     },
     {
-      id: "west-wing",
-      name: "West Wing",
-      section: "WEST",
-      stores: [
-        { id: "fitness", label: "Fitness Zone", icon: "💪", route: "/app/fitness" },
-      ],
-    },
-    {
       id: "south-wing",
       name: "South Wing",
       section: "SOUTH",
@@ -171,18 +163,6 @@ export default function MapHomeScreen() {
                 <div className="wing-zone-label">GROCERY STORES</div>
                 <div className="wing-icon">🛒</div>
                 {isStoreLastVisited('grocery-lab') && <div className="wing-indicator">●</div>}
-              </div>
-
-              {/* West Wing - Left */}
-              <div 
-                className={`floor-wing floor-west ${hoveredZone === 'west-wing' ? 'hovered' : ''} ${selectedZone === 'fitness' ? 'selected' : ''}`}
-                onClick={() => handleZoneClick(zones[2])}
-                onMouseEnter={() => setHoveredZone('west-wing')}
-                onMouseLeave={() => setHoveredZone(null)}
-              >
-                <div className="wing-zone-label">FITNESS ZONE</div>
-                <div className="wing-icon">💪</div>
-                {isStoreLastVisited('fitness') && <div className="wing-indicator">●</div>}
               </div>
 
               {/* Center Atrium */}
