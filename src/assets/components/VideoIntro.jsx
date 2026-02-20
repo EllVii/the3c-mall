@@ -72,23 +72,7 @@ export default function VideoIntro({ open, onComplete }) {
 
   return (
     <div className="video-intro-overlay">
-      {/* Loading Indicator */}
-      {loading && !videoError && (
-        <div className="video-loading">
-          <div className="spinner"></div>
-          <p>Loading experience...</p>
-        </div>
-      )}
-      
-      {/* Error Message */}
-      {videoError && (
-        <div className="video-error">
-          <p>⚠️ Video couldn't load</p>
-          <p>Continuing to app...</p>
-        </div>
-      )}
-      
-      {/* Skip Button */}
+      {/* Skip Button - Minimal */}
       {showSkip && !videoEnded && !videoError && (
         <button className="video-skip-btn" onClick={handleSkip}>
           Skip Intro →
@@ -142,47 +126,6 @@ export default function VideoIntro({ open, onComplete }) {
           width: 100%;
           height: 100%;
           display: block;
-        }
-        
-        .video-loading {
-          position: fixed;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%);
-          z-index: 10000;
-          text-align: center;
-          color: white;
-          font-family: system-ui, -apple-system, sans-serif;
-        }
-        
-        .spinner {
-          width: 50px;
-          height: 50px;
-          border: 4px solid rgba(255, 255, 255, 0.3);
-          border-top-color: white;
-          border-radius: 50%;
-          animation: spin 1s linear infinite;
-          margin: 0 auto 20px;
-        }
-        
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
-        
-        .video-error {
-          position: fixed;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%);
-          z-index: 10000;
-          text-align: center;
-          color: white;
-          font-family: system-ui, -apple-system, sans-serif;
-          font-size: 18px;
-        }
-        
-        .video-error p {
-          margin: 10px 0;
         }
         
         .video-skip-btn {
