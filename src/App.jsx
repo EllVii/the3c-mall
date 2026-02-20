@@ -9,9 +9,6 @@ import { AuthProvider, useAuth } from "./context/AuthContext.jsx";
 import { TutorialProvider, useTutorial } from "./context/TutorialContext.jsx";
 import QuickTutorial from "./assets/components/QuickTutorial.jsx";
 
-// Beta Gate
-import BetaGate from "./assets/components/BetaGate.jsx";
-
 // Alpha helper (safe)
 import AlphaRouteChip from "./assets/components/AlphaRouteChip.jsx";
 
@@ -76,7 +73,7 @@ function ProtectedRoute({ children }) {
 function AppContent() {
   const { pathname } = useLocation();
   const { showTutorial, completeTutorial } = useTutorial();
-  const showAlphaChip = import.meta.env.VITE_ALPHA_CHIP !== "0";
+  const showAlphaChip = import.meta.env.VITE_ALPHA_CHIP === "1"; // Only show if explicitly enabled
   
   // Check if we're on the .app domain (or localhost for local dev)
   const host = window.location.hostname.toLowerCase();
@@ -192,11 +189,8 @@ function AppContent() {
     </div>
   );
 
-  // Apply BetaGate only on .app domain
-  if (isDotApp) {
-    return <BetaGate>{appContent}</BetaGate>;
-  }
-
+  // LIVE MODE: BetaGate removed - all users can access the app
+  // (Beta code validation disabled for production launch)
   return appContent;
 }
 
