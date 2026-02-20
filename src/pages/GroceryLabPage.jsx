@@ -210,6 +210,11 @@ function isValidName(name) {
 // Daily Price Rotation (00:00 local time) — SAFE
 // -------------------------------
 function getDailyMultiplier(date = new Date()) {
+  // Defensive check: ensure date is a valid Date object
+  if (!date || typeof date.getFullYear !== 'function') {
+    date = new Date();
+  }
+  
   const seed = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
   let hash = 0;
   for (let i = 0; i < seed.length; i++) {
