@@ -145,23 +145,16 @@ export default function LandingPage() {
           <div className="lp-video-grid">
             <div className="lp-video-card">
               <video autoPlay loop muted playsInline className="lp-video">
-                <source src="/src/assets/videos/groceries.mp4" type="video/mp4" />
+                <source src="/assets/videos/groceries.mp4" type="video/mp4" />
               </video>
               <div className="lp-video-label">Smart Grocery Routing</div>
             </div>
             
             <div className="lp-video-card">
               <video autoPlay loop muted playsInline className="lp-video">
-                <source src="/src/assets/videos/coach.mp4" type="video/mp4" />
+                <source src="/assets/videos/coach.mp4" type="video/mp4" />
               </video>
               <div className="lp-video-label">Personal Concierge</div>
-            </div>
-            
-            <div className="lp-video-card">
-              <video autoPlay loop muted playsInline className="lp-video">
-                <source src="/src/assets/videos/athlete.mp4" type="video/mp4" />
-              </video>
-              <div className="lp-video-label">Fitness Integration</div>
             </div>
           </div>
         </div>
