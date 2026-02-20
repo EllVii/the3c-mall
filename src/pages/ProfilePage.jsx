@@ -63,19 +63,42 @@ export default function ProfilePage() {
     
     try {
       const dates = activities
-        .map(a => new Date(a?.completedAt).toDateString())
-        .filter((date, idx, arr) => arr.indexOf(date) === idx)
-        .sort((a, b) => new Date(b) - new Date(a));
+        .map(a => {
+          try {
+            const d = new Date(a?.completedAt);
+            if (!(d instanceof Date) || isNaN(d.getTime())) {
+              return null;
+            }
+            return d.toDateString();
+          } catch {
+            return null;
+          }
+        })
+        .filter((date, idx, arr) => date && arr.indexOf(date) === idx)
+        .sort((a, b) => {
+          try {
+            return new Date(b) - new Date(a);
+          } catch {
+            return 0;
+          }
+        });
       
       let streak = 0;
       const today = new Date().toDateString();
       
       for (let i = 0; i < dates.length; i++) {
-        const expectedDate = new Date();
-        expectedDate.setDate(expectedDate.getDate() - i);
-        if (dates[i] === expectedDate.toDateString()) {
-          streak++;
-        } else {
+        try {
+          const expectedDate = new Date();
+          if (!(expectedDate instanceof Date) || isNaN(expectedDate.getTime())) {
+            break;
+          }
+          expectedDate.setDate(expectedDate.getDate() - i);
+          if (dates[i] === expectedDate.toDateString()) {
+            streak++;
+          } else {
+            break;
+          }
+        } catch {
           break;
         }
       }
@@ -90,6 +113,13 @@ export default function ProfilePage() {
     try {
       const date = new Date(dateStr);
       const now = new Date();
+      
+      // Validate both dates
+      if (!(date instanceof Date) || isNaN(date.getTime()) || 
+          !(now instanceof Date) || isNaN(now.getTime())) {
+        return "Today";
+      }
+      
       const diffTime = Math.abs(now - date);
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
       
