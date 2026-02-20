@@ -47,6 +47,8 @@ export default defineConfig({
         navigateFallback: "/index.html",
         // React Router SPA safety
         navigateFallbackDenylist: [/^\/api\//],
+        // Increase cache limit for video assets
+        maximumFileSizeToCacheInBytes: 50 * 1024 * 1024, // 50 MB limit
       },
     }),
   ],
