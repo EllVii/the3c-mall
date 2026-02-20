@@ -1,27 +1,33 @@
 /* src/styles/GroceryLabPage.css */
 /*
-  3C Mall Grocery Lab – locked 5-panel carousel
-  - Track = 500% (5 panels)
-  - Panel = 20% each
-  - NO horizontal scrolling (only via dots/buttons)
-  - Vertical scrolling happens INSIDE each panel
+  3C Mall Grocery Lab – Luxury Streamlined UX/UI
+  Inspired by Kroger, Walmart, Target, Frys
+  - Clean, minimal design
+  - Fast checkout flow
+  - Premium visual hierarchy
+  - Accessible touch targets
+  - Aisle-first navigation (like physical stores)
 */
 
 :root{
-  --bg: #070B14;
-  --panel: rgba(255,255,255,.06);
+  --bg: #0a0e1a;
+  --bg-light: #121829;
+  --panel: rgba(255,255,255,.05);
   --panel-2: rgba(255,255,255,.08);
-  --text: rgba(255,255,255,.92);
-  --muted: rgba(255,255,255,.66);
-  --stroke: rgba(255,255,255,.10);
-  --stroke-2: rgba(255,255,255,.16);
-  --gold: rgba(246, 220, 138, .92);
-  --blue: rgba(31, 93, 255, .85);
+  --text: rgba(255,255,255,.95);
+  --text-secondary: rgba(255,255,255,.72);
+  --muted: rgba(255,255,255,.58);
+  --stroke: rgba(255,255,255,.08);
+  --stroke-2: rgba(255,255,255,.14);
+  --gold: rgba(246, 220, 138, .95);
+  --blue: rgba(31, 93, 255, .88);
+  --success: rgba(76, 175, 80, .85);
   --danger: rgba(255, 83, 83, .92);
-  --shadow: 0 18px 60px rgba(0,0,0,.55);
-  --radius: 18px;
-  --radius-sm: 12px;
-  --blur: 14px;
+  --shadow: 0 12px 48px rgba(0,0,0,.45);
+  --shadow-sm: 0 4px 16px rgba(0,0,0,.25);
+  --radius: 16px;
+  --radius-sm: 10px;
+  --blur: 12px;
 }
 
 *{ box-sizing: border-box; }
@@ -36,9 +42,9 @@ html, body { width: 100%; height: 100%; overflow-x: hidden; }
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background: var(--bg);
+  background: linear-gradient(135deg, var(--bg) 0%, var(--bg-light) 100%);
   color: var(--text);
-  overflow: hidden;          /* no scrollbars on shell */
+  overflow: hidden;
 }
 
 .gl-shell::before{
@@ -46,57 +52,382 @@ html, body { width: 100%; height: 100%; overflow-x: hidden; }
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(circle at 22% 18%, rgba(31,93,255,.10), transparent 55%),
-    radial-gradient(circle at 82% 14%, rgba(246,220,138,.08), transparent 55%),
-    radial-gradient(circle at 60% 90%, rgba(31,93,255,.10), transparent 60%);
+    radial-gradient(circle at 20% 15%, rgba(246,220,138,.06), transparent 50%),
+    radial-gradient(circle at 85% 20%, rgba(31,93,255,.06), transparent 50%),
+    radial-gradient(circle at 50% 95%, rgba(31,93,255,.05), transparent 60%);
   z-index: -2;
   pointer-events: none;
 }
 
-.gl-shell::after{
-  content: "";
-  position:absolute;
-  inset: 0;
-  background-image: url("/icons/3c-mall.png");
-  background-repeat: no-repeat;
-  background-position: 50% 38%;
-  background-size: min(520px, 70vw);
-  opacity: 0.10;
-  filter: saturate(1.12);
-  z-index: -1;
-  pointer-events:none;
-}
-
 /* =========================================================
-   HEADER
+   HEADER - STREAMLINED
    ========================================================= */
 .gl-header{
   position: sticky;
   top: 0;
   z-index: 100;
-  background: var(--bg0);
+  background: rgba(10, 14, 26, .92);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--stroke);
   display:flex;
-  align-items:flex-end;
+  align-items:center;
   justify-content: space-between;
-  gap: 16px;
-  padding: 22px 18px 10px;
+  gap: 20px;
+  padding: 16px 24px;
   width: 100%;
-  max-width: 100%;
-  overflow-x: auto;
-  overflow-y: hidden;
+}
+
+.gl-header-left{
+  flex: 1;
+  min-width: 0;
 }
 
 .gl-title{
   margin: 0;
-  font-size: 28px;
-  letter-spacing: .2px;
-  flex-shrink: 0;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
 }
 
 .gl-subtitle{
-  margin: 6px 0 0;
+  margin: 4px 0 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.gl-header-right{ 
+  display:flex; 
+  gap: 12px;
+  align-items: center;
+  justify-content: flex-end;
+  flex-shrink: 0;
+}
+
+.gl-inline-summary{
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.gl-pill{
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 12px;
+  background: rgba(246,220,138,.12);
+  border: 1px solid rgba(246,220,138,.25);
+  border-radius: 999px;
+  color: var(--gold);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+/* =========================================================
+   STEP NAV - COMPACT & VISUAL
+   ========================================================= */
+.gl-steps{
+  max-width: 100%;
+  padding: 12px 24px;
+  display:flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  background: rgba(255,255,255,.02);
+  border-bottom: 1px solid var(--stroke);
+  overflow-x: auto;
+}
+
+.gl-step{
+  display:flex;
+  align-items:center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  background: rgba(255,255,255,.03);
+  border: 1px solid var(--stroke);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all .2s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.gl-step:disabled{ 
+  opacity: .4; 
+  cursor: not-allowed; 
+}
+
+.gl-step:hover:not(:disabled){
+  background: rgba(255,255,255,.06);
+  border-color: var(--stroke-2);
+  color: var(--text);
+}
+
+.gl-step.is-active{
+  border-color: var(--gold);
+  background: rgba(246,220,138,.10);
+  color: var(--gold);
+  font-weight: 600;
+}
+
+.gl-step-index{
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display:grid;
+  place-items:center;
+  font-size: 11px;
+  font-weight: 700;
+  border: 1.5px solid currentColor;
+}
+
+.gl-step-label{ 
+  font-size: 13px; 
+  font-weight: 500;
+}
+
+/* =========================================================
+   BUTTONS
+   ========================================================= */
+.gl-btn{
+  border: 1px solid var(--stroke);
+  background: rgba(255,255,255,.05);
+  color: var(--text);
+  padding: 10px 18px;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all .15s ease;
+  white-space: nowrap;
+}
+
+.gl-btn:hover{
+  background: rgba(255,255,255,.08);
+  border-color: var(--stroke-2);
+  transform: translateY(-1px);
+}
+
+.gl-btn:disabled{ 
+  opacity: .45; 
+  cursor: not-allowed; 
+  transform: none;
+}
+
+.gl-btn-primary{
+  border-color: var(--blue);
+  background: linear-gradient(135deg, rgba(31,93,255,.25), rgba(31,93,255,.15));
+  color: var(--blue);
+}
+
+.gl-btn-primary:hover{
+  background: linear-gradient(135deg, rgba(31,93,255,.35), rgba(31,93,255,.25));
+  border-color: var(--blue);
+}
+
+.gl-btn-success{
+  border-color: var(--success);
+  background: rgba(76, 175, 80, .15);
+  color: var(--success);
+}
+
+.gl-btn-ghost{ 
+  background: rgba(255,255,255,.03);
+  border-color: var(--stroke);
+}
+
+.gl-btn-danger{
+  border-color: var(--danger);
+  background: rgba(255, 83, 83, .12);
+  color: var(--danger);
+}
+
+/* =========================================================
+   CAROUSEL (LOCKED) – NO HORIZONTAL SCROLL
+   ========================================================= */
+.gl-carousel{
+  width: 100%;
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.gl-track{
+  display:flex;
+  width: 500%;
+  height: 100%;
+  transition: transform .28s cubic-bezier(.25, .46, .45, .94);
+  will-change: transform;
+  overflow: hidden;
+}
+
+.gl-panel{
+  flex: 0 0 20%;
+  width: 20%;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  height: 100%;
+  gap: 16px;
+}
+
+.gl-panel::-webkit-scrollbar {
+  width: 6px;
+}
+
+.gl-panel::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.gl-panel::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,.12);
+  border-radius: 3px;
+}
+
+.gl-panel::-webkit-scrollbar-thumb:hover {
+  background: rgba(255,255,255,.18);
+}
+
+.gl-panel-title{
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  outline: none;
+}
+
+/* =========================================================
+   CARDS - CLEAN & MINIMAL
+   ========================================================= */
+.gl-card{
+  background: rgba(255,255,255,.04);
+  border: 1px solid var(--stroke);
+  border-radius: var(--radius);
+  padding: 16px;
+  box-shadow: var(--shadow-sm);
+  transition: all .15s ease;
+}
+
+.gl-card:hover{
+  background: rgba(255,255,255,.06);
+  border-color: var(--stroke-2);
+}
+
+.gl-card-head{
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.gl-card-title{
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.gl-summary{
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* =========================================================
+   LISTS & ITEMS - AISLE VIEW
+   ========================================================= */
+.gl-list{
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.gl-row{
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  background: rgba(255,255,255,.02);
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,.04);
+  transition: all .15s ease;
+}
+
+.gl-row:hover{
+  background: rgba(255,255,255,.04);
+  border-color: var(--stroke);
+}
+
+.gl-row-main{
+  flex: 1;
+  min-width: 0;
+}
+
+.gl-row-name{
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  word-break: break-word;
+}
+
+.gl-row-meta{
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+.gl-row-actions{
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.gl-muted{
   color: var(--muted);
-  font-size: 14px;
+  font-size: 12px;
+}
+
+/* =========================================================
+   PRICING DISPLAY - HIGHLIGHT SAVINGS
+   ========================================================= */
+.gl-pricing-card{
+  background: linear-gradient(135deg, rgba(76, 175, 80, .08), rgba(31, 93, 255, .08));
+  border: 1px solid rgba(76, 175, 80, .2);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+
+.gl-pricing-row{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--stroke);
+}
+
+.gl-pricing-row:last-child{
+  border-bottom: none;
+  padding-top: 12px;
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.gl-pricing-amount{
+  color: var(--gold);
+  font-weight: 600;
 }
 
 .gl-header-right{ 
