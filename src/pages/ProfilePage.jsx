@@ -110,6 +110,16 @@ export default function ProfilePage() {
     setActiveTab('settings');
   };
 
+  const handleProfileUpdate = (updates) => {
+    const updatedProfile = {
+      ...profile,
+      ...updates,
+      updatedAt: new Date().toISOString()
+    };
+    setProfile(updatedProfile);
+    writeJSON(PROFILE_KEY, updatedProfile);
+  };
+
   const handleImageUpload = (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -120,9 +130,9 @@ export default function ProfilePage() {
       return;
     }
     
-    // Validate file size (max 2MB)
-    if (file.size > 2 * 1024 * 1024) {
-      alert('Image must be smaller than 2MB');
+    // Validate file size (max 5MB for better quality)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image must be smaller than 5MB');
       return;
     }
     
@@ -131,7 +141,11 @@ export default function ProfilePage() {
       const base64String = reader.result;
       setProfileImage(base64String);
       writeJSON(PROFILE_IMAGE_KEY, base64String);
+      handleProfileUpdate({ profileImage: base64String });
       setShowImageUpload(false);
+    };
+    reader.onerror = () => {
+      alert('Error reading file. Please try again.');
     };
     reader.readAsDataURL(file);
   };
@@ -140,6 +154,7 @@ export default function ProfilePage() {
     if (window.confirm('Remove profile picture?')) {
       setProfileImage(null);
       writeJSON(PROFILE_IMAGE_KEY, null);
+      handleProfileUpdate({ profileImage: null });
     }
   };
 
@@ -147,6 +162,7 @@ export default function ProfilePage() {
     const avatarData = `avatar:${emoji}`;
     setProfileImage(avatarData);
     writeJSON(PROFILE_IMAGE_KEY, avatarData);
+    handleProfileUpdate({ profileImage: avatarData });
     setShowImageUpload(false);
   };
 
