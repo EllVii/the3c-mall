@@ -51,7 +51,6 @@ export default function ConciergeHub({ minimized, onMinimize, onExpand, onClose 
     persistPrefs(next);
     if (focus === "grocery") nav("/app/grocery-lab");
     if (focus === "meal") nav("/app/meal-plans");
-    if (focus === "fitness") nav("/app/fitness");
     if (focus === "community") nav("/app/community");
   }
 
@@ -68,8 +67,9 @@ export default function ConciergeHub({ minimized, onMinimize, onExpand, onClose 
       chooseFocus("meal");
       return;
     }
+    // Fitness focus removed from public release - redirect to meal planning
     if (text.includes("workout") || text.includes("train") || text.includes("gym")) {
-      chooseFocus("fitness");
+      chooseFocus("meal");
       return;
     }
     if (text.includes("community") || text.includes("people") || text.includes("support")) {
@@ -221,7 +221,7 @@ export default function ConciergeHub({ minimized, onMinimize, onExpand, onClose 
           className="input"
           value={msg}
           onChange={(e) => setMsg(e.target.value)}
-          placeholder='Examples: "Help me save money", "Plan my meals", "I want a workout"'
+          placeholder='Examples: "Help me save money", "Plan my meals", "Find community"'
         />
         <div className="nav-row">
           <button className="btn btn-primary" onClick={handleMockAsk}>Go</button>
@@ -236,7 +236,6 @@ export default function ConciergeHub({ minimized, onMinimize, onExpand, onClose 
         <div className="nav-row">
           <button className="btn btn-primary" onClick={() => chooseFocus("grocery")}>Save Money (Groceries)</button>
           <button className="btn btn-secondary" onClick={() => chooseFocus("meal")}>Meal Prep</button>
-          <button className="btn btn-secondary" onClick={() => chooseFocus("fitness")}>Workout</button>
           <button className="btn btn-secondary" onClick={() => chooseFocus("community")}>Community</button>
         </div>
       </div>
