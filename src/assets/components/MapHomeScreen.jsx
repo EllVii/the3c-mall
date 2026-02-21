@@ -129,7 +129,8 @@ export default function MapHomeScreen() {
           <div className="directory-display" style={{
             backgroundImage: imageLoaded ? 'url(/brand/RUIDd533a251cbb24608833e7205326c34bd.png)' : 'none',
             backgroundSize: 'cover',
-            backgroundPosition: 'center',
+            /* Lower the background image so the top-left grocery area aligns with map markers */
+            backgroundPosition: 'center 60%',
             backgroundRepeat: 'no-repeat',
             position: 'relative',
             imageRendering: 'auto',
