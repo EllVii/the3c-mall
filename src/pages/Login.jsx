@@ -209,8 +209,9 @@ function Login() {
             height: 100vh;
             overflow: hidden;
             display: flex;
-            align-items: flex-end;
-            justify-content: center;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
             background: #000;
           }
 
@@ -219,7 +220,7 @@ function Login() {
             top: 0;
             left: 0;
             width: 100%;
-            height: 100%;
+            height: 50%;
             z-index: 1;
           }
 
@@ -235,8 +236,8 @@ function Login() {
             bottom: 0;
             left: 0;
             width: 100%;
-            height: 60%;
-            background: linear-gradient(to top, rgba(0, 0, 0, 0.95), transparent);
+            height: 100%;
+            background: linear-gradient(to bottom, transparent 20%, rgba(0, 0, 0, 0.85) 70%, rgba(0, 0, 0, 0.95) 100%);
             z-index: 2;
           }
 
@@ -244,33 +245,35 @@ function Login() {
             position: relative;
             z-index: 3;
             width: 100%;
-            max-width: 450px;
-            padding: 2rem;
-            padding-bottom: 3rem;
+            max-width: 420px;
+            padding: 1.5rem;
+            padding-bottom: 2.5rem;
             text-align: center;
+            margin-top: auto;
+            margin-bottom: auto;
           }
 
           .login-branding h1 {
-            font-size: 3rem;
+            font-size: 2.2rem;
             font-weight: 300;
             letter-spacing: 0.2em;
             color: #d4af37;
-            margin: 0 0 0.5rem 0;
+            margin: 0 0 0.25rem 0;
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
           }
 
           .login-tagline {
             color: #d4af37;
-            font-size: 0.9rem;
+            font-size: 0.75rem;
             letter-spacing: 0.15em;
-            margin: 0 0 2rem 0;
+            margin: 0 0 1.25rem 0;
             opacity: 0.9;
           }
 
           .login-form {
             display: flex;
             flex-direction: column;
-            gap: 1rem;
+            gap: 0.75rem;
           }
 
           .form-group {
@@ -280,20 +283,20 @@ function Login() {
           .form-group label {
             display: block;
             color: #fff;
-            font-size: 0.9rem;
-            margin-bottom: 0.5rem;
+            font-size: 0.8rem;
+            margin-bottom: 0.35rem;
             font-weight: 500;
             letter-spacing: 0.05em;
           }
 
           .form-group input {
             width: 100%;
-            padding: 0.875rem 1rem;
+            padding: 0.7rem 0.85rem;
             background: rgba(255, 255, 255, 0.1);
             border: 1px solid rgba(212, 175, 55, 0.3);
             border-radius: 4px;
             color: #fff;
-            font-size: 1rem;
+            font-size: 0.95rem;
             backdrop-filter: blur(10px);
             transition: all 0.3s ease;
           }
@@ -316,35 +319,35 @@ function Login() {
 
           .error-message {
             color: #ff6b6b;
-            font-size: 0.9rem;
+            font-size: 0.8rem;
             margin: 0;
-            padding: 0.5rem;
+            padding: 0.4rem;
             background: rgba(255, 107, 107, 0.1);
             border-radius: 4px;
           }
 
           .success-message {
             color: #51cf66;
-            font-size: 0.9rem;
+            font-size: 0.8rem;
             margin: 0;
-            padding: 0.5rem;
+            padding: 0.4rem;
             background: rgba(81, 207, 102, 0.1);
             border-radius: 4px;
           }
 
           .login-btn {
             width: 100%;
-            padding: 1rem;
+            padding: 0.85rem;
             background: linear-gradient(135deg, #d4af37, #c9a02c);
             border: none;
             border-radius: 4px;
             color: #000;
-            font-size: 1rem;
+            font-size: 0.95rem;
             font-weight: 600;
             letter-spacing: 0.1em;
             cursor: pointer;
             transition: all 0.3s ease;
-            margin-top: 0.5rem;
+            margin-top: 0.3rem;
           }
 
           .login-btn:hover:not(:disabled) {
@@ -359,9 +362,9 @@ function Login() {
           }
 
           .login-toggle {
-            margin-top: 1rem;
+            margin-top: 0.75rem;
             color: rgba(255, 255, 255, 0.7);
-            font-size: 0.9rem;
+            font-size: 0.8rem;
           }
 
           .login-toggle p {
@@ -386,33 +389,65 @@ function Login() {
           /* Mobile Responsive */
           @media (max-width: 768px) {
             .login-branding h1 {
-              font-size: 2.5rem;
+              font-size: 1.8rem;
             }
 
             .login-form-container {
               max-width: 90%;
-              padding: 1.5rem;
+              padding: 1.25rem;
               padding-bottom: 2rem;
             }
           }
 
           @media (max-height: 700px) {
             .login-branding h1 {
-              font-size: 2rem;
-              margin-bottom: 0.25rem;
+              font-size: 1.5rem;
+              margin-bottom: 0.15rem;
             }
 
             .login-tagline {
-              font-size: 0.8rem;
-              margin-bottom: 1rem;
+              font-size: 0.7rem;
+              margin-bottom: 0.8rem;
             }
 
             .login-form {
-              gap: 0.75rem;
+              gap: 0.65rem;
             }
 
             .form-group input {
+              padding: 0.65rem 0.75rem;
+              font-size: 0.9rem;
+            }
+
+            .login-btn {
               padding: 0.75rem;
+              font-size: 0.9rem;
+            }
+          }
+
+          @media (max-height: 600px) {
+            .login-branding h1 {
+              font-size: 1.25rem;
+              margin-bottom: 0.1rem;
+            }
+
+            .login-tagline {
+              font-size: 0.65rem;
+              margin-bottom: 0.6rem;
+            }
+
+            .form-group label {
+              font-size: 0.75rem;
+              margin-bottom: 0.25rem;
+            }
+
+            .login-form {
+              gap: 0.55rem;
+            }
+
+            .form-group input {
+              padding: 0.6rem 0.75rem;
+              font-size: 0.85rem;
             }
           }
         `}</style>
