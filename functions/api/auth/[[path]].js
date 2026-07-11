@@ -101,7 +101,7 @@ async function handleSignup(request, env) {
     .bind(email)
     .first();
 
-  if (existing?.email_verified_at && existing.status !== "deleted") {
+  if (existing) {
     const error = new Error("An account already exists for this email address");
     error.status = 409;
     throw error;
@@ -109,29 +109,19 @@ async function handleSignup(request, env) {
 
   const now = new Date().toISOString();
   const passwordHash = await hashPassword(password);
-  const userId = existing?.id || crypto.randomUUID();
+  const userId = crypto.randomUUID();
 
-  if (existing) {
-    await env.DB.prepare(
-      `UPDATE users
-       SET password_hash = ?, metadata_json = ?, status = 'active', updated_at = ?
-       WHERE id = ?`,
-    )
-      .bind(passwordHash, metadataJson, now, userId)
-      .run();
-  } else {
-    await env.DB.batch([
-      env.DB.prepare(
-        `INSERT INTO users
-          (id, email, password_hash, metadata_json, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?)`,
-      ).bind(userId, email, passwordHash, metadataJson, now, now),
-      env.DB.prepare(
-        `INSERT INTO profiles (user_id, profile_json, created_at, updated_at)
-         VALUES (?, ?, ?, ?)`,
-      ).bind(userId, metadataJson, now, now),
-    ]);
-  }
+  await env.DB.batch([
+    env.DB.prepare(
+      `INSERT INTO users
+        (id, email, password_hash, metadata_json, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+    ).bind(userId, email, passwordHash, metadataJson, now, now),
+    env.DB.prepare(
+      `INSERT INTO profiles (user_id, profile_json, created_at, updated_at)
+       VALUES (?, ?, ?, ?)`,
+    ).bind(userId, metadataJson, now, now),
+  ]);
 
   const verification = await issueVerificationToken(env, userId);
   const emailResult = await sendVerificationEmail(request, env, email, verification.token);
