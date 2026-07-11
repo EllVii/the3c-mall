@@ -1,6 +1,6 @@
-# 3C Mall: Cloudflare D1 Setup
+# 3C Mall: Cloudflare D1 and Email Sending Setup
 
-This repository now uses Cloudflare Pages Functions and a D1 binding named `DB` for authentication, sessions, reporting, and profile preference sync.
+This repository uses Cloudflare Pages Functions, a D1 binding named `DB`, and Cloudflare Email Sending for authentication, sessions, transactional email, reporting, and profile preference sync.
 
 ## 1. Create the database
 
@@ -30,7 +30,7 @@ The initial schema is in:
 migrations/0001_initial.sql
 ```
 
-Apply it through the D1 console in Cloudflare Dashboard, or from the repository root with Wrangler:
+Apply it from the repository root with Wrangler so D1 records the migration history:
 
 ```bash
 npx wrangler d1 migrations apply 3c-mall-db --remote
@@ -42,31 +42,47 @@ For a local D1 database:
 npx wrangler d1 migrations apply 3c-mall-db --local
 ```
 
-## 4. Add Pages environment variables
+## 4. Configure Cloudflare Email Sending
 
-Add these under the Pages project's **Settings → Variables and Secrets**.
+In Cloudflare Dashboard:
+
+1. Go to **Compute → Email Service → Email Sending**.
+2. Onboard `the3cmall.com` for outbound email.
+3. Create an API token with **Account → Email Sending → Edit** permission.
+4. Copy the token when Cloudflare displays it; it is only shown once.
+
+The sender domain in `AUTH_FROM_EMAIL` must be onboarded for Email Sending.
+
+## 5. Add Pages environment variables
+
+Add these under the Pages project's **Settings → Variables and Secrets** for both Preview and Production unless noted otherwise.
 
 | Variable | Type | Recommended value |
 |---|---|---|
-| `PUBLIC_APP_URL` | Plain text | `https://the3cmall.app` |
-| `RESEND_API_KEY` | Secret | Existing Resend API key |
+| `CLOUDFLARE_ACCOUNT_ID` | Plain text | The Cloudflare account ID that owns `the3cmall.com` |
+| `CLOUDFLARE_EMAIL_API_TOKEN` | Secret | Token with Email Sending: Edit permission |
 | `AUTH_FROM_EMAIL` | Plain text | `3C Mall <support@the3cmall.com>` |
 | `ADMIN_TOKEN` | Secret | A long random admin token |
+| `PUBLIC_APP_URL` | Plain text | Production only: `https://the3cmall.app` |
 
-`RESEND_API_KEY` is required for verification and password-reset emails. Authentication data and D1 credentials are never sent to the browser.
+Leave `PUBLIC_APP_URL` unset in Preview so verification and reset links use the active preview deployment URL.
 
-## 5. Deploy and verify
+`RESEND_API_KEY` may remain temporarily as a fallback while Cloudflare Email Sending is being tested. When both Cloudflare email variables are present, the app uses Cloudflare rather than Resend. Remove `RESEND_API_KEY` only after signup verification, resend verification, and password reset emails all work through Cloudflare.
 
-After Cloudflare builds the branch, open:
+Authentication data, Cloudflare API tokens, D1 credentials, and admin secrets are never sent to the browser.
+
+## 6. Deploy and verify D1
+
+After Cloudflare builds the branch, open the preview deployment and append:
 
 ```text
-https://the3cmall.app/health/d1
+/health/d1
 ```
 
-The API can also be checked directly:
+The API can also be checked directly at:
 
 ```text
-https://the3cmall.app/api/health/d1
+/api/health/d1
 ```
 
 A healthy response includes:
@@ -80,6 +96,21 @@ A healthy response includes:
   }
 }
 ```
+
+## 7. Verify transactional email and authentication
+
+Test the preview deployment in this order:
+
+1. Create a new account with an email address you can access and a password of at least eight characters.
+2. Confirm the response says the verification email was sent.
+3. Confirm the email appears in Cloudflare Email Sending logs and in the recipient inbox.
+4. Open the verification link.
+5. Sign in and refresh the page to confirm the session persists.
+6. Sign out.
+7. Use resend verification with a different unverified test account.
+8. Request a password reset, set a new password, and sign in with it.
+
+Keep the pull request in draft until the full flow passes.
 
 ## Routes moved to Cloudflare Pages Functions
 
@@ -101,7 +132,7 @@ Kroger product and store routes remain on the existing backend until their Worke
 
 ## Existing Supabase accounts
 
-Do not attempt to copy plaintext passwords. The safest migration is to import user email addresses and profile metadata, then require each existing user to set a new password through the D1 password-reset flow.
+Do not attempt to copy plaintext passwords or incompatible password hashes. Import user email addresses and profile metadata, then require each existing user to set a new password through the D1 password-reset flow.
 
 ## Rollback
 
@@ -111,4 +142,4 @@ The work is isolated on the branch:
 agent/migrate-supabase-to-d1
 ```
 
-Do not merge the branch until the D1 binding, migration, and environment variables have been added to the Cloudflare Pages project.
+Do not merge the branch until the D1 binding, migration, Cloudflare Email Sending variables, and complete preview authentication flow have been verified.
