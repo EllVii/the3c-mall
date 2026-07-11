@@ -146,16 +146,19 @@ export async function deleteSession(request, env) {
 export async function enforceRateLimit(env, key, limit, windowSeconds) {
   const now = Math.floor(Date.now() / 1000);
   const nextReset = now + windowSeconds;
-  const row = await env.DB.prepare(
-    `INSERT INTO rate_limits (rate_key, request_count, reset_at)
-     VALUES (?, 1, ?)
-     ON CONFLICT(rate_key) DO UPDATE SET
-       request_count = CASE WHEN reset_at <= ? THEN 1 ELSE request_count + 1 END,
-       reset_at = CASE WHEN reset_at <= ? THEN ? ELSE reset_at END
-     RETURNING request_count, reset_at`,
-  )
-    .bind(key, nextReset, now, now, nextReset)
-    .first();
+  const [, readResult] = await env.DB.batch([
+    env.DB.prepare(
+      `INSERT INTO rate_limits (rate_key, request_count, reset_at)
+       VALUES (?, 1, ?)
+       ON CONFLICT(rate_key) DO UPDATE SET
+         request_count = CASE WHEN reset_at <= ? THEN 1 ELSE request_count + 1 END,
+         reset_at = CASE WHEN reset_at <= ? THEN ? ELSE reset_at END`,
+    ).bind(key, nextReset, now, now, nextReset),
+    env.DB.prepare(
+      "SELECT request_count, reset_at FROM rate_limits WHERE rate_key = ? LIMIT 1",
+    ).bind(key),
+  ]);
+  const row = readResult?.results?.[0] || null;
 
   if (Number(row?.request_count || 0) > limit) {
     const error = new Error("Too many requests. Please try again later.");
