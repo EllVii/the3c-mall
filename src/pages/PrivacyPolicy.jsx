@@ -65,7 +65,7 @@ export default function PrivacyPolicy() {
               <li>Respond to support requests.</li>
               <li>Send service updates or optional communications.</li>
               <li>Improve security, troubleshoot issues, and prevent misuse.</li>
-              <li>Maintain records required for legal, business, or grant documentation purposes.</li>
+              <li>Maintain records required for legal, business, or project documentation purposes.</li>
             </ul>
           </section>
 
@@ -107,7 +107,7 @@ export default function PrivacyPolicy() {
           <section className="legal-section">
             <h2>7. Pilot Testing and Reimbursement Records</h2>
             <p>
-              If you participate in a pilot program, we may collect consent forms, feedback forms, receipts, reimbursement records, approval notes, and related documentation. These records may be retained for project documentation, accounting, audit, legal, or grant reporting purposes.
+              If you participate in a pilot program, we may collect consent forms, feedback forms, receipts, reimbursement records, approval notes, and related documentation. These records may be retained for project documentation, accounting, audit, legal, or business record purposes.
             </p>
           </section>
 
@@ -128,7 +128,7 @@ export default function PrivacyPolicy() {
           <section className="legal-section">
             <h2>10. Data Retention</h2>
             <p>
-              We keep information for as long as reasonably necessary to provide the Service, support pilot or reimbursement records, comply with legal or grant documentation needs, resolve disputes, maintain security, or improve the platform. You may request deletion of account-related information, subject to records we are required or permitted to keep.
+              We keep information for as long as reasonably necessary to provide the Service, support pilot or reimbursement records, comply with legal or business documentation needs, resolve disputes, maintain security, or improve the platform. You may request deletion of account-related information, subject to records we are required or permitted to keep.
             </p>
           </section>
 
