@@ -25,9 +25,9 @@ Final shopping, checkout, delivery, medical, nutrition, and financial decisions 
 
 Any third-party grocery, recipe, mapping, nutrition, or AI data source should be used only through approved APIs, permitted data sources, or documented provider terms.
 
-## Legal and Grant Review Lens
+## Legal Review Lens
 
-When writing code, documentation, marketing copy, grant material, or user-facing content for 3C Mall, keep the project inside this lane:
+When writing code, documentation, marketing copy, or user-facing content for 3C Mall, keep the project inside this lane:
 
 **We help families compare, plan, organize, and decide. We do not act as the store, doctor, dietitian, payment handler, or delivery provider.**
 
@@ -55,9 +55,9 @@ Avoid these risky phrases unless reviewed and approved:
 - guaranteed savings,
 - official partner unless a written partnership exists.
 
-## Pilot and Grant Use
+## Pilot Use
 
-The grant-facing pilot is expected to focus on:
+The early pilot is expected to focus on:
 
 - platform development,
 - grocery comparison workflows,
@@ -91,4 +91,4 @@ npm run build
 
 ## Documentation Rule
 
-README, Markdown files, grant notes, and public pages should all stay consistent with the safe positioning above. If a document describes 3C Mall as a retailer, delivery company, medical provider, payment processor, or guaranteed savings engine, rewrite it before using it in a grant package or public launch.
+README, Markdown files, internal notes, and public pages should all stay consistent with the safe positioning above. If a document describes 3C Mall as a retailer, delivery company, medical provider, payment processor, or guaranteed savings engine, rewrite it before using it in public or user-facing material.
