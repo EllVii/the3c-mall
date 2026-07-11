@@ -94,7 +94,7 @@ export default function TermsOfService() {
           <section className="legal-section">
             <h2>12. Content You Provide</h2>
             <p>
-              You are responsible for information, feedback, receipts, messages, files, or other content you submit through the Service. You grant 3C Mall permission to use submitted content as reasonably necessary to operate the Service, provide support, process pilot feedback, document reimbursement records, improve the platform, and meet legal or grant documentation requirements.
+              You are responsible for information, feedback, receipts, messages, files, or other content you submit through the Service. You grant 3C Mall permission to use submitted content as reasonably necessary to operate the Service, provide support, process pilot feedback, document reimbursement records, improve the platform, and meet legal or business documentation requirements.
             </p>
           </section>
 
