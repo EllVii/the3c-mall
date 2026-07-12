@@ -1,5 +1,5 @@
 // src/assets/components/VideoIntro.jsx
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 
 const VIDEO_INTRO_SEEN_KEY = "videoIntro.seen.v1";
 
@@ -21,69 +21,92 @@ export default function VideoIntro({ open, onComplete }) {
   ];
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) return undefined;
 
     setVideoEnded(false);
     setLoading(true);
     setVideoError(false);
-    
-    // Show skip button after 5 seconds
-    const skipTimer = setTimeout(() => setShowSkip(true), 5000);
-    
-    return () => clearTimeout(skipTimer);
+    setShowSkip(false);
+
+    // Prevent the page beneath the intro from moving on mobile.
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousHtmlOverflow = document.documentElement.style.overflow;
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+
+    // Show skip button after 5 seconds.
+    const skipTimer = window.setTimeout(() => setShowSkip(true), 5000);
+
+    return () => {
+      window.clearTimeout(skipTimer);
+      document.body.style.overflow = previousBodyOverflow;
+      document.documentElement.style.overflow = previousHtmlOverflow;
+    };
   }, [open]);
 
   const handleVideoEnd = () => {
     setVideoEnded(true);
-    localStorage.setItem(VIDEO_INTRO_SEEN_KEY, JSON.stringify({ 
-      seenAt: new Date().toISOString() 
-    }));
-    // Auto-complete after video ends
-    setTimeout(() => {
+    localStorage.setItem(
+      VIDEO_INTRO_SEEN_KEY,
+      JSON.stringify({ seenAt: new Date().toISOString() }),
+    );
+
+    // Auto-complete after the final frame has displayed briefly.
+    window.setTimeout(() => {
       onComplete?.();
     }, 500);
   };
-  
-  const handleVideoError = (e) => {
-    console.error('Video failed to load:', e);
+
+  const handleVideoError = (event) => {
+    console.error("Video failed to load:", event);
     setVideoError(true);
     setLoading(false);
-    // Auto-skip after 3 seconds if video fails
-    setTimeout(() => {
-      localStorage.setItem(VIDEO_INTRO_SEEN_KEY, JSON.stringify({ 
-        seenAt: new Date().toISOString(),
-        skipped: true,
-        reason: 'error'
-      }));
+
+    // Auto-skip after 3 seconds if the video cannot load.
+    window.setTimeout(() => {
+      localStorage.setItem(
+        VIDEO_INTRO_SEEN_KEY,
+        JSON.stringify({
+          seenAt: new Date().toISOString(),
+          skipped: true,
+          reason: "error",
+        }),
+      );
       onComplete?.();
     }, 3000);
   };
-  
+
   const handleSkip = () => {
-    localStorage.setItem(VIDEO_INTRO_SEEN_KEY, JSON.stringify({ 
-      seenAt: new Date().toISOString(),
-      skipped: true,
-      reason: 'user-skip'
-    }));
+    localStorage.setItem(
+      VIDEO_INTRO_SEEN_KEY,
+      JSON.stringify({
+        seenAt: new Date().toISOString(),
+        skipped: true,
+        reason: "user-skip",
+      }),
+    );
     onComplete?.();
   };
 
   if (!open) return null;
 
   return (
-    <div className="video-intro-overlay">
-      {/* Skip Button - Minimal */}
+    <div className="video-intro-overlay" role="dialog" aria-label="3C Mall introduction">
       {showSkip && !videoEnded && !videoError && (
-        <button className="video-skip-btn" onClick={handleSkip}>
+        <button
+          className="video-skip-btn"
+          type="button"
+          onClick={handleSkip}
+          aria-label="Skip introduction video"
+        >
           Skip Intro →
         </button>
       )}
-      
-      {/* Main Video */}
-      <video 
+
+      <video
         className="video-intro-player"
-        autoPlay 
-        muted 
+        autoPlay
+        muted
         playsInline
         preload="auto"
         onEnded={handleVideoEnd}
@@ -91,17 +114,7 @@ export default function VideoIntro({ open, onComplete }) {
         onLoadedData={() => setLoading(false)}
         onWaiting={() => setLoading(true)}
         onCanPlay={() => setLoading(false)}
-        style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          objectFit: 'cover',
-          zIndex: 9999,
-          opacity: loading ? 0.3 : 1,
-          transition: 'opacity 0.3s ease',
-        }}
+        style={{ opacity: loading ? 0.35 : 1 }}
       >
         {videoSources.map((src) => (
           <source key={src} src={src} type="video/mp4" />
@@ -112,44 +125,94 @@ export default function VideoIntro({ open, onComplete }) {
       <style>{`
         .video-intro-overlay {
           position: fixed;
-          top: 0;
-          left: 0;
-          width: 100vw;
-          height: 100vh;
-          background: #000;
+          inset: 0;
           z-index: 9998;
+          display: flex;
+          width: 100%;
+          height: 100vh;
+          height: 100svh;
+          height: 100dvh;
+          align-items: center;
+          justify-content: center;
           overflow: hidden;
+          background: #000;
+          isolation: isolate;
           pointer-events: auto;
         }
 
         .video-intro-player {
+          position: absolute;
+          inset: 0;
+          z-index: 1;
+          display: block;
           width: 100%;
           height: 100%;
-          display: block;
+          max-width: 100vw;
+          max-height: 100vh;
+          max-height: 100dvh;
+          border: 0;
+          background: #000;
+          object-fit: contain;
+          object-position: center center;
+          transition: opacity 0.3s ease;
         }
-        
+
         .video-skip-btn {
           position: fixed;
-          top: 20px;
-          right: 20px;
-          z-index: 10001;
-          padding: 12px 24px;
-          background: rgba(255, 255, 255, 0.1);
-          border: 2px solid rgba(255, 255, 255, 0.5);
-          color: white;
-          font-size: 16px;
-          font-weight: 500;
-          border-radius: 8px;
+          top: max(12px, env(safe-area-inset-top));
+          right: max(12px, env(safe-area-inset-right));
+          z-index: 2;
+          min-height: 44px;
+          padding: 10px 18px;
+          border: 1px solid rgba(255, 255, 255, 0.65);
+          border-radius: 999px;
+          background: rgba(0, 0, 0, 0.48);
+          color: #fff;
+          font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+          font-size: clamp(0.875rem, 1.5vw, 1rem);
+          font-weight: 600;
+          line-height: 1;
           cursor: pointer;
           backdrop-filter: blur(10px);
-          transition: all 0.3s ease;
-          font-family: system-ui, -apple-system, sans-serif;
+          -webkit-backdrop-filter: blur(10px);
+          touch-action: manipulation;
+          transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
         }
-        
-        .video-skip-btn:hover {
-          background: rgba(255, 255, 255, 0.2);
-          border-color: white;
-          transform: translateY(-2px);
+
+        .video-skip-btn:hover,
+        .video-skip-btn:focus-visible {
+          border-color: #fff;
+          background: rgba(0, 0, 0, 0.72);
+          transform: translateY(-1px);
+          outline: none;
+        }
+
+        @media (max-width: 768px) {
+          .video-intro-player {
+            width: 100vw;
+            height: 100svh;
+            height: 100dvh;
+          }
+
+          .video-skip-btn {
+            padding: 10px 15px;
+          }
+        }
+
+        @media (orientation: landscape) and (max-height: 520px) {
+          .video-skip-btn {
+            top: max(8px, env(safe-area-inset-top));
+            right: max(8px, env(safe-area-inset-right));
+            min-height: 40px;
+            padding: 8px 14px;
+          }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .video-intro-player,
+          .video-skip-btn {
+            transition: none;
+          }
         }
       `}</style>
     </div>
