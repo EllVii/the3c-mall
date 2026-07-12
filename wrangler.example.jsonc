@@ -1,0 +1,30 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "the3c-mall",
+  "compatibility_date": "2026-07-01",
+  "pages_build_output_dir": "dist",
+  "vars": {
+    "APP_ORIGIN": "https://the3cmall.app",
+    "FROM_EMAIL": "3C Mall <no-reply@the3cmall.app>",
+    "PILOT_SHOW_AUTH_LINKS": "false"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "the3c-mall-production",
+      "database_id": "REPLACE_WITH_D1_DATABASE_ID",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "RECEIPTS",
+      "bucket_name": "the3c-mall-phase-i-receipts"
+    }
+  ]
+}
+
+// Configure these secrets in Cloudflare, never in Git:
+// ADMIN_API_TOKEN
+// RESEND_API_KEY
+// Any authorized retailer or data-provider credentials
