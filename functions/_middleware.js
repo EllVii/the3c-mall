@@ -1,17 +1,20 @@
 export async function onRequest(context) {
   const { request, env } = context;
+  const url = new URL(request.url);
 
-  if (env.DB) {
+  if (env.DB && url.pathname.startsWith("/api/")) {
     // Normalize expiration enforcement through SQLite's datetime parser. This
     // prevents formatting differences between JavaScript ISO timestamps and
     // D1 CURRENT_TIMESTAMP from extending same-day token validity.
-    context.waitUntil(
-      env.DB.batch([
+    try {
+      await env.DB.batch([
         env.DB.prepare("DELETE FROM sessions WHERE datetime(expires_at) <= datetime('now')"),
         env.DB.prepare("DELETE FROM email_verification_tokens WHERE used_at IS NOT NULL OR datetime(expires_at) <= datetime('now', '-7 days')"),
         env.DB.prepare("DELETE FROM password_reset_tokens WHERE used_at IS NOT NULL OR datetime(expires_at) <= datetime('now', '-7 days')"),
-      ]).catch((cleanupError) => console.error("D1 cleanup failed", cleanupError)),
-    );
+      ]);
+    } catch (cleanupError) {
+      console.error("D1 cleanup failed", cleanupError);
+    }
   }
 
   const response = await context.next();
@@ -21,7 +24,7 @@ export async function onRequest(context) {
   headers.set("permissions-policy", "camera=(), microphone=(), geolocation=()");
   headers.set("cross-origin-opener-policy", "same-origin");
 
-  if (new URL(request.url).protocol === "https:") {
+  if (url.protocol === "https:") {
     headers.set("strict-transport-security", "max-age=31536000; includeSubDomains");
   }
 
