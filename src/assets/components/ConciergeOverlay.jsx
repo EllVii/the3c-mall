@@ -1,8 +1,9 @@
 // src/assets/components/ConciergeOverlay.jsx
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { readJSON } from "../../utils/Storage";
 
 const CONCIERGE_HIDDEN_KEY = "concierge.hidden.v1";
+const PROFILE_KEY = "concierge.profile.v1";
 
 export default function ConciergeOverlay({
   open,
@@ -17,39 +18,32 @@ export default function ConciergeOverlay({
   userName = null,
 }) {
   const visible = open && !minimized;
-  
-  // Check if concierge is hidden from profile settings
+
   const [isHidden, setIsHidden] = useState(() => readJSON(CONCIERGE_HIDDEN_KEY, false));
-  
-  // Listen for storage changes to update hide/show state
+  const hasProfile = Boolean(readJSON(PROFILE_KEY, null));
+
   useEffect(() => {
     const handleStorageChange = () => {
       setIsHidden(readJSON(CONCIERGE_HIDDEN_KEY, false));
     };
-    
+
     window.addEventListener("storage", handleStorageChange);
-    // Check periodically for same-tab changes
-    const interval = setInterval(handleStorageChange, 500);
-    
+    const interval = window.setInterval(handleStorageChange, 500);
+
     return () => {
       window.removeEventListener("storage", handleStorageChange);
-      clearInterval(interval);
+      window.clearInterval(interval);
     };
   }, []);
 
-  // Feng shui: never exceed 6 visible actions
   const safeOptions = useMemo(() => options.slice(0, 6), [options]);
 
-  /* ============================
-     HIDDEN STATE - Don't show anything
-     ============================ */
-  if (isHidden) {
+  // First-time customers should finish the dedicated onboarding flow before
+  // another concierge surface is allowed to appear.
+  if (isHidden || !hasProfile) {
     return null;
   }
 
-  /* ============================
-     MINIMIZED STATE (FLOATING PILL)
-     ============================ */
   if (!visible) {
     return (
       <button
@@ -64,22 +58,21 @@ export default function ConciergeOverlay({
     );
   }
 
-  /* ============================
-     FULL OVERLAY
-     ============================ */
   return (
-    <div className="cc-overlay" role="dialog" aria-modal="true">
-      {/* backdrop */}
+    <div
+      className="cc-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="cc-overlay-title"
+    >
       <div className="cc-backdrop" onClick={onClose} />
 
-      {/* panel */}
       <div className="cc-panel">
-        {/* HEADER */}
         <div className="cc-head">
           <div className="cc-head-left">
-            <div className="cc-badge">3C</div>
+            <div className="cc-badge" aria-hidden="true">3C</div>
             <div>
-              <div className="cc-title">{title}</div>
+              <div id="cc-overlay-title" className="cc-title">{title}</div>
               <div className="cc-sub">{subtitle}</div>
             </div>
           </div>
@@ -96,45 +89,36 @@ export default function ConciergeOverlay({
               className="btn btn-secondary cc-btn"
               onClick={onClose}
               type="button"
+              aria-label="Close Concierge"
             >
               Close
             </button>
           </div>
         </div>
 
-        {/* BODY */}
         <div className="cc-body">
           <p className="small cc-copy">
             {userName ? (
               <>
-                Hi <strong>{userName}</strong>! Pick your lane and I'll take you there. I'll remember your choice so the app stays focused on what matters to you.
+                Hi <strong>{userName}</strong>. Choose what you want help with and I’ll take you directly there.
               </>
             ) : (
-              <>
-                Pick your lane. I'll take you there and remember it so the app stays quiet.
-              </>
+              <>Choose what you want help with and I’ll take you directly there.</>
             )}
           </p>
 
           <div className="cc-grid">
-            {safeOptions.map((x) => (
+            {safeOptions.map((option) => (
               <button
-                key={x.id}
+                key={option.id}
                 className="cc-choice"
-                onClick={() => onPick?.(x)}
+                onClick={() => onPick?.(option)}
                 type="button"
               >
-                <div className="cc-choice-title">{x.label}</div>
-                <div className="cc-choice-desc">{x.hint}</div>
+                <div className="cc-choice-title">{option.label}</div>
+                <div className="cc-choice-desc">{option.hint}</div>
               </button>
             ))}
-          </div>
-
-          <div className="cc-foot">
-            <div className="small">
-              Alpha: this overlay is the primary launcher — no hunting, no
-              scrolling.
-            </div>
           </div>
         </div>
       </div>
