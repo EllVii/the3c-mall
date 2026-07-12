@@ -1,5 +1,5 @@
 // src/pages/DashboardPage.jsx
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/DashboardPage.css";
 
@@ -7,7 +7,6 @@ import FeedbackPanel from "../assets/components/FeedbackPanel.jsx";
 import ConciergeOverlay from "../assets/components/ConciergeOverlay.jsx";
 import GuidedAssistOverlay from "../assets/components/GuidedAssistOverlay.jsx";
 import OnboardingGate from "../assets/components/OnboardingGate.jsx";
-import ConciergeIntro from "../assets/components/ConciergeIntro.jsx";
 import VideoIntro, { VIDEO_INTRO_SEEN_KEY } from "../assets/components/VideoIntro.jsx";
 import { readJSON, writeJSON } from "../utils/Storage";
 
@@ -22,10 +21,27 @@ import {
   markGuideSeen,
 } from "../utils/prefs";
 
+const PROFILE_KEY = "concierge.profile.v1";
+
 const ZONES = [
-  { id: "grocery", title: "Save money on groceries", desc: "Build a cart optimized automatically.", route: "/app/grocery-lab" },
-  { id: "meals", title: "Plan meals fast", desc: "Choose a date → time → meal. Snacks included.", route: "/app/meal-plans" },
-  { id: "community", title: "Community support", desc: "Encouragement without pressure (Beta preview).", route: "/app/community" },
+  {
+    id: "grocery",
+    title: "Save money on groceries",
+    desc: "Build a cart optimized automatically.",
+    route: "/app/grocery-lab",
+  },
+  {
+    id: "meals",
+    title: "Plan meals fast",
+    desc: "Choose a date → time → meal. Snacks included.",
+    route: "/app/meal-plans",
+  },
+  {
+    id: "community",
+    title: "Community support",
+    desc: "Encouragement without pressure (Beta preview).",
+    route: "/app/community",
+  },
 ];
 
 function getTimeBasedGreeting() {
@@ -35,87 +51,80 @@ function getTimeBasedGreeting() {
   return "Good Evening";
 }
 
-function pickRandom(arr) {
-  return arr[Math.floor(Math.random() * arr.length)];
+function pickRandom(items) {
+  return items[Math.floor(Math.random() * items.length)];
 }
 
 export default function DashboardPage() {
   const nav = useNavigate();
+  const hadProfileOnMount = useRef(Boolean(readJSON(PROFILE_KEY, null)));
 
+  const [hasProfile, setHasProfile] = useState(hadProfileOnMount.current);
+  const [userName, setUserName] = useState(() => {
+    const profile = readJSON(PROFILE_KEY, null);
+    return profile?.firstName || null;
+  });
   const [prefs, setPrefsState] = useState(() => getPrefsSafe());
   const [nudge, setNudge] = useState({ show: false });
+  const [showVideoIntro, setShowVideoIntro] = useState(() => {
+    return !readJSON(VIDEO_INTRO_SEEN_KEY, null);
+  });
 
-  // Load user name from profile
-  const userName = useMemo(() => {
-    const profile = readJSON("concierge.profile.v1", null);
-    return profile?.firstName || null;
-  }, []);
+  // The Concierge should be available, but it should never cover first-time setup.
+  const [ccOpen, setCcOpen] = useState(false);
+  const [ccMin, setCcMin] = useState(false);
+  const [gaOpen, setGaOpen] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
 
-  // Track if user has completed at least one shop (trust metric)
+  const isFirstTime = !hasProfile;
+
   const hasShoppedBefore = useMemo(() => {
     const history = readJSON("grocery.savingsHistory.v1", []);
     return Array.isArray(history) && history.length > 0;
   }, []);
-
-  // Video Intro - shows on first visit to /app
-  const [showVideoIntro, setShowVideoIntro] = useState(() => {
-    const hasSeenIntro = readJSON(VIDEO_INTRO_SEEN_KEY, null);
-    return !hasSeenIntro; // Show if never seen
-  });
-
-  // Concierge overlay — OPEN BY DEFAULT
-  const [ccOpen, setCcOpen] = useState(true);
-  const [ccMin, setCcMin] = useState(false);
-
-  // Concierge Intro on first run
-  const [introOpen, setIntroOpen] = useState(() => {
-    const profile = readJSON("concierge.profile.v1", null);
-    return !profile; // Show if no profile yet
-  });
-
-  // Onboarding gate (after Video Intro)
-  const isFirstTime = !readJSON("concierge.profile.v1", null);
-
-  // Guided Assist
-  const [gaOpen, setGaOpen] = useState(false);
-
-  // Feedback
-  const [feedbackOpen, setFeedbackOpen] = useState(false);
-
 
   useEffect(() => {
     setPrefsState(getPrefsSafe());
     setNudge(shouldShowNudge());
   }, []);
 
+  // Returning customers do not need to see this transition page.
+  useEffect(() => {
+    if (hadProfileOnMount.current) {
+      nav("/app/directory", { replace: true });
+    }
+  }, [nav]);
+
   // ======= DEV ONLY: Reset Onboarding (Shift+R, only after 30 min) =======
   useEffect(() => {
-    const isDev = import.meta.env.MODE === 'development';
-    if (!isDev) return;
+    const isDev = import.meta.env.MODE === "development";
+    if (!isDev) return undefined;
 
     const LAST_RESET_KEY = "dev.lastOnboardingReset";
-    const COOLDOWN_MS = 30 * 60 * 1000; // 30 minutes
+    const COOLDOWN_MS = 30 * 60 * 1000;
 
-    const handleDevReset = (e) => {
-      if (e.key?.toLowerCase() === "r" && e.shiftKey) {
-        const lastReset = parseInt(localStorage.getItem(LAST_RESET_KEY) || "0", 10);
-        const now = Date.now();
-        const timeSinceReset = now - lastReset;
+    const handleDevReset = (event) => {
+      if (event.key?.toLowerCase() !== "r" || !event.shiftKey) return;
 
-        if (timeSinceReset < COOLDOWN_MS) {
-          const minutesLeft = Math.ceil((COOLDOWN_MS - timeSinceReset) / 60000);
-          alert(`DEV: Onboarding reset is on cooldown. Wait ${minutesLeft} more minute(s).`);
-          return;
-        }
+      const lastReset = Number.parseInt(localStorage.getItem(LAST_RESET_KEY) || "0", 10);
+      const now = Date.now();
+      const timeSinceReset = now - lastReset;
 
-        const confirm = window.confirm("DEV MODE: Reset onboarding and clear profile?\n\nThis will:\n- Clear your name and preferences\n- Show the welcome screen again\n- Allow re-entering all info\n\nCooldown: 30 minutes");
-        
-        if (confirm) {
-          localStorage.removeItem("concierge.profile.v1");
-          localStorage.removeItem("grocery.strategy.v1");
-          localStorage.setItem(LAST_RESET_KEY, now.toString());
-          window.location.reload();
-        }
+      if (timeSinceReset < COOLDOWN_MS) {
+        const minutesLeft = Math.ceil((COOLDOWN_MS - timeSinceReset) / 60000);
+        window.alert(`DEV: Onboarding reset is on cooldown. Wait ${minutesLeft} more minute(s).`);
+        return;
+      }
+
+      const confirmed = window.confirm(
+        "DEV MODE: Reset onboarding and clear profile?\n\nThis will clear your name and preferences and show the welcome screen again.",
+      );
+
+      if (confirmed) {
+        localStorage.removeItem(PROFILE_KEY);
+        localStorage.removeItem("grocery.strategy.v1");
+        localStorage.setItem(LAST_RESET_KEY, now.toString());
+        window.location.reload();
       }
     };
 
@@ -123,54 +132,29 @@ export default function DashboardPage() {
     return () => window.removeEventListener("keydown", handleDevReset);
   }, []);
 
-  // ======= Guided Assist: reliable test + timer =======
   useEffect(() => {
-    const pageId = "dashboard";
-
-    // Keyboard test: press "g" to force show guide (dev/test)
-    const onKey = (e) => {
-      if (e.key?.toLowerCase() === "g") {
-        setGaOpen(true);
-      }
-      // Shift+G = reset and show again
-      if (e.key?.toLowerCase() === "g" && e.shiftKey) {
-        // don’t require resetGuides; just allow re-show by not marking seen yet
+    const onKey = (event) => {
+      if (event.key?.toLowerCase() === "g") {
         setGaOpen(true);
       }
     };
-    window.addEventListener("keydown", onKey);
 
+    window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
   useEffect(() => {
     const pageId = "dashboard";
-    if (hasSeenGuide(pageId)) return;
+    if (hasSeenGuide(pageId) || isFirstTime || showVideoIntro || ccOpen) return undefined;
 
-    // Show guided assist immediately after intro closes (user completed onboarding)
-    if (introOpen === false && !ccOpen && !isFirstTime) {
-      const timer = setTimeout(() => {
-        setGaOpen(true);
-      }, 500);
-      return () => clearTimeout(timer);
-    }
-
-    // Fallback: if user is idle for 30 seconds, show guide
-    if (isFirstTime || introOpen || ccOpen) return;
-
-    let idleTimer = setTimeout(() => {
-      if (!hasSeenGuide(pageId)) {
-        setGaOpen(true);
-      }
+    let idleTimer = window.setTimeout(() => {
+      if (!hasSeenGuide(pageId)) setGaOpen(true);
     }, 30000);
 
-    // Reset timer on interaction
     const restart = () => {
-      clearTimeout(idleTimer);
-      idleTimer = setTimeout(() => {
-        if (!hasSeenGuide(pageId)) {
-          setGaOpen(true);
-        }
+      window.clearTimeout(idleTimer);
+      idleTimer = window.setTimeout(() => {
+        if (!hasSeenGuide(pageId)) setGaOpen(true);
       }, 30000);
     };
 
@@ -178,23 +162,34 @@ export default function DashboardPage() {
     window.addEventListener("keydown", restart);
 
     return () => {
-      clearTimeout(idleTimer);
+      window.clearTimeout(idleTimer);
       window.removeEventListener("pointerdown", restart);
       window.removeEventListener("keydown", restart);
     };
-  }, [introOpen, ccOpen, isFirstTime]);
+  }, [ccOpen, isFirstTime, showVideoIntro]);
 
-  // ======= Focus logic =======
   const focusedZone = useMemo(() => {
     if (!prefs?.focus || prefs.focus === "explore") return null;
-    return ZONES.find((z) => z.id === prefs.focus) || null;
+    return ZONES.find((zone) => zone.id === prefs.focus) || null;
   }, [prefs]);
 
   const visibleZones = useMemo(() => {
     if (prefs?.navMode === "full") return ZONES;
-    const grocery = ZONES.find((z) => z.id === "grocery");
+    const grocery = ZONES.find((zone) => zone.id === "grocery");
     return [focusedZone || grocery].filter(Boolean);
   }, [prefs, focusedZone]);
+
+  const explorePick = useMemo(() => pickRandom(ZONES), []);
+
+  const conciergeOptions = useMemo(
+    () => [
+      { id: "grocery", label: "Groceries", hint: "Build a better-value shopping strategy", route: "/app/grocery-lab" },
+      { id: "meals", label: "Meal planning", hint: "Plan meals and snacks around real life", route: "/app/meal-plans" },
+      { id: "community", label: "Community", hint: "Find support without pressure", route: "/app/community" },
+      { id: "explore", label: "Surprise me 🎲", hint: "Open one useful zone", route: explorePick.route },
+    ],
+    [explorePick.route],
+  );
 
   function chooseFocus(id) {
     const next = setFocus(id);
@@ -211,96 +206,73 @@ export default function DashboardPage() {
     setNudge(shouldShowNudge());
   }
 
-  const explorePick = useMemo(() => pickRandom(ZONES), []);
+  function onConciergePick(option) {
+    const destination = option.id === "explore" ? explorePick.route : option.route;
+    const focusId = option.id === "explore" ? explorePick.id : option.id;
 
-  const conciergeOptions = useMemo(
-    () => [
-      { id: "grocery", label: "Groceries only", hint: "Best value cart strategy", route: "/app/grocery-lab" },
-      { id: "meals", label: "Meal planning", hint: "Fast meal + snack flow", route: "/app/meal-plans" },
-      { id: "community", label: "Community", hint: "Support without pressure", route: "/app/community" },
-      { id: "explore", label: "Surprise me 🎲", hint: "Explore one zone", route: explorePick.route },
-    ],
-    [explorePick.route]
-  );
-
-  function onConciergePick(x) {
-    if (x.id === "explore") {
-      chooseFocus(explorePick.id);
-      nav(explorePick.route);
-    } else {
-      if (["grocery", "meals", "community"].includes(x.id)) chooseFocus(x.id);
-      nav(x.route);
+    if (["grocery", "meals", "community"].includes(focusId)) {
+      chooseFocus(focusId);
     }
+
     setCcOpen(false);
+    setCcMin(false);
+    nav(destination);
   }
 
-  // If user has profile, redirect to map (skip dashboard entirely)
-  useEffect(() => {
-    const profile = readJSON("concierge.profile.v1", null);
-    
-    if (profile) {
-      // User has completed onboarding, send them to the map
-      nav("/app/directory", { replace: true });
-    }
-  }, [nav]);
+  function handleOnboardingComplete(destination = "/app/directory") {
+    const profile = readJSON(PROFILE_KEY, null);
+    setHasProfile(Boolean(profile));
+    setUserName(profile?.firstName || null);
+    setCcOpen(false);
+    setCcMin(false);
+    nav(destination, { replace: true });
+  }
 
   return (
     <section className="page db-shell">
-      {/* VIDEO INTRO - shows on first visit to /app */}
       {showVideoIntro && (
         <VideoIntro
           open={showVideoIntro}
           onComplete={() => {
-            setShowVideoIntro(false);
             writeJSON(VIDEO_INTRO_SEEN_KEY, true);
+            setShowVideoIntro(false);
           }}
         />
       )}
 
-      {/* ONBOARDING GATE - force name entry on first use (Video Intro already shown on landing page) */}
       <OnboardingGate
-        open={isFirstTime}
-        onClose={() => {
-          setIntroOpen(false);
-          // After profile creation, redirect to map
-          nav("/app/directory", { replace: true });
-        }}
+        open={isFirstTime && !showVideoIntro}
+        onClose={handleOnboardingComplete}
       />
 
-      {/* CONCIERGE INTRO - fill out preferences after name */}
-      <ConciergeIntro
-        open={introOpen && !isFirstTime}
-        onClose={() => setIntroOpen(false)}
-      />
+      {hasProfile && !showVideoIntro && (
+        <ConciergeOverlay
+          open={ccOpen}
+          minimized={ccMin}
+          onMinimize={() => {
+            setCcMin(true);
+            setCcOpen(true);
+          }}
+          onOpen={() => {
+            setCcMin(false);
+            setCcOpen(true);
+          }}
+          onClose={() => {
+            setCcOpen(false);
+            setCcMin(false);
+          }}
+          onPick={onConciergePick}
+          title="What can I help with?"
+          subtitle="Concierge · Cost · Community"
+          options={conciergeOptions}
+          userName={userName}
+        />
+      )}
 
-      {/* CONCIERGE OVERLAY */}
-      <ConciergeOverlay
-        open={ccOpen}
-        minimized={ccMin}
-        onMinimize={() => {
-          setCcMin(true);
-          setCcOpen(true);
-        }}
-        onOpen={() => {
-          setCcMin(false);
-          setCcOpen(true);
-        }}
-        onClose={() => {
-          setCcOpen(false);
-          setCcMin(false);
-        }}
-        onPick={onConciergePick}
-        title="Concierge"
-        subtitle="Groceries • Meals • Strategy"
-        options={conciergeOptions}
-        userName={userName}
-      />
-
-      {/* GUIDED ASSIST OVERLAY */}
       <GuidedAssistOverlay
-        open={gaOpen}
+        open={gaOpen && hasProfile && !showVideoIntro}
         title={`Ready to explore, ${userName || "friend"}?`}
-        message="Start with Groceries to see how I can help you save money on your shopping trips."
+        message="Start with Groceries to see how 3C Mall can help organize your shopping strategy."
         primaryLabel="Start with Groceries"
         secondaryLabel="Explore later"
         onPrimary={() => {
@@ -320,23 +292,29 @@ export default function DashboardPage() {
         iconText="3C"
       />
 
-      {/* CONTENT */}
       <div className="page-content">
-        {/* TIME-BASED GREETING */}
         <div style={{ marginBottom: "1rem" }}>
-          <h1 style={{ margin: 0, fontSize: "1.5rem", fontWeight: 800, color: "var(--gold)", marginBottom: ".25rem" }}>
+          <h1
+            style={{
+              margin: 0,
+              marginBottom: ".25rem",
+              color: "var(--gold)",
+              fontSize: "1.5rem",
+              fontWeight: 800,
+            }}
+          >
             {getTimeBasedGreeting()}{userName ? `, ${userName}` : ""}
           </h1>
           <p style={{ margin: 0, fontSize: ".95rem", opacity: 0.85 }}>
-            Pick a zone below to save money, plan meals, or track your health — or use the Concierge menu above.
+            Pick a zone to save money, plan meals, or find support.
           </p>
         </div>
 
         {nudge.show && (
           <div className="tile tile-hero" style={{ borderColor: "rgba(246,220,138,.35)" }}>
             <div className="kicker">Quick Tip</div>
-            <div className="tile-title">Want the other wins too?</div>
-            <div className="small">3C can plan meals and support consistency. Ignore forever if you want.</div>
+            <div className="tile-title">Want to see the other zones?</div>
+            <div className="small">Open the full mall whenever you are ready.</div>
 
             <div style={{ display: "flex", gap: ".6rem", flexWrap: "wrap", marginTop: ".6rem" }}>
               <button
@@ -345,14 +323,14 @@ export default function DashboardPage() {
                   handleNudgeSeen();
                   setPrefsState(setNavMode("full"));
                 }}
-                title="Show all zones (Groceries, Meals, Community)"
+                type="button"
               >
-                Show me more
+                Show all zones
               </button>
-              <button className="btn btn-secondary" onClick={handleNudgeSeen} title="Hide this message">
+              <button className="btn btn-secondary" onClick={handleNudgeSeen} type="button">
                 Not now
               </button>
-              <button className="btn btn-ghost" onClick={handleDisableNudges} title="Don't show this tip again">
+              <button className="btn btn-ghost" onClick={handleDisableNudges} type="button">
                 Don’t remind me
               </button>
             </div>
@@ -360,21 +338,21 @@ export default function DashboardPage() {
         )}
 
         <div className="fit-grid">
-          {visibleZones.map((z) => (
-            <div key={z.id} className="tile" title={`${z.title}. ${z.desc}`}>
-              <div className="tile-title">{z.title}</div>
-              <div className="tile-desc">{z.desc}</div>
+          {visibleZones.map((zone) => (
+            <div key={zone.id} className="tile" title={`${zone.title}. ${zone.desc}`}>
+              <div className="tile-title">{zone.title}</div>
+              <div className="tile-desc">{zone.desc}</div>
 
               <div style={{ display: "flex", gap: ".5rem", flexWrap: "wrap", marginTop: ".5rem" }}>
-                <button className="btn btn-primary" onClick={() => nav(z.route)} title={`Open ${z.title}`}>
+                <button className="btn btn-primary" onClick={() => nav(zone.route)} type="button">
                   Open
                 </button>
                 {hasShoppedBefore && (
                   <>
-                    <button className="btn btn-secondary" onClick={() => chooseFocus(z.id)} title={`Make ${z.title} your default starting zone`}>
+                    <button className="btn btn-secondary" onClick={() => chooseFocus(zone.id)} type="button">
                       Set default
                     </button>
-                    <button className="btn btn-ghost" onClick={() => setFeedbackOpen(true)} title="Share feedback about this zone">
+                    <button className="btn btn-ghost" onClick={() => setFeedbackOpen(true)} type="button">
                       Feedback
                     </button>
                   </>
@@ -384,8 +362,6 @@ export default function DashboardPage() {
           ))}
         </div>
       </div>
-
-    
 
       <FeedbackPanel
         open={feedbackOpen}
