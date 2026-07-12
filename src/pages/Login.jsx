@@ -1,458 +1,560 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
-import VideoIntro, { VIDEO_INTRO_SEEN_KEY } from "../assets/components/VideoIntro.jsx";
-import { readJSON } from "../utils/Storage";
+
+const MIN_PASSWORD_LENGTH = 8;
 
 function Login() {
   const nav = useNavigate();
-  const { signIn, signUp, error: authError, loading } = useAuth();
+  const [searchParams] = useSearchParams();
+  const {
+    signIn,
+    signUp,
+    resetPassword,
+    resendVerification,
+    loading,
+  } = useAuth();
 
   const [mode, setMode] = useState("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  
-  // Show video intro on first visit (if not seen on landing page)
-  const [showVideoIntro, setShowVideoIntro] = useState(() => {
-    const hasSeenIntro = readJSON(VIDEO_INTRO_SEEN_KEY, null);
-    return !hasSeenIntro;
-  });
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
+  useEffect(() => {
+    if (searchParams.get("verified") === "1") {
+      setSuccess("Your email is verified. You can log in now.");
+      setMode("login");
+    } else if (searchParams.get("verification") === "invalid") {
+      setError("That verification link is invalid or has expired. Request a new one below.");
+      setMode("login");
+    }
+  }, [searchParams]);
+
+  const clearMessages = () => {
     setError("");
     setSuccess("");
-
-    if (!email || !password) {
-      setError("Please fill in all fields");
-      return;
-    }
-
-    const { error: signInError } = await signIn(email, password);
-    if (signInError) {
-      setError(signInError);
-      return;
-    }
-
-    setSuccess("✅ Logged in! Redirecting...");
-    setTimeout(() => nav("/app"), 500);
   };
 
-  const handleSignUp = async (e) => {
-    e.preventDefault();
-    setError("");
-    setSuccess("");
+  const switchMode = (nextMode) => {
+    clearMessages();
+    setMode(nextMode);
+    setPassword("");
+    setConfirmPassword("");
+    setShowPassword(false);
+  };
 
-    if (!email || !password || !confirmPassword) {
-      setError("Please fill in all fields");
+  const validateEmail = () => {
+    if (!email.trim()) {
+      setError("Enter your email address.");
+      return false;
+    }
+    return true;
+  };
+
+  const handleLogin = async (event) => {
+    event.preventDefault();
+    clearMessages();
+
+    if (!validateEmail() || !password) {
+      if (!password) setError("Enter your email address and password.");
+      return;
+    }
+
+    const result = await signIn(email.trim(), password);
+    if (result.error) {
+      setError(result.error);
+      return;
+    }
+
+    setSuccess("Logged in. Opening 3C Mall...");
+    window.setTimeout(() => nav("/app"), 350);
+  };
+
+  const handleSignUp = async (event) => {
+    event.preventDefault();
+    clearMessages();
+
+    if (!validateEmail() || !password || !confirmPassword) {
+      if (!password || !confirmPassword) setError("Complete all account fields.");
+      return;
+    }
+
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      setError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters.`);
       return;
     }
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match");
+      setError("Passwords do not match.");
       return;
     }
 
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters");
-      return;
-    }
-
-    const { error: signUpError } = await signUp(email, password, {
+    const result = await signUp(email.trim(), password, {
       firstName: "",
       household: "solo",
     });
 
-    if (signUpError) {
-      setError(signUpError);
+    if (result.error) {
+      setError(result.error);
       return;
     }
 
-    setSuccess("✅ Account created! Check your email for confirmation.");
-    setTimeout(() => {
-      setMode("login");
-      setEmail("");
-      setPassword("");
-      setConfirmPassword("");
-    }, 2000);
+    setSuccess(result.message || "Account created. Check your email to verify your account.");
+    setPassword("");
+    setConfirmPassword("");
+    setMode("login");
   };
 
+  const handleForgotPassword = async (event) => {
+    event.preventDefault();
+    clearMessages();
+
+    if (!validateEmail()) return;
+
+    const result = await resetPassword(email.trim());
+    if (result.error) {
+      setError(result.error);
+      return;
+    }
+
+    setSuccess(result.message || "Check your email for password-reset instructions.");
+  };
+
+  const handleResendVerification = async () => {
+    clearMessages();
+    if (!validateEmail()) return;
+
+    const result = await resendVerification(email.trim());
+    if (result.error) {
+      setError(result.error);
+      return;
+    }
+
+    setSuccess(result.message || "If the account is unverified, a new email has been sent.");
+  };
+
+  const isSignup = mode === "signup";
+  const isForgot = mode === "forgot";
+
   return (
-    <>
-      {/* VIDEO INTRO - Plays if user hasn't seen it yet */}
-      <VideoIntro
-        open={showVideoIntro}
-        onComplete={() => {
-          setShowVideoIntro(false);
-        }}
-      />
-      
-      <section className="login-page">
-        {/* Background Image */}
-        <div className="login-hero-image">
-          <img 
-            src="/brand/3c-mall-entrance.jpg" 
-            alt="3C Mall Entrance" 
-            className="hero-img"
-          />
-          <div className="login-overlay"></div>
+    <main className="auth-page">
+      <div className="auth-background" aria-hidden="true">
+        <img src="/brand/3c-mall-entrance.jpg" alt="" />
+      </div>
+      <div className="auth-shade" aria-hidden="true" />
+
+      <section className="auth-card" aria-labelledby="auth-title">
+        <div className="auth-brand">
+          <p className="auth-eyebrow">CONCIERGE • COST • COMMUNITY</p>
+          <h1 id="auth-title">
+            {isSignup ? "Create your account" : isForgot ? "Reset your password" : "Welcome back"}
+          </h1>
+          <p className="auth-subtitle">
+            {isSignup
+              ? "Start your personalized 3C Mall experience."
+              : isForgot
+                ? "Enter your email and we will send a secure reset link."
+                : "Log in to continue your journey."}
+          </p>
         </div>
 
-        {/* Login Form at Bottom Center */}
-        <div className="login-form-container">
-          <form
-            className="login-form"
-            onSubmit={mode === "login" ? handleLogin : handleSignUp}
-          >
-            {/* Email - Above Password */}
-            <div className="form-group">
-              <label htmlFor="email">Email</label>
-              <input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={loading}
-                autoComplete="email"
-              />
-            </div>
-
-            {/* Password - Below Username */}
-            <div className="form-group">
-              <label htmlFor="password">Password</label>
-              <input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                disabled={loading}
-                autoComplete={mode === "login" ? "current-password" : "new-password"}
-              />
-            </div>
-
-            {mode === "signup" && (
-              <div className="form-group">
-                <label htmlFor="confirmPassword">Confirm Password</label>
-                <input
-                  id="confirmPassword"
-                  type="password"
-                  placeholder="••••••••"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  disabled={loading}
-                  autoComplete="new-password"
-                />
-              </div>
-            )}
-
-            {(error || authError) && (
-              <p className="error-message">
-                ❌ {error || authError}
-              </p>
-            )}
-
-            {success && (
-              <p className="success-message">
-                {success}
-              </p>
-            )}
-
+        {!isForgot && (
+          <div className="auth-tabs" role="tablist" aria-label="Account options">
             <button
-              type="submit"
-              className="login-btn"
+              type="button"
+              role="tab"
+              aria-selected={mode === "login"}
+              className={mode === "login" ? "active" : ""}
+              onClick={() => switchMode("login")}
               disabled={loading}
             >
-              {loading
-                ? "Loading..."
-                : mode === "login"
-                  ? "Log In"
-                  : "Create Account"}
+              Log in
             </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={isSignup}
+              className={isSignup ? "active" : ""}
+              onClick={() => switchMode("signup")}
+              disabled={loading}
+            >
+              Create account
+            </button>
+          </div>
+        )}
 
-            <div className="login-toggle">
-              {mode === "login" ? (
-                <p>
-                  Don't have an account?{" "}
-                  <button
-                    type="button"
-                    onClick={() => setMode("signup")}
-                    className="toggle-btn"
-                  >
-                    Sign up
-                  </button>
-                </p>
-              ) : (
-                <p>
-                  Already have an account?{" "}
-                  <button
-                    type="button"
-                    onClick={() => setMode("login")}
-                    className="toggle-btn"
-                  >
-                    Log in
-                  </button>
-                </p>
-              )}
+        <form
+          className="auth-form"
+          onSubmit={isSignup ? handleSignUp : isForgot ? handleForgotPassword : handleLogin}
+        >
+          <label className="auth-field" htmlFor="auth-email">
+            <span>Email</span>
+            <input
+              id="auth-email"
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              disabled={loading}
+              autoComplete="email"
+              required
+            />
+          </label>
+
+          {!isForgot && (
+            <label className="auth-field" htmlFor="auth-password">
+              <span>Password</span>
+              <div className="password-input-wrap">
+                <input
+                  id="auth-password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder={isSignup ? "At least 8 characters" : "Enter your password"}
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  disabled={loading}
+                  autoComplete={isSignup ? "new-password" : "current-password"}
+                  minLength={isSignup ? MIN_PASSWORD_LENGTH : undefined}
+                  required
+                />
+                <button
+                  type="button"
+                  className="password-toggle"
+                  onClick={() => setShowPassword((current) => !current)}
+                  disabled={loading}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? "Hide" : "Show"}
+                </button>
+              </div>
+            </label>
+          )}
+
+          {isSignup && (
+            <label className="auth-field" htmlFor="auth-confirm-password">
+              <span>Confirm password</span>
+              <input
+                id="auth-confirm-password"
+                type={showPassword ? "text" : "password"}
+                placeholder="Re-enter your password"
+                value={confirmPassword}
+                onChange={(event) => setConfirmPassword(event.target.value)}
+                disabled={loading}
+                autoComplete="new-password"
+                minLength={MIN_PASSWORD_LENGTH}
+                required
+              />
+            </label>
+          )}
+
+          {error && (
+            <div className="auth-message auth-error" role="alert">
+              {error}
             </div>
-          </form>
-        </div>
+          )}
 
-        <style>{`
-          .login-page {
-            position: relative;
-            width: 100vw;
-            height: 100vh;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-start;
-            background: #000;
-          }
+          {success && (
+            <div className="auth-message auth-success" role="status">
+              {success}
+            </div>
+          )}
 
-          .login-hero-image {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 50%;
-            z-index: 1;
-          }
+          <button type="submit" className="auth-primary" disabled={loading}>
+            {loading
+              ? "Please wait..."
+              : isSignup
+                ? "Create account"
+                : isForgot
+                  ? "Send reset link"
+                  : "Log in"}
+          </button>
 
-          .hero-img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            object-position: center;
-          }
+          {mode === "login" && (
+            <div className="auth-actions">
+              <button type="button" onClick={() => switchMode("forgot")} disabled={loading}>
+                Forgot password?
+              </button>
+              <button type="button" onClick={handleResendVerification} disabled={loading}>
+                Resend verification email
+              </button>
+            </div>
+          )}
 
-          .login-overlay {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(to bottom, transparent 20%, rgba(0, 0, 0, 0.85) 70%, rgba(0, 0, 0, 0.95) 100%);
-            z-index: 2;
-          }
+          {isForgot && (
+            <button
+              type="button"
+              className="auth-back"
+              onClick={() => switchMode("login")}
+              disabled={loading}
+            >
+              Back to login
+            </button>
+          )}
+        </form>
 
-          .login-form-container {
-            position: relative;
-            z-index: 3;
-            width: 100%;
-            max-width: 420px;
-            padding: 1.5rem;
-            padding-bottom: 2.5rem;
-            text-align: center;
-            margin-top: auto;
-            margin-bottom: auto;
-          }
-
-          .login-branding h1 {
-            font-size: 2.2rem;
-            font-weight: 300;
-            letter-spacing: 0.2em;
-            color: #d4af37;
-            margin: 0 0 0.25rem 0;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-          }
-
-          .login-tagline {
-            color: #d4af37;
-            font-size: 0.75rem;
-            letter-spacing: 0.15em;
-            margin: 0 0 1.25rem 0;
-            opacity: 0.9;
-          }
-
-          .login-form {
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
-          }
-
-          .form-group {
-            text-align: left;
-          }
-
-          .form-group label {
-            display: block;
-            color: #fff;
-            font-size: 0.8rem;
-            margin-bottom: 0.35rem;
-            font-weight: 500;
-            letter-spacing: 0.05em;
-          }
-
-          .form-group input {
-            width: 100%;
-            padding: 0.7rem 0.85rem;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(212, 175, 55, 0.3);
-            border-radius: 4px;
-            color: #fff;
-            font-size: 0.95rem;
-            backdrop-filter: blur(10px);
-            transition: all 0.3s ease;
-          }
-
-          .form-group input:focus {
-            outline: none;
-            border-color: #d4af37;
-            background: rgba(255, 255, 255, 0.15);
-            box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.1);
-          }
-
-          .form-group input::placeholder {
-            color: rgba(255, 255, 255, 0.5);
-          }
-
-          .form-group input:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-          }
-
-          .error-message {
-            color: #ff6b6b;
-            font-size: 0.8rem;
-            margin: 0;
-            padding: 0.4rem;
-            background: rgba(255, 107, 107, 0.1);
-            border-radius: 4px;
-          }
-
-          .success-message {
-            color: #51cf66;
-            font-size: 0.8rem;
-            margin: 0;
-            padding: 0.4rem;
-            background: rgba(81, 207, 102, 0.1);
-            border-radius: 4px;
-          }
-
-          .login-btn {
-            width: 100%;
-            padding: 0.85rem;
-            background: linear-gradient(135deg, #d4af37, #c9a02c);
-            border: none;
-            border-radius: 4px;
-            color: #000;
-            font-size: 0.95rem;
-            font-weight: 600;
-            letter-spacing: 0.1em;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-top: 0.3rem;
-          }
-
-          .login-btn:hover:not(:disabled) {
-            background: linear-gradient(135deg, #e0bf47, #d4af37);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(212, 175, 55, 0.4);
-          }
-
-          .login-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-          }
-
-          .login-toggle {
-            margin-top: 0.75rem;
-            color: rgba(255, 255, 255, 0.7);
-            font-size: 0.8rem;
-          }
-
-          .login-toggle p {
-            margin: 0;
-          }
-
-          .toggle-btn {
-            background: none;
-            border: none;
-            color: #d4af37;
-            cursor: pointer;
-            text-decoration: underline;
-            font-size: inherit;
-            padding: 0;
-            font-weight: 500;
-          }
-
-          .toggle-btn:hover {
-            color: #e0bf47;
-          }
-
-          /* Mobile Responsive */
-          @media (max-width: 768px) {
-            .login-branding h1 {
-              font-size: 1.8rem;
-            }
-
-            .login-form-container {
-              max-width: 90%;
-              padding: 1.25rem;
-              padding-bottom: 2rem;
-            }
-          }
-
-          @media (max-height: 700px) {
-            .login-branding h1 {
-              font-size: 1.5rem;
-              margin-bottom: 0.15rem;
-            }
-
-            .login-tagline {
-              font-size: 0.7rem;
-              margin-bottom: 0.8rem;
-            }
-
-            .login-form {
-              gap: 0.65rem;
-            }
-
-            .form-group input {
-              padding: 0.65rem 0.75rem;
-              font-size: 0.9rem;
-            }
-
-            .login-btn {
-              padding: 0.75rem;
-              font-size: 0.9rem;
-            }
-          }
-
-          @media (max-height: 600px) {
-            .login-branding h1 {
-              font-size: 1.25rem;
-              margin-bottom: 0.1rem;
-            }
-
-            .login-tagline {
-              font-size: 0.65rem;
-              margin-bottom: 0.6rem;
-            }
-
-            .form-group label {
-              font-size: 0.75rem;
-              margin-bottom: 0.25rem;
-            }
-
-            .login-form {
-              gap: 0.55rem;
-            }
-
-            .form-group input {
-              padding: 0.6rem 0.75rem;
-              font-size: 0.85rem;
-            }
-          }
-        `}</style>
+        <p className="auth-security-note">
+          Your password is encrypted and your session is stored in a secure HTTP-only cookie.
+        </p>
       </section>
-    </>
+
+      <style>{`
+        .auth-page {
+          position: relative;
+          min-height: 100svh;
+          width: 100%;
+          display: grid;
+          place-items: center;
+          overflow-x: hidden;
+          padding: 2rem 1rem;
+          background: #050505;
+          color: #fff;
+        }
+
+        .auth-background,
+        .auth-shade {
+          position: fixed;
+          inset: 0;
+        }
+
+        .auth-background img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          object-position: center;
+        }
+
+        .auth-shade {
+          background:
+            radial-gradient(circle at 50% 22%, rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.72) 65%),
+            linear-gradient(180deg, rgba(0, 0, 0, 0.22), rgba(0, 0, 0, 0.9));
+          backdrop-filter: blur(2px);
+        }
+
+        .auth-card {
+          position: relative;
+          z-index: 1;
+          width: min(100%, 470px);
+          padding: clamp(1.4rem, 4vw, 2.25rem);
+          border: 1px solid rgba(212, 175, 55, 0.38);
+          border-radius: 18px;
+          background: rgba(7, 7, 7, 0.84);
+          box-shadow: 0 24px 80px rgba(0, 0, 0, 0.55);
+          backdrop-filter: blur(18px);
+        }
+
+        .auth-brand {
+          text-align: center;
+          margin-bottom: 1.25rem;
+        }
+
+        .auth-eyebrow {
+          margin: 0 0 0.55rem;
+          color: #d4af37;
+          font-size: 0.72rem;
+          font-weight: 700;
+          letter-spacing: 0.15em;
+        }
+
+        .auth-brand h1 {
+          margin: 0;
+          font-size: clamp(1.75rem, 5vw, 2.35rem);
+          line-height: 1.08;
+        }
+
+        .auth-subtitle {
+          margin: 0.7rem auto 0;
+          max-width: 34ch;
+          color: rgba(255, 255, 255, 0.72);
+          font-size: 0.93rem;
+          line-height: 1.5;
+        }
+
+        .auth-tabs {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 0.35rem;
+          margin-bottom: 1.1rem;
+          padding: 0.3rem;
+          border-radius: 11px;
+          background: rgba(255, 255, 255, 0.06);
+        }
+
+        .auth-tabs button {
+          min-height: 42px;
+          border: 0;
+          border-radius: 8px;
+          background: transparent;
+          color: rgba(255, 255, 255, 0.7);
+          font-weight: 700;
+          cursor: pointer;
+        }
+
+        .auth-tabs button.active {
+          background: #d4af37;
+          color: #101010;
+        }
+
+        .auth-form {
+          display: grid;
+          gap: 0.95rem;
+        }
+
+        .auth-field {
+          display: grid;
+          gap: 0.42rem;
+          text-align: left;
+        }
+
+        .auth-field > span {
+          font-size: 0.82rem;
+          font-weight: 700;
+          color: rgba(255, 255, 255, 0.88);
+        }
+
+        .auth-field input {
+          width: 100%;
+          min-height: 48px;
+          padding: 0.75rem 0.9rem;
+          border: 1px solid rgba(255, 255, 255, 0.18);
+          border-radius: 10px;
+          background: rgba(255, 255, 255, 0.08);
+          color: #fff;
+          font-size: 1rem;
+          outline: none;
+          box-sizing: border-box;
+        }
+
+        .auth-field input:focus {
+          border-color: #d4af37;
+          box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15);
+        }
+
+        .auth-field input::placeholder {
+          color: rgba(255, 255, 255, 0.42);
+        }
+
+        .password-input-wrap {
+          position: relative;
+        }
+
+        .password-input-wrap input {
+          padding-right: 4.25rem;
+        }
+
+        .password-toggle {
+          position: absolute;
+          top: 50%;
+          right: 0.7rem;
+          transform: translateY(-50%);
+          border: 0;
+          background: transparent;
+          color: #d4af37;
+          font-weight: 700;
+          cursor: pointer;
+        }
+
+        .auth-message {
+          padding: 0.75rem 0.85rem;
+          border-radius: 10px;
+          font-size: 0.86rem;
+          line-height: 1.4;
+        }
+
+        .auth-error {
+          border: 1px solid rgba(255, 107, 107, 0.35);
+          background: rgba(255, 107, 107, 0.12);
+          color: #ffb4b4;
+        }
+
+        .auth-success {
+          border: 1px solid rgba(81, 207, 102, 0.35);
+          background: rgba(81, 207, 102, 0.12);
+          color: #a9efb5;
+        }
+
+        .auth-primary {
+          min-height: 50px;
+          border: 0;
+          border-radius: 10px;
+          background: linear-gradient(135deg, #e0bf47, #c99f24);
+          color: #0a0a0a;
+          font-size: 0.98rem;
+          font-weight: 800;
+          letter-spacing: 0.035em;
+          cursor: pointer;
+          box-shadow: 0 10px 24px rgba(212, 175, 55, 0.2);
+        }
+
+        .auth-primary:hover:not(:disabled) {
+          transform: translateY(-1px);
+          filter: brightness(1.06);
+        }
+
+        .auth-primary:disabled,
+        .auth-tabs button:disabled,
+        .auth-actions button:disabled,
+        .auth-back:disabled,
+        .password-toggle:disabled {
+          cursor: not-allowed;
+          opacity: 0.58;
+        }
+
+        .auth-actions {
+          display: flex;
+          justify-content: space-between;
+          gap: 0.75rem;
+          flex-wrap: wrap;
+        }
+
+        .auth-actions button,
+        .auth-back {
+          border: 0;
+          padding: 0.2rem 0;
+          background: transparent;
+          color: #d4af37;
+          font-size: 0.82rem;
+          font-weight: 700;
+          cursor: pointer;
+        }
+
+        .auth-back {
+          justify-self: center;
+        }
+
+        .auth-security-note {
+          margin: 1.25rem 0 0;
+          color: rgba(255, 255, 255, 0.46);
+          text-align: center;
+          font-size: 0.72rem;
+          line-height: 1.45;
+        }
+
+        @media (max-width: 520px) {
+          .auth-page {
+            place-items: end center;
+            padding: 1rem 0.8rem max(1rem, env(safe-area-inset-bottom));
+          }
+
+          .auth-card {
+            width: 100%;
+            border-radius: 16px;
+            padding: 1.25rem;
+          }
+
+          .auth-actions {
+            justify-content: center;
+          }
+        }
+
+        @media (max-height: 720px) and (min-width: 521px) {
+          .auth-page {
+            place-items: start center;
+          }
+        }
+      `}</style>
+    </main>
   );
 }
 
