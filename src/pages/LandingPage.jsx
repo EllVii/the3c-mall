@@ -68,11 +68,11 @@ export default function LandingPage() {
           <p className="lp-kicker">Concierge • Cost • Community</p>
           
           <h1>
-            Eat smarter, spend less, <span className="lp-highlight">you're not alone.</span>
+            Eat smarter, plan better, <span className="lp-highlight">you're not alone.</span>
           </h1>
           
           <p className="lp-subtitle">
-            The 3C Mall is your guided lifestyle dashboard: meal plans, grocery labs, and coaching tools—built for real life.
+            The 3C Mall is a guided family dashboard for grocery comparison, meal planning, and household food decisions—built for real life.
           </p>
 
           {/* Beta Waitlist Form */}
@@ -80,7 +80,7 @@ export default function LandingPage() {
             <div className="lp-beta-badge">🔒 Beta Access</div>
             <h3>Join the Beta Waitlist</h3>
             <p className="lp-waitlist-desc">
-              We're currently in closed beta. Sign up to get early access when we open new spots.
+              We're currently in beta. Sign up to help test grocery comparison, meal planning, and family-friendly decision-support tools.
             </p>
             
             {!submitted ? (
@@ -147,7 +147,7 @@ export default function LandingPage() {
               <video autoPlay loop muted playsInline className="lp-video">
                 <source src="/assets/videos/groceries.mp4" type="video/mp4" />
               </video>
-              <div className="lp-video-label">Smart Grocery Routing</div>
+              <div className="lp-video-label">Grocery Comparison</div>
             </div>
             
             <div className="lp-video-card">
@@ -167,37 +167,37 @@ export default function LandingPage() {
         <div className="lp-feature-grid">
           <div className="lp-feature-card">
             <div className="lp-feature-icon">🛒</div>
-            <h3>Multi-Store Grocery Optimization</h3>
-            <p>Smart pricing comparison across stores can potentially save 20-40% on groceries.</p>
+            <h3>Estimated Grocery Comparison</h3>
+            <p>Compare estimated grocery totals across stores so your family can make clearer planning decisions.</p>
           </div>
           
           <div className="lp-feature-card">
             <div className="lp-feature-icon">🥗</div>
             <h3>Guided Meal Planning</h3>
-            <p>AI-powered meal plans that adapt to your preferences, dietary needs, and budget.</p>
+            <p>Build practical meal plans around preferences, household needs, and grocery planning goals.</p>
           </div>
           
           <div className="lp-feature-card">
             <div className="lp-feature-icon">💪</div>
-            <h3>Community & Coaching</h3>
-            <p>Connect with trainers, nutritionists, and a community focused on healthy living.</p>
+            <h3>Community & Support</h3>
+            <p>Connect with practical tools, encouragement, and future professional support options as the platform grows.</p>
           </div>
         </div>
       </section>
 
-      {/* Social Proof */}
+      {/* Positioning Note */}
       <section className="lp-stats">
         <div className="lp-stat-pill">
-          <span className="lp-stat-number">Early Access</span>
-          <span className="lp-stat-label">Closed Beta Phase</span>
+          <span className="lp-stat-number">Beta</span>
+          <span className="lp-stat-label">Family Testing Phase</span>
         </div>
         <div className="lp-stat-pill">
           <span className="lp-stat-number">3 Modules</span>
           <span className="lp-stat-label">Concierge, Cost, Community</span>
         </div>
         <div className="lp-stat-pill">
-          <span className="lp-stat-number">Free Beta</span>
-          <span className="lp-stat-label">Help Shape the Future</span>
+          <span className="lp-stat-number">Decision Support</span>
+          <span className="lp-stat-label">Users confirm final choices with retailers</span>
         </div>
       </section>
     </main>

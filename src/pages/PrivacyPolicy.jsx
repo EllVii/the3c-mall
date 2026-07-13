@@ -10,189 +10,173 @@ export default function PrivacyPolicy() {
         <div className="legal-header">
           <Link to="/" className="legal-back-link">← Back to Home</Link>
           <h1>Privacy Policy</h1>
-          <p className="legal-updated">Last updated: January 17, 2026</p>
+          <p className="legal-updated">Last updated: July 11, 2026</p>
         </div>
 
         <div className="legal-content">
           <section className="legal-section">
             <h2>1. Introduction</h2>
             <p>
-              The 3C Mall ("we," "us," "our," or "Company") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website and use our application.
+              The 3C Mall ("we," "us," or "our") respects your privacy. This Privacy Policy explains how we collect, use, share, and protect information when you use our website, application, beta tools, or pilot testing materials.
             </p>
           </section>
 
           <section className="legal-section">
-            <h2>2. Information We Collect</h2>
-            
-            <h3>2.1 Information You Provide Directly</h3>
-            <ul>
-              <li><strong>Account Registration:</strong> Name, email address, password, and profile information</li>
-              <li><strong>Meal Planning Data:</strong> Dietary preferences, recipes, ingredients, and meal history</li>
-              <li><strong>Grocery Information:</strong> Shopping lists, purchased items, and pricing data</li>
-              <li><strong>Health Data:</strong> Protein intake, fitness goals, and nutritional preferences</li>
-              <li><strong>Communication:</strong> Messages, feedback, and support requests</li>
-            </ul>
-
-            <h3>2.2 Automatically Collected Information</h3>
-            <ul>
-              <li><strong>Device Information:</strong> IP address, browser type, operating system, and device identifiers</li>
-              <li><strong>Usage Data:</strong> Pages visited, features used, time spent, and interaction patterns</li>
-              <li><strong>Cookies:</strong> Session tracking and user preferences</li>
-              <li><strong>Location Data:</strong> Approximate location (if permitted) for store proximity</li>
-            </ul>
-
-            <h3>2.3 Third-Party Data</h3>
-            <ul>
-              <li>Kroger Products API data (product information, pricing, images)</li>
-              <li>Analytics providers and advertising platforms</li>
-            </ul>
+            <h2>2. What 3C Mall Does</h2>
+            <p>
+              3C Mall is a grocery comparison, meal planning, and household decision-support platform. We use information to help users organize food decisions, test grocery comparison workflows, plan meals, collect feedback, and improve the platform.
+            </p>
           </section>
 
           <section className="legal-section">
-            <h2>3. How We Use Your Information</h2>
-            <p>We use the information we collect for:</p>
+            <h2>3. Information We May Collect</h2>
+            <h3>3.1 Information You Provide</h3>
             <ul>
-              <li>Providing and maintaining the Service</li>
-              <li>Creating and managing your account</li>
-              <li>Personalizing your experience and content</li>
-              <li>Processing transactions and sending related information</li>
-              <li>Sending promotional communications (with your consent)</li>
-              <li>Analyzing usage patterns to improve the Service</li>
-              <li>Complying with legal obligations</li>
-              <li>Debugging and troubleshooting technical issues</li>
-              <li>Preventing fraud and securing the Service</li>
+              <li>Name, email address, contact information, or login information.</li>
+              <li>Household preferences, meal planning preferences, food preferences, grocery lists, or budget-planning inputs.</li>
+              <li>Feedback, support messages, surveys, testing notes, and pilot forms.</li>
+              <li>Receipts or reimbursement records if you participate in an approved pilot reimbursement program.</li>
+            </ul>
+
+            <h3>3.2 Information Collected Automatically</h3>
+            <ul>
+              <li>Device, browser, operating system, and basic usage information.</li>
+              <li>Pages visited, features used, and interaction patterns used to improve the Service.</li>
+              <li>Cookies or local storage used for login, preferences, and beta functionality.</li>
+              <li>Approximate location or store-area information only when needed and allowed for planning features.</li>
+            </ul>
+
+            <h3>3.3 Third-Party Information</h3>
+            <ul>
+              <li>Product, recipe, map, store, price, or nutrition-related data from approved third-party services when available.</li>
+              <li>Analytics, email, hosting, database, and security service information needed to operate the platform.</li>
             </ul>
           </section>
 
           <section className="legal-section">
-            <h2>4. How We Share Your Information</h2>
-            
-            <h3>4.1 Service Providers</h3>
-            <p>
-              We share information with third parties who perform services on our behalf, including:
-            </p>
+            <h2>4. How We Use Information</h2>
+            <p>We may use information to:</p>
             <ul>
-              <li>Kroger Products API (for product and pricing data)</li>
-              <li>Email service providers (Resend, SendGrid)</li>
-              <li>Supabase (database and authentication)</li>
-              <li>Analytics platforms</li>
-            </ul>
-
-            <h3>4.2 Legal Requirements</h3>
-            <p>
-              We may disclose information if required by law, court order, or government request.
-            </p>
-
-            <h3>4.3 Business Transfers</h3>
-            <p>
-              If 3C Mall is involved in a merger, acquisition, or bankruptcy, your information may be transferred as part of that transaction.
-            </p>
-
-            <h3>4.4 What We Do NOT Share</h3>
-            <p>
-              We do NOT sell your personal information to third parties for marketing purposes.
-            </p>
-          </section>
-
-          <section className="legal-section">
-            <h2>5. Data Retention</h2>
-            <p>
-              We retain your information for as long as necessary to provide the Service and fulfill the purposes outlined in this Privacy Policy. You can request deletion of your account and associated data at any time.
-            </p>
-          </section>
-
-          <section className="legal-section">
-            <h2>6. Security</h2>
-            <p>
-              We implement appropriate technical and organizational measures to protect your information against unauthorized access, alteration, disclosure, or destruction. However, no method of transmission over the internet is 100% secure, and we cannot guarantee absolute security.
-            </p>
-          </section>
-
-          <section className="legal-section">
-            <h2>7. Your Rights</h2>
-            <p>Depending on your location, you may have the right to:</p>
-            <ul>
-              <li>Access the personal information we hold about you</li>
-              <li>Request correction or deletion of inaccurate data</li>
-              <li>Opt out of promotional communications</li>
-              <li>Request export of your data</li>
-              <li>Withdraw consent for data processing</li>
-            </ul>
-            <p>
-              To exercise these rights, please contact us at support@the3cmall.app
-            </p>
-          </section>
-
-          <section className="legal-section">
-            <h2>8. Cookies and Tracking</h2>
-            <p>
-              We use cookies to enhance your experience. You can control cookie settings through your browser. Disabling cookies may limit functionality.
-            </p>
-            <ul>
-              <li><strong>Essential Cookies:</strong> Required for authentication and security</li>
-              <li><strong>Preference Cookies:</strong> Remember your settings</li>
-              <li><strong>Analytics Cookies:</strong> Help us understand usage patterns</li>
+              <li>Provide and improve the Service.</li>
+              <li>Create accounts and remember user preferences.</li>
+              <li>Support grocery comparison and meal planning workflows.</li>
+              <li>Collect beta or pilot feedback.</li>
+              <li>Review receipts and reimbursement requests for approved pilot activities.</li>
+              <li>Respond to support requests.</li>
+              <li>Send service updates or optional communications.</li>
+              <li>Improve security, troubleshoot issues, and prevent misuse.</li>
+              <li>Maintain records required for legal, business, or project documentation purposes.</li>
             </ul>
           </section>
 
           <section className="legal-section">
-            <h2>9. Children's Privacy</h2>
+            <h2>5. How We Share Information</h2>
+            <h3>5.1 Service Providers</h3>
             <p>
-              The Service is not intended for children under 13. We do not knowingly collect information from children under 13. If we become aware that we have collected such information, we will promptly delete it.
+              We may share information with service providers that help operate the platform, such as hosting providers, database providers, email services, analytics services, security tools, payment processors if used, or other vendors needed to provide the Service.
+            </p>
+
+            <h3>5.2 Retailers and Third-Party Services</h3>
+            <p>
+              If the Service links to or uses third-party retailer, grocery, recipe, map, nutrition, or delivery-related services, those services may process information under their own terms and privacy policies. Final checkout and fulfillment information is handled by the applicable retailer or provider.
+            </p>
+
+            <h3>5.3 Legal and Safety Reasons</h3>
+            <p>
+              We may disclose information if required by law, court order, government request, security investigation, or to protect rights, safety, and the integrity of the Service.
+            </p>
+
+            <h3>5.4 Business Transfers</h3>
+            <p>
+              If 3C Mall or related business assets are involved in a merger, acquisition, financing, reorganization, or sale, information may be transferred as part of that transaction.
+            </p>
+
+            <h3>5.5 No Sale of Personal Information</h3>
+            <p>
+              We do not sell personal information for third-party marketing.
             </p>
           </section>
 
           <section className="legal-section">
-            <h2>10. Third-Party Links</h2>
+            <h2>6. Food, Wellness, and Household Preferences</h2>
             <p>
-              The Service may contain links to third-party websites. We are not responsible for the privacy practices of these external sites. Please review their privacy policies before providing any information.
+              3C Mall may collect food preferences, grocery planning information, household preferences, meal planning details, or general wellness-related preferences. This information is used for planning and decision-support features. 3C Mall does not use this information to diagnose, treat, or provide medical advice.
             </p>
           </section>
 
           <section className="legal-section">
-            <h2>11. Health Data</h2>
+            <h2>7. Pilot Testing and Reimbursement Records</h2>
             <p>
-              Any health-related information you provide (dietary preferences, fitness goals, nutritional intake) is treated as sensitive personal data and protected accordingly. We do not use this data for health diagnosis or medical advice.
+              If you participate in a pilot program, we may collect consent forms, feedback forms, receipts, reimbursement records, approval notes, and related documentation. These records may be retained for project documentation, accounting, audit, legal, or business record purposes.
             </p>
           </section>
 
           <section className="legal-section">
-            <h2>12. California Privacy Rights (CCPA)</h2>
+            <h2>8. Children and Family Use</h2>
             <p>
-              If you are a California resident, you have rights under the California Consumer Privacy Act (CCPA), including:
+              The Service is not directed to children under 13. If family testing involves minors, a parent or guardian must manage participation and provide any required consent. We do not knowingly collect personal information directly from children under 13 without appropriate parental involvement.
             </p>
+          </section>
+
+          <section className="legal-section">
+            <h2>9. Cookies and Local Storage</h2>
+            <p>
+              We may use cookies, local storage, or similar technologies to remember preferences, support login or beta access, improve performance, and understand feature usage. You can control cookies through your browser, but disabling them may limit functionality.
+            </p>
+          </section>
+
+          <section className="legal-section">
+            <h2>10. Data Retention</h2>
+            <p>
+              We keep information for as long as reasonably necessary to provide the Service, support pilot or reimbursement records, comply with legal or business documentation needs, resolve disputes, maintain security, or improve the platform. You may request deletion of account-related information, subject to records we are required or permitted to keep.
+            </p>
+          </section>
+
+          <section className="legal-section">
+            <h2>11. Security</h2>
+            <p>
+              We use reasonable safeguards to protect information, including access controls, secure development practices, and controlled storage where appropriate. No system can be guaranteed to be completely secure, and users should avoid submitting unnecessary sensitive information.
+            </p>
+          </section>
+
+          <section className="legal-section">
+            <h2>12. Your Choices</h2>
+            <p>Depending on your location and applicable law, you may be able to:</p>
             <ul>
-              <li>Right to know what data is collected</li>
-              <li>Right to access your data</li>
-              <li>Right to delete your data</li>
-              <li>Right to opt-out of data sales</li>
-              <li>Right to non-discrimination for exercising CCPA rights</li>
+              <li>Access or update your information.</li>
+              <li>Request deletion of certain information.</li>
+              <li>Opt out of promotional communications.</li>
+              <li>Request a copy of certain information.</li>
+              <li>Ask questions about how your information is used.</li>
             </ul>
-          </section>
-
-          <section className="legal-section">
-            <h2>13. EU Residents (GDPR)</h2>
             <p>
-              If you are in the EU, your data is protected under GDPR. You have additional rights including data portability and the right to lodge complaints with your supervisory authority.
+              To make a request, contact us at privacy@the3cmall.app.
             </p>
           </section>
 
           <section className="legal-section">
-            <h2>14. Changes to Privacy Policy</h2>
+            <h2>13. Third-Party Links</h2>
             <p>
-              We may update this Privacy Policy periodically. We will notify you of significant changes via email or a prominent notice on the Service. Continued use of the Service following changes constitutes acceptance of the updated policy.
+              The Service may link to third-party websites or services. We are not responsible for third-party privacy practices. Please review their terms and privacy policies before providing information to them.
+            </p>
+          </section>
+
+          <section className="legal-section">
+            <h2>14. Changes to This Policy</h2>
+            <p>
+              We may update this Privacy Policy from time to time. If we make material changes, we may provide notice through the Service or by other reasonable means. Continued use of the Service after changes are posted means you accept the updated policy.
             </p>
           </section>
 
           <section className="legal-section">
             <h2>15. Contact Us</h2>
             <p>
-              For privacy-related questions or to exercise your rights, please contact us at:
+              For privacy-related questions or requests, please contact us at:
             </p>
             <p>
               <strong>Email:</strong> privacy@the3cmall.app<br />
-              <strong>Address:</strong> The 3C Mall, United States<br />
-              <strong>Support:</strong> support@the3cmall.app
+              <strong>Support:</strong> support@the3cmall.app<br />
+              <strong>Address:</strong> The 3C Mall, United States
             </p>
           </section>
         </div>

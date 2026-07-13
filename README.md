@@ -1,16 +1,94 @@
-# React + Vite
+# 3C Mall
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+3C Mall is a family-centered software platform for grocery comparison, meal planning, and household food decision support.
 
-Currently, two official plugins are available:
+The project is operated under Ell Vii's Automations LLC. 3C Mall is designed to help users compare estimated grocery options, organize meal plans, and make more informed household food decisions in one guided place.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Safe Product Positioning
 
-## React Compiler
+3C Mall is a decision-support platform. It is not a grocery retailer, delivery company, payment processor, medical provider, dietitian replacement, or financial advisor.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+The platform may help users:
 
-## Expanding the ESLint configuration
+- compare grocery options and estimated totals,
+- plan meals and grocery lists,
+- organize household food decisions,
+- review options across stores or providers,
+- receive general grocery and meal-planning guidance,
+- participate in controlled pilot testing and feedback.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Final shopping, checkout, delivery, medical, nutrition, and financial decisions remain with the user and any applicable third-party retailer, provider, or professional.
+
+## Current Technical Direction
+
+3C Mall is built as a React/Vite application. The current project direction is to use Cloudflare infrastructure where practical, including Cloudflare Workers/Pages Functions, Cloudflare D1 for relational data, and Cloudflare R2 for file or image storage when needed.
+
+Any third-party grocery, recipe, mapping, nutrition, or AI data source should be used only through approved APIs, permitted data sources, or documented provider terms.
+
+## Legal Review Lens
+
+When writing code, documentation, marketing copy, or user-facing content for 3C Mall, keep the project inside this lane:
+
+**We help families compare, plan, organize, and decide. We do not act as the store, doctor, dietitian, payment handler, or delivery provider.**
+
+Use these safer phrases:
+
+- estimated grocery comparison,
+- meal planning support,
+- household food planning,
+- user-guided decision support,
+- retailer/provider checkout,
+- receipt-based pilot reimbursement,
+- general wellness and lifestyle information,
+- privacy-conscious family testing.
+
+Avoid these risky phrases unless reviewed and approved:
+
+- guaranteed lowest price,
+- cheapest,
+- medical advice,
+- diagnosis,
+- prescribed diet,
+- we order for you,
+- we deliver your groceries,
+- breach-proof security,
+- guaranteed savings,
+- official partner unless a written partnership exists.
+
+## Pilot Use
+
+The early pilot is expected to focus on:
+
+- platform development,
+- grocery comparison workflows,
+- meal planning workflows,
+- pilot family testing,
+- receipt-based reimbursement records,
+- privacy and consent materials,
+- secure development tools,
+- documented project logs,
+- final pilot findings.
+
+## Development
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Run the app locally:
+
+```bash
+npm run dev
+```
+
+Build:
+
+```bash
+npm run build
+```
+
+## Documentation Rule
+
+README, Markdown files, internal notes, and public pages should all stay consistent with the safe positioning above. If a document describes 3C Mall as a retailer, delivery company, medical provider, payment processor, or guaranteed savings engine, rewrite it before using it in public or user-facing material.

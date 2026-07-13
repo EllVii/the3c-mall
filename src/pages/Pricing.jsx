@@ -15,7 +15,7 @@ export default function Pricing() {
       features: [
         "Meal Planner (MVP)",
         "Grocery Lab strategy (MVP)",
-          "Saved settings + handoff (Meal → Grocery), anonymized stores",
+        "Saved settings + handoff (Meal → Grocery), anonymized stores",
         "Limited tools / features during Beta",
       ],
       cta: "Start Free",
@@ -28,9 +28,9 @@ export default function Pricing() {
       period: "/mo",
       tagline: "Full workflow. Best value for individuals.",
       features: [
-          "Smart estimated pricing comparison",
+        "Smart estimated grocery comparison",
         "Advanced meal planning & templates",
-          "Estimated grocery totals + store comparisons",
+        "Estimated grocery totals + store comparisons",
         "Priority access to new features",
       ],
       cta: "Go Pro",
@@ -60,8 +60,8 @@ export default function Pricing() {
         <p className="kicker">3C Mall • Pricing</p>
         <h1 className="h1">Simple, honest pricing</h1>
         <p className="sub">
-          You’ll always see what you pay. Delivery is optional — and when you use multi-store,
-          delivery is charged per store delivery (because each store is a separate delivery event).
+          3C Mall is a planning and comparison platform. Subscription pricing covers access to software tools;
+          final grocery prices, checkout, pickup, delivery, and retailer fees are confirmed directly with the applicable retailer or provider.
         </p>
 
         <div className="nav-row" style={{ marginTop: "1rem" }}>
@@ -139,61 +139,60 @@ export default function Pricing() {
     Manage or cancel your subscription
   </a>
 </div>
-      {/* ✅ Delivery Pricing (added back) */}
+      {/* Fulfillment clarity */}
       <section className="card" style={{ marginTop: "1rem" }}>
-        <p className="kicker">Delivery Pricing</p>
+        <p className="kicker">Retailer / Provider Fulfillment</p>
         <h2 className="h1" style={{ fontSize: "1.35rem" }}>
-          Optional delivery — pay only when you use it
+          3C Mall helps you plan. Retailers and providers confirm the final order.
         </h2>
 
         <div className="sub" style={{ maxWidth: "900px" }}>
-          If your cart routes to multiple stores, that can create multiple deliveries. We keep it transparent:
-          <strong style={{ color: "var(--gold)" }}> delivery is priced per delivery event</strong> (per store),
-          not hidden inside your subscription.
+          Grocery totals, pickup options, delivery availability, service fees, and final checkout terms may vary by retailer, provider, location, and time.
+          <strong style={{ color: "var(--gold)" }}> 3C Mall does not guarantee final prices or complete purchases on behalf of users during beta.</strong>
         </div>
 
         <div className="grid" style={{ marginTop: "1rem" }}>
           <div className="card" style={{ background: "rgba(5,9,18,.75)" }}>
-            <div style={{ fontWeight: 900, color: "var(--gold)" }}>Self Pickup</div>
+            <div style={{ fontWeight: 900, color: "var(--gold)" }}>Self Pickup / In-Store Shopping</div>
             <div className="small" style={{ marginTop: ".35rem" }}>
-              $0 delivery fees. You pick up orders yourself.
+              Use 3C Mall to organize your list, then confirm the final purchase directly with the retailer.
             </div>
             <div className="pill" style={{ marginTop: ".9rem" }}>
-              <span>Delivery Fee</span>
+              <span>3C Mall Delivery Fee</span>
               <strong>$0</strong>
             </div>
           </div>
 
           <div className="card" style={{ background: "rgba(5,9,18,.75)" }}>
-            <div style={{ fontWeight: 900, color: "var(--gold)" }}>Partner Delivery (Typical)</div>
+            <div style={{ fontWeight: 900, color: "var(--gold)" }}>Retailer / Third-Party Delivery</div>
             <div className="small" style={{ marginTop: ".35rem" }}>
-              Example pricing model for Beta: each routed store delivery is charged separately.
+              If a retailer or delivery provider offers delivery, their checkout flow controls the final fee, availability, and terms.
             </div>
 
             <div className="grid" style={{ marginTop: ".9rem" }}>
               <div className="pill">
-                <span>Per Store Delivery</span>
-                <strong>$4.99–$9.99</strong>
+                <span>Final Delivery Fee</span>
+                <strong>Provider confirms</strong>
               </div>
               <div className="pill">
-                <span>Multi-Store Example</span>
-                <strong>2 stores → 2 fees</strong>
+                <span>Multi-Store Planning</span>
+                <strong>May involve separate checkouts</strong>
               </div>
             </div>
 
             <div className="small" style={{ marginTop: ".85rem" }}>
-              Final delivery fees depend on provider availability, store partner rules, and distance.
+              3C Mall may show planning estimates, but final prices and fulfillment terms are confirmed outside 3C Mall.
             </div>
           </div>
 
           <div className="card" style={{ background: "rgba(5,9,18,.75)" }}>
-            <div style={{ fontWeight: 900, color: "var(--gold)" }}>Future: Delivery Bundles</div>
+            <div style={{ fontWeight: 900, color: "var(--gold)" }}>Future Fulfillment Options</div>
             <div className="small" style={{ marginTop: ".35rem" }}>
-              We can add a “bundle” option later to cap delivery costs or include a monthly delivery allowance.
+              Future delivery or fulfillment features may be reviewed separately and added only when the legal, payment, tax, and partner requirements are clear.
             </div>
             <div className="pill" style={{ marginTop: ".9rem" }}>
               <span>Status</span>
-              <strong>Planned</strong>
+              <strong>Planned / Not active</strong>
             </div>
           </div>
         </div>
@@ -204,33 +203,19 @@ export default function Pricing() {
         <p className="kicker">FAQ</p>
 
         <div style={{ marginTop: ".5rem" }}>
-          <div style={{ fontWeight: 900 }}>Why is delivery per store?</div>
+          <div style={{ fontWeight: 900 }}>Does 3C Mall order groceries for me?</div>
           <div className="small" style={{ marginTop: ".25rem" }}>
-            Because each store is its own fulfillment system. Multi-store routing saves money on groceries,
-            but can increase delivery events — we keep that transparent.
+            No. During beta, 3C Mall helps you compare and plan. You confirm final purchases through the retailer or provider.
           </div>
         </div>
 
         <div style={{ marginTop: "1rem" }}>
-          <div style={{ fontWeight: 900 }}>Can I avoid delivery?</div>
+          <div style={{ fontWeight: 900 }}>Are prices guaranteed?</div>
           <div className="small" style={{ marginTop: ".25rem" }}>
-            Yes. Choose pickup or in-store shopping inside Grocery Lab.
+            No. Prices are estimates for planning. Final prices are confirmed by the retailer or provider at checkout.
           </div>
         </div>
       </section>
-
-      {/* Bottom Navigation */}
-      <div className="nav-row" style={{ marginTop: "2rem" }}>
-        <button className="btn btn-secondary" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-          ↑ Back to Top
-        </button>
-        <button className="btn btn-secondary" onClick={() => nav("/")}>
-          ← Home
-        </button>
-        <button className="btn btn-primary" onClick={() => nav("/login")}>
-          Get Started →
-        </button>
-      </div>
     </main>
   );
 }
