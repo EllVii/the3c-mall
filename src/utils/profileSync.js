@@ -1,6 +1,4 @@
-// src/utils/profileSync.js
-// MVP: local-only. Beta: connect these functions to Supabase (or Firebase).
-// Goal: local-first + cloud sync when user is authenticated.
+import { apiGet, apiPut } from "../lib/apiClient.js";
 
 export function getLocal(key, fallback = null) {
   try {
@@ -15,22 +13,18 @@ export function setLocal(key, value) {
   localStorage.setItem(key, JSON.stringify(value));
 }
 
-// --- Future: replace these with real DB calls ---
-export async function loadFromCloud(userId, key) {
-  // Example later (Supabase):
-  // return supabase.from("profiles").select(key).eq("id", userId).single()
-  return null;
+export async function loadFromCloud(_userId, key) {
+  const data = await apiGet(`/api/profile/preferences/${encodeURIComponent(key)}`);
+  return data.value;
 }
 
-export async function saveToCloud(userId, key, value) {
-  // Example later (Supabase):
-  // return supabase.from("profiles").upsert({ id: userId, [key]: value, updated_at: new Date().toISOString() })
-  return true;
+export async function saveToCloud(_userId, key, value) {
+  return apiPut(`/api/profile/preferences/${encodeURIComponent(key)}`, { value });
 }
 
 /**
  * Sync pattern:
- * 1) On login: cloud → local
- * 2) On updates: local → cloud (debounced)
- * 3) Conflict: compare updated_at timestamps; last-write-wins
+ * 1) On login: D1 -> local
+ * 2) On updates: local -> D1 (debounced by the caller)
+ * 3) Conflict handling: compare updatedAt timestamps; latest write wins
  */
