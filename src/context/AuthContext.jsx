@@ -1,185 +1,147 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
-import { supabase } from "../lib/supabaseClient.js";
-import { readJSON, writeJSON } from "../utils/Storage.js";
+import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import {
+  changePassword,
+  getSession,
+  requestPasswordReset,
+  signInAccount,
+  signOutAccount,
+  signUpAccount,
+} from "../lib/apiClient.js";
+import { writeJSON } from "../utils/Storage.js";
 
 const AuthContext = createContext(null);
+
+function messageFrom(error, fallback) {
+  return error?.message || fallback;
+}
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const isEmailVerified = (authUser) => {
-    if (!authUser) return false;
-    return Boolean(authUser.email_confirmed_at || authUser.confirmed_at);
-  };
-
-  // Initialize session on mount
   useEffect(() => {
-    const initAuth = async () => {
+    let active = true;
+
+    async function initialize() {
       try {
-        // Get current session
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user) {
-          if (!isEmailVerified(session.user)) {
-            await supabase.auth.signOut();
-            setUser(null);
-            localStorage.removeItem("auth.session.v1");
-            setError("Please verify your email before logging in.");
-            return;
-          }
-          setUser(session.user);
-          // Store session ID locally for reference
+        const data = await getSession();
+        if (!active) return;
+        setUser(data?.user || null);
+        if (data?.user) {
           writeJSON("auth.session.v1", {
-            userId: session.user.id,
-            email: session.user.email,
+            userId: data.user.id,
+            email: data.user.email,
             timestamp: new Date().toISOString(),
-          });
-        }
-      } catch (err) {
-        console.error("❌ Auth init error:", err);
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    initAuth();
-
-    // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        if (session?.user) {
-          if (!isEmailVerified(session.user)) {
-            supabase.auth.signOut();
-            setUser(null);
-            localStorage.removeItem("auth.session.v1");
-            setError("Please verify your email before logging in.");
-            setLoading(false);
-            return;
-          }
-          setUser(session.user);
-          writeJSON("auth.session.v1", {
-            userId: session.user.id,
-            email: session.user.email,
-            timestamp: new Date().toISOString(),
+            provider: "cloudflare-d1",
           });
         } else {
-          setUser(null);
           localStorage.removeItem("auth.session.v1");
         }
-        setLoading(false);
+      } catch (sessionError) {
+        if (!active) return;
+        console.error("Auth initialization failed", sessionError);
+        setUser(null);
+        localStorage.removeItem("auth.session.v1");
+        setError("The sign-in service is temporarily unavailable.");
+      } finally {
+        if (active) setLoading(false);
       }
-    );
+    }
 
+    initialize();
     return () => {
-      subscription?.unsubscribe();
+      active = false;
     };
   }, []);
 
   const signUp = async (email, password, metadata = {}) => {
+    setLoading(true);
+    setError(null);
     try {
-      setError(null);
-      // Use environment variable if available, fallback to dynamic origin
-      const siteUrl = import.meta.env.VITE_SITE_URL || window.location.origin;
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: metadata,
-          emailRedirectTo: `${siteUrl}/app`,
-        },
-      });
-
-      if (error) throw error;
-
-      return { user: data.user, error: null };
-    } catch (err) {
-      const message = err?.message || "Sign up failed";
+      const data = await signUpAccount(email, password, metadata);
+      return { user: null, data, error: null };
+    } catch (signUpError) {
+      const message = messageFrom(signUpError, "Sign up failed");
       setError(message);
       return { user: null, error: message };
+    } finally {
+      setLoading(false);
     }
   };
 
   const signIn = async (email, password) => {
+    setLoading(true);
+    setError(null);
     try {
-      setError(null);
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) throw error;
-
-      if (!isEmailVerified(data.user)) {
-        await supabase.auth.signOut();
-        setUser(null);
-        localStorage.removeItem("auth.session.v1");
-        const message = "Please verify your email before logging in.";
-        setError(message);
-        return { user: null, error: message };
-      }
-
+      const data = await signInAccount(email, password);
       setUser(data.user);
+      writeJSON("auth.session.v1", {
+        userId: data.user.id,
+        email: data.user.email,
+        timestamp: new Date().toISOString(),
+        provider: "cloudflare-d1",
+      });
       return { user: data.user, error: null };
-    } catch (err) {
-      const message = err?.message || "Sign in failed";
+    } catch (signInError) {
+      const message = messageFrom(signInError, "Sign in failed");
+      setUser(null);
+      localStorage.removeItem("auth.session.v1");
       setError(message);
       return { user: null, error: message };
+    } finally {
+      setLoading(false);
     }
   };
 
   const signOut = async () => {
+    setLoading(true);
+    setError(null);
     try {
-      setError(null);
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-
+      await signOutAccount();
       setUser(null);
       localStorage.removeItem("auth.session.v1");
       return { error: null };
-    } catch (err) {
-      const message = err?.message || "Sign out failed";
+    } catch (signOutError) {
+      const message = messageFrom(signOutError, "Sign out failed");
       setError(message);
       return { error: message };
+    } finally {
+      setLoading(false);
     }
   };
 
   const resetPassword = async (email) => {
+    setLoading(true);
+    setError(null);
     try {
-      setError(null);
-      // Use environment variable if available, fallback to dynamic origin
-      const siteUrl = import.meta.env.VITE_SITE_URL || window.location.origin;
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${siteUrl}/auth/reset-password`,
-      });
-
-      if (error) throw error;
-
-      return { error: null };
-    } catch (err) {
-      const message = err?.message || "Password reset request failed";
+      const data = await requestPasswordReset(email);
+      return { data, error: null };
+    } catch (resetError) {
+      const message = messageFrom(resetError, "Password reset request failed");
       setError(message);
       return { error: message };
+    } finally {
+      setLoading(false);
     }
   };
 
   const updatePassword = async (newPassword) => {
+    setLoading(true);
+    setError(null);
     try {
-      setError(null);
-      const { error } = await supabase.auth.updateUser({ password: newPassword });
-
-      if (error) throw error;
-
+      await changePassword(newPassword);
       return { error: null };
-    } catch (err) {
-      const message = err?.message || "Password update failed";
+    } catch (passwordError) {
+      const message = messageFrom(passwordError, "Password update failed");
       setError(message);
       return { error: message };
+    } finally {
+      setLoading(false);
     }
   };
 
-  const value = {
+  const value = useMemo(() => ({
     user,
     loading,
     error,
@@ -188,16 +150,14 @@ export function AuthProvider({ children }) {
     signOut,
     resetPassword,
     updatePassword,
-    isAuthenticated: !!user,
-  };
+    isAuthenticated: Boolean(user),
+  }), [user, loading, error]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used within AuthProvider");
-  }
+  if (!context) throw new Error("useAuth must be used within AuthProvider");
   return context;
 }
