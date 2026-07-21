@@ -1,5 +1,8 @@
 import { getAppBaseUrl } from "./http.js";
 
+const DEFAULT_FROM = "3C Mall <support@the3cmall.com>";
+const AUTH_EMAIL_INTERNAL_ORIGIN = "https://3c-mall-auth-email.internal";
+
 function parseNamedAddress(value) {
   const text = String(value || "").trim();
   const match = text.match(/^\s*([^<>]*?)\s*<\s*([^<>\s]+@[^<>\s]+)\s*>\s*$/);
@@ -22,15 +25,56 @@ async function readProviderResponse(response) {
   }
 }
 
-async function sendWithCloudflare(env, payload) {
+function hasAuthEmailService(env) {
+  return Boolean(env.AUTH_EMAIL && typeof env.AUTH_EMAIL.fetch === "function");
+}
+
+async function sendWithAuthEmailService(env, payload) {
+  if (!hasAuthEmailService(env)) {
+    return { sent: false, reason: "not_configured", provider: "cloudflare_email_binding" };
+  }
+
+  const from = parseNamedAddress(env.AUTH_FROM_EMAIL || DEFAULT_FROM);
+
+  try {
+    const response = await env.AUTH_EMAIL.fetch(`${AUTH_EMAIL_INTERNAL_ORIGIN}/send`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ from, ...payload }),
+    });
+    const result = await readProviderResponse(response);
+
+    if (!response.ok || !result?.sent) {
+      console.error("3C Mall auth email Worker failed", response.status, result);
+      return {
+        sent: false,
+        reason: result?.configured === false ? "not_configured" : "provider_error",
+        provider: "cloudflare_email_binding",
+      };
+    }
+
+    return {
+      sent: true,
+      provider: "cloudflare_email_binding",
+      result: {
+        messageId: result?.messageId || "",
+      },
+    };
+  } catch (error) {
+    console.error("3C Mall auth email Worker request failed", error);
+    return { sent: false, reason: "provider_error", provider: "cloudflare_email_binding" };
+  }
+}
+
+async function sendWithCloudflareRest(env, payload) {
   const accountId = String(env.CLOUDFLARE_ACCOUNT_ID || "").trim();
   const apiToken = String(env.CLOUDFLARE_EMAIL_API_TOKEN || "").trim();
 
   if (!accountId || !apiToken) {
-    return { sent: false, reason: "not_configured", provider: "cloudflare" };
+    return { sent: false, reason: "not_configured", provider: "cloudflare_rest" };
   }
 
-  const from = parseNamedAddress(env.AUTH_FROM_EMAIL || "3C Mall <support@the3cmall.com>");
+  const from = parseNamedAddress(env.AUTH_FROM_EMAIL || DEFAULT_FROM);
   const endpoint = `https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(accountId)}/email/sending/send`;
 
   try {
@@ -45,20 +89,20 @@ async function sendWithCloudflare(env, payload) {
 
     const result = await readProviderResponse(response);
     if (!response.ok || result?.success === false) {
-      console.error("Cloudflare Email Sending failed", response.status, result);
-      return { sent: false, reason: "provider_error", provider: "cloudflare" };
+      console.error("Cloudflare Email Sending REST request failed", response.status, result);
+      return { sent: false, reason: "provider_error", provider: "cloudflare_rest" };
     }
 
     const permanentBounces = result?.result?.permanent_bounces || [];
     if (permanentBounces.length > 0) {
       console.error("Cloudflare Email Sending permanently bounced", permanentBounces);
-      return { sent: false, reason: "permanent_bounce", provider: "cloudflare" };
+      return { sent: false, reason: "permanent_bounce", provider: "cloudflare_rest" };
     }
 
-    return { sent: true, provider: "cloudflare", result: result?.result || null };
+    return { sent: true, provider: "cloudflare_rest", result: result?.result || null };
   } catch (error) {
-    console.error("Cloudflare Email Sending request failed", error);
-    return { sent: false, reason: "provider_error", provider: "cloudflare" };
+    console.error("Cloudflare Email Sending REST request failed", error);
+    return { sent: false, reason: "provider_error", provider: "cloudflare_rest" };
   }
 }
 
@@ -67,7 +111,7 @@ async function sendWithResend(env, payload) {
     return { sent: false, reason: "not_configured", provider: "resend" };
   }
 
-  const from = env.AUTH_FROM_EMAIL || "3C Mall <support@the3cmall.com>";
+  const from = env.AUTH_FROM_EMAIL || DEFAULT_FROM;
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
@@ -87,16 +131,20 @@ async function sendWithResend(env, payload) {
 }
 
 async function sendEmail(env, payload) {
+  if (hasAuthEmailService(env)) {
+    return sendWithAuthEmailService(env, payload);
+  }
+
   const hasCloudflareToken = Boolean(String(env.CLOUDFLARE_EMAIL_API_TOKEN || "").trim());
   const hasCloudflareAccount = Boolean(String(env.CLOUDFLARE_ACCOUNT_ID || "").trim());
 
   if (hasCloudflareToken && hasCloudflareAccount) {
-    return sendWithCloudflare(env, payload);
+    return sendWithCloudflareRest(env, payload);
   }
 
   if (hasCloudflareToken || hasCloudflareAccount) {
     console.warn(
-      "Cloudflare Email Sending is only partially configured; both CLOUDFLARE_EMAIL_API_TOKEN and CLOUDFLARE_ACCOUNT_ID are required",
+      "Cloudflare Email Sending REST is only partially configured; both CLOUDFLARE_EMAIL_API_TOKEN and CLOUDFLARE_ACCOUNT_ID are required",
     );
   }
 
@@ -106,6 +154,39 @@ async function sendEmail(env, payload) {
 
   console.warn("No outbound email provider is configured; email was not sent");
   return { sent: false, reason: "not_configured", provider: null };
+}
+
+export async function getEmailHealth(env) {
+  if (hasAuthEmailService(env)) {
+    try {
+      const response = await env.AUTH_EMAIL.fetch(`${AUTH_EMAIL_INTERNAL_ORIGIN}/health`, {
+        method: "GET",
+      });
+      const result = await readProviderResponse(response);
+      return {
+        configured: Boolean(response.ok && result?.configured),
+        provider: "cloudflare_email_binding",
+        serviceBinding: true,
+      };
+    } catch (error) {
+      console.error("3C Mall auth email health check failed", error);
+      return {
+        configured: false,
+        provider: "cloudflare_email_binding",
+        serviceBinding: true,
+      };
+    }
+  }
+
+  const hasCloudflareToken = Boolean(String(env.CLOUDFLARE_EMAIL_API_TOKEN || "").trim());
+  const hasCloudflareAccount = Boolean(String(env.CLOUDFLARE_ACCOUNT_ID || "").trim());
+  if (hasCloudflareToken && hasCloudflareAccount) {
+    return { configured: true, provider: "cloudflare_rest", serviceBinding: false };
+  }
+  if (env.RESEND_API_KEY) {
+    return { configured: true, provider: "resend", serviceBinding: false };
+  }
+  return { configured: false, provider: null, serviceBinding: false };
 }
 
 export async function sendVerificationEmail(request, env, email, token) {
