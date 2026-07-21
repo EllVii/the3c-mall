@@ -18,12 +18,18 @@ export async function apiRequest(path, options = {}) {
     ...options,
     headers: {
       ...DEFAULT_HEADERS,
-      ...(options.body && !(options.body instanceof FormData) ? { "Content-Type": "application/json" } : {}),
+      ...(options.body && !(options.body instanceof FormData)
+        ? { "Content-Type": "application/json" }
+        : {}),
       ...(options.headers || {}),
     },
   };
 
-  if (requestOptions.body && !(requestOptions.body instanceof FormData) && typeof requestOptions.body !== "string") {
+  if (
+    requestOptions.body &&
+    !(requestOptions.body instanceof FormData) &&
+    typeof requestOptions.body !== "string"
+  ) {
     requestOptions.body = JSON.stringify(requestOptions.body);
   }
 
@@ -31,7 +37,21 @@ export async function apiRequest(path, options = {}) {
   try {
     response = await fetch(path, requestOptions);
   } catch (networkError) {
-    throw new ApiError("The 3C Mall service could not be reached.", 0, "network_error", networkError);
+    if (requestOptions.signal?.aborted) {
+      throw new ApiError(
+        "The request took too long.",
+        408,
+        "request_timeout",
+        networkError,
+      );
+    }
+
+    throw new ApiError(
+      "The 3C Mall service could not be reached.",
+      0,
+      "network_error",
+      networkError,
+    );
   }
 
   const contentType = response.headers.get("content-type") || "";
@@ -51,8 +71,8 @@ export async function apiRequest(path, options = {}) {
   return payload;
 }
 
-export function getSession() {
-  return apiRequest("/api/auth/session");
+export function getSession(options = {}) {
+  return apiRequest("/api/auth/session", options);
 }
 
 export function signUpAccount(email, password, metadata = {}) {
@@ -109,7 +129,10 @@ export function getPilotConsent() {
   return apiRequest("/api/pilot/consent");
 }
 
-export function acceptPilotConsent(familyCode, consentVersion = "phase-i-v1") {
+export function acceptPilotConsent(
+  familyCode,
+  consentVersion = "phase-i-v1",
+) {
   return apiRequest("/api/pilot/consent", {
     method: "POST",
     body: { accepted: true, familyCode, consentVersion },
@@ -130,7 +153,11 @@ export function submitPilotFeedback(values) {
   });
 }
 
-export function recordPilotEvent(eventName, properties = {}, eventVersion = 1) {
+export function recordPilotEvent(
+  eventName,
+  properties = {},
+  eventVersion = 1,
+) {
   return apiRequest("/api/pilot/events", {
     method: "POST",
     body: { eventName, properties, eventVersion },

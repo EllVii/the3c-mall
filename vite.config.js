@@ -21,7 +21,7 @@ export default defineConfig({
         background_color: "#050912",
         display: "standalone",
         scope: "/",
-        start_url: "/",
+        start_url: "/app",
         icons: [
           {
             src: "/icons/icon-192.png",
@@ -42,13 +42,12 @@ export default defineConfig({
         ],
       },
       workbox: {
-        // Cache your app shell + assets
-        globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2,mp4}"],
+        // Keep the install shell small. Videos load only when a user requests them.
+        globPatterns: ["**/*.{js,css,html,ico,png,svg,webp,woff2}"],
+        maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
+        cleanupOutdatedCaches: true,
         navigateFallback: "/index.html",
-        // React Router SPA safety
         navigateFallbackDenylist: [/^\/api\//],
-        // Increase cache limit for video assets
-        maximumFileSizeToCacheInBytes: 50 * 1024 * 1024, // 50 MB limit
       },
     }),
   ],
