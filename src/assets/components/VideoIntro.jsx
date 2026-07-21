@@ -1,12 +1,25 @@
 // src/assets/components/VideoIntro.jsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
 const VIDEO_INTRO_SEEN_KEY = "videoIntro.seen.v1";
 
+function shouldSkipHeavyIntro() {
+  const connection =
+    navigator.connection ||
+    navigator.mozConnection ||
+    navigator.webkitConnection;
+
+  return Boolean(
+    connection?.saveData ||
+      ["slow-2g", "2g"].includes(connection?.effectiveType),
+  );
+}
+
 /**
  * Video Intro Experience
- * Plays the main intro MP4 video on first launch (PRE-AUTH)
- * Clean and professional entry point before login/signup
+ * Plays the main intro MP4 video on first launch (PRE-AUTH).
+ * The browser receives metadata first instead of downloading the full file
+ * before the rest of the interface can render.
  */
 export default function VideoIntro({ open, onComplete }) {
   const [videoEnded, setVideoEnded] = useState(false);
@@ -15,13 +28,29 @@ export default function VideoIntro({ open, onComplete }) {
   const [showSkip, setShowSkip] = useState(false);
   const baseUrl = import.meta.env.BASE_URL || "/";
   const normalizedBaseUrl = baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`;
-  const videoSources = [
-    `${normalizedBaseUrl}brand/RUIDb230dc15b18c43e88c3dd4db8d70a06f.mp4`,
-    `${normalizedBaseUrl}RUIDb230dc15b18c43e88c3dd4db8d70a06f.mp4`,
-  ];
+  const videoSources = useMemo(
+    () => [
+      `${normalizedBaseUrl}brand/RUIDb230dc15b18c43e88c3dd4db8d70a06f.mp4`,
+      `${normalizedBaseUrl}RUIDb230dc15b18c43e88c3dd4db8d70a06f.mp4`,
+    ],
+    [normalizedBaseUrl],
+  );
 
   useEffect(() => {
     if (!open) return undefined;
+
+    if (shouldSkipHeavyIntro()) {
+      localStorage.setItem(
+        VIDEO_INTRO_SEEN_KEY,
+        JSON.stringify({
+          seenAt: new Date().toISOString(),
+          skipped: true,
+          reason: "low-data",
+        }),
+      );
+      onComplete?.();
+      return undefined;
+    }
 
     setVideoEnded(false);
     setLoading(true);
@@ -34,15 +63,15 @@ export default function VideoIntro({ open, onComplete }) {
     document.body.style.overflow = "hidden";
     document.documentElement.style.overflow = "hidden";
 
-    // Show skip button after 5 seconds.
-    const skipTimer = window.setTimeout(() => setShowSkip(true), 5000);
+    // Make the skip option available quickly on slower devices.
+    const skipTimer = window.setTimeout(() => setShowSkip(true), 1500);
 
     return () => {
       window.clearTimeout(skipTimer);
       document.body.style.overflow = previousBodyOverflow;
       document.documentElement.style.overflow = previousHtmlOverflow;
     };
-  }, [open]);
+  }, [open, onComplete]);
 
   const handleVideoEnd = () => {
     setVideoEnded(true);
@@ -51,10 +80,9 @@ export default function VideoIntro({ open, onComplete }) {
       JSON.stringify({ seenAt: new Date().toISOString() }),
     );
 
-    // Auto-complete after the final frame has displayed briefly.
     window.setTimeout(() => {
       onComplete?.();
-    }, 500);
+    }, 300);
   };
 
   const handleVideoError = (event) => {
@@ -62,7 +90,6 @@ export default function VideoIntro({ open, onComplete }) {
     setVideoError(true);
     setLoading(false);
 
-    // Auto-skip after 3 seconds if the video cannot load.
     window.setTimeout(() => {
       localStorage.setItem(
         VIDEO_INTRO_SEEN_KEY,
@@ -73,7 +100,7 @@ export default function VideoIntro({ open, onComplete }) {
         }),
       );
       onComplete?.();
-    }, 3000);
+    }, 1000);
   };
 
   const handleSkip = () => {
@@ -91,7 +118,11 @@ export default function VideoIntro({ open, onComplete }) {
   if (!open) return null;
 
   return (
-    <div className="video-intro-overlay" role="dialog" aria-label="3C Mall introduction">
+    <div
+      className="video-intro-overlay"
+      role="dialog"
+      aria-label="3C Mall introduction"
+    >
       {showSkip && !videoEnded && !videoError && (
         <button
           className="video-skip-btn"
@@ -108,7 +139,8 @@ export default function VideoIntro({ open, onComplete }) {
         autoPlay
         muted
         playsInline
-        preload="auto"
+        preload="metadata"
+        poster="/brand/3c-mall-entrance.jpg"
         onEnded={handleVideoEnd}
         onError={handleVideoError}
         onLoadedData={() => setLoading(false)}
