@@ -84,6 +84,7 @@ function AppContent() {
   const { pathname } = useLocation();
   const { showTutorial, completeTutorial } = useTutorial();
   const showAlphaChip = import.meta.env.VITE_ALPHA_CHIP === "1";
+  const isAppPath = pathname.startsWith("/app");
 
   const host = window.location.hostname.toLowerCase();
   const isDotApp =
@@ -139,7 +140,7 @@ function AppContent() {
         </Suspense>
       )}
 
-      {showTutorial && (
+      {isAppPath && showTutorial && (
         <Suspense fallback={null}>
           <QuickTutorial open={showTutorial} onComplete={completeTutorial} />
         </Suspense>
