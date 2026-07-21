@@ -21,6 +21,15 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         <App />
       </BrowserRouter>
     </ErrorBoundary>
-  </React.StrictMode>
+  </React.StrictMode>,
 );
-registerSW({ immediate: true });
+
+function registerServiceWorker() {
+  registerSW({ immediate: false });
+}
+
+if ("requestIdleCallback" in window) {
+  window.requestIdleCallback(registerServiceWorker, { timeout: 3000 });
+} else {
+  window.addEventListener("load", registerServiceWorker, { once: true });
+}
