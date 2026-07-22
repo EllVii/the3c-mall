@@ -24,12 +24,13 @@ ReactDOM.createRoot(document.getElementById("root")).render(
   </React.StrictMode>,
 );
 
-function registerServiceWorker() {
-  registerSW({ immediate: false });
-}
-
-if ("requestIdleCallback" in window) {
-  window.requestIdleCallback(registerServiceWorker, { timeout: 3000 });
-} else {
-  window.addEventListener("load", registerServiceWorker, { once: true });
-}
+// Register immediately so an updated worker can replace older cached app-shell
+// behavior without waiting for the browser to become idle.
+registerSW({
+  immediate: true,
+  onRegisteredSW(_swUrl, registration) {
+    registration?.update().catch((error) => {
+      console.warn("Service worker update check failed", error);
+    });
+  },
+});
