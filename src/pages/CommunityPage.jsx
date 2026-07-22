@@ -9,24 +9,24 @@ export default function CommunityPage() {
     <section className="page cm-shell">
       <header className="cm-header">
         <div>
-          <p className="kicker">Center · Community</p>
+          <p className="kicker">Community Center</p>
           <h1 className="h1">
-            Community <span className="cm-accent">— family + challenges.</span>
+            Make progress <span className="cm-accent">together.</span>
           </h1>
           <p className="sub">
-            Household accounts: linked data, shared goals, savings competitions, and team challenges.
+            Share goals, celebrate wins, and keep your household connected without pressure.
           </p>
         </div>
 
         <div className="pill cm-meta">
           <span>Mode</span>
-          <strong>Household MVP</strong>
+          <strong>Family preview</strong>
         </div>
       </header>
 
       <div className="nav-row">
         <button className="btn btn-secondary" onClick={() => nav("/app")}>
-          Dashboard →
+          Home →
         </button>
         <button className="btn btn-secondary" onClick={() => nav("/app/grocery-lab")}>
           Grocery Lab →
@@ -38,7 +38,7 @@ export default function CommunityPage() {
           <div className="card-tag">Challenges</div>
           <h2 className="cm-card-title">Team goals</h2>
           <p className="small">
-            Strength championships, weight gain/loss goals, and consistency streaks.
+            Work toward shared strength, nutrition, and consistency goals at a pace that feels realistic.
           </p>
           <div className="nav-row">
             <button className="btn btn-ghost" onClick={() => nav("/app/coming-soon")}>
@@ -51,7 +51,7 @@ export default function CommunityPage() {
           <div className="card-tag">Savings</div>
           <h2 className="cm-card-title">Household competitions</h2>
           <p className="small">
-            Later: monthly awards + affiliate-driven “spend more to save more” mechanics.
+            Compare progress, recognize smart shopping wins, and celebrate the household together.
           </p>
           <div className="nav-row">
             <button className="btn btn-ghost" onClick={() => nav("/app/coming-soon")}>

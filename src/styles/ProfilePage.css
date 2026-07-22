@@ -110,6 +110,40 @@
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
 }
 
+.profile-avatar-initial {
+  color: var(--gold);
+  font-size: 2.5rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.profile-camera-button {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border: 2px solid #17364a;
+  border-radius: 50%;
+  background: #f1d18b;
+  color: #17364a;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.profile-camera-button:hover {
+  background: #f7dea7;
+  transform: scale(1.04);
+}
+
+.profile-camera-button svg {
+  width: 17px;
+  height: 17px;
+}
+
 .profile-info {
   flex: 1;
 }
@@ -175,6 +209,13 @@
   background: rgba(246, 220, 138, 0.15);
   border-radius: 12px;
   flex-shrink: 0;
+}
+
+.stat-icon svg,
+.profile-action-icon svg,
+.empty-icon svg {
+  width: 25px;
+  height: 25px;
 }
 
 .stat-content {

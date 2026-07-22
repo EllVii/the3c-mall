@@ -225,7 +225,7 @@ export default function StoreLocatorPage() {
     <div className="store-locator-container">
       <div className="store-locator-header">
         <div className="header-content">
-          <h1>🗺️ Find Nearby Stores</h1>
+          <h1>Find Nearby Stores</h1>
           <p>Discover your closest shopping options</p>
         </div>
         <button className="back-button" onClick={() => navigate(-1)}>← Back</button>
@@ -329,4 +329,3 @@ export default function StoreLocatorPage() {
     </div>
   );
 }
-

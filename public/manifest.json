@@ -1,11 +1,11 @@
 {
   "name": "3C Mall",
   "short_name": "3C Mall",
-  "description": "3C Mall — Grocery + Meal + Fitness Concierge",
-  "start_url": "/",
+  "description": "Concierge • Cost • Community — plan meals, compare groceries, and shop with clarity.",
+  "start_url": "/app",
   "display": "standalone",
-  "background_color": "#050912",
-  "theme_color": "#050912",
+  "background_color": "#f7f3e9",
+  "theme_color": "#17364a",
   "icons": [
     {
       "src": "/icons/icon-192.png",

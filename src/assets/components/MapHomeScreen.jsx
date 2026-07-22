@@ -1,812 +1,494 @@
-// src/assets/components/MapHomeScreen.jsx
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useMemo, useState } from "react";
+import { useNavigate, useOutletContext } from "react-router-dom";
 import { readJSON, writeJSON } from "../../utils/Storage";
 import VideoIntro, { VIDEO_INTRO_SEEN_KEY } from "./VideoIntro.jsx";
+import "./MapHomeScreen.css";
 
+const PROFILE_KEY = "concierge.profile.v1";
 const LAST_DESTINATION_KEY = "lastDestination.v1";
+const WEEKLY_BUDGET_KEY = "grocery.weeklyBudget.v1";
+const SAVINGS_HISTORY_KEY = "grocery.savingsHistory.v1";
+const MEAL_HISTORY_KEY = "mp.history.v1";
+const GROCERY_ITEMS_KEY = "grocery.items.v1";
+const MEAL_ITEMS_KEY = "cart.mealItems.v1";
+const PRICING_SUMMARY_KEY = "grocery.pricingSummary.v1";
 
-/**
- * The Map Is the Home Screen
- * Luxury mall directory kiosk interface
- * Users choose their destination — no forced workflows.
- * Directory is the main entry point.
- */
+const QUICK_ACTIONS = [
+  {
+    id: "meals",
+    title: "Plan my meals",
+    description: "Build meals and snacks around your schedule and preferences.",
+    buttonLabel: "Start planning",
+    route: "/app/meal-planner",
+    icon: "meals",
+    tone: "teal",
+  },
+  {
+    id: "compare",
+    title: "Compare grocery prices",
+    description: "See store estimates together and understand the real value.",
+    buttonLabel: "Compare stores",
+    route: "/app/grocery-lab",
+    icon: "compare",
+    tone: "blue",
+  },
+  {
+    id: "list",
+    title: "Build my shopping list",
+    description: "Organize meal items and everyday extras in one clear list.",
+    buttonLabel: "Build my list",
+    route: "/app/grocery-lab",
+    icon: "list",
+    tone: "gold",
+  },
+  {
+    id: "concierge",
+    title: "Ask the 3C Concierge",
+    description: "Tell us what you need and get help choosing the next step.",
+    buttonLabel: "Ask for help",
+    icon: "sparkle",
+    tone: "coral",
+  },
+];
+
+function HomeIcon({ name }) {
+  const props = {
+    width: 28,
+    height: 28,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 1.75,
+    strokeLinecap: "round",
+    strokeLinejoin: "round",
+    "aria-hidden": true,
+  };
+
+  if (name === "meals") {
+    return (
+      <svg {...props}>
+        <path d="M5 3v7a3 3 0 0 0 6 0V3" />
+        <path d="M8 3v18" />
+        <path d="M17 3v18" />
+        <path d="M17 3c2.7 2.1 3.5 5.2 3.5 8H17" />
+      </svg>
+    );
+  }
+
+  if (name === "compare") {
+    return (
+      <svg {...props}>
+        <path d="M7 3v18" />
+        <path d="M17 3v18" />
+        <path d="m3 7 4-4 4 4" />
+        <path d="m13 17 4 4 4-4" />
+      </svg>
+    );
+  }
+
+  if (name === "list") {
+    return (
+      <svg {...props}>
+        <path d="M9 6h11" />
+        <path d="M9 12h11" />
+        <path d="M9 18h11" />
+        <path d="m3 6 1 1 2-2" />
+        <path d="m3 12 1 1 2-2" />
+        <path d="m3 18 1 1 2-2" />
+      </svg>
+    );
+  }
+
+  if (name === "wallet") {
+    return (
+      <svg {...props}>
+        <path d="M4 6h14a2 2 0 0 1 2 2v10H4a2 2 0 0 1-2-2V6a3 3 0 0 1 3-3h12" />
+        <path d="M20 11h-5a2 2 0 0 0 0 4h5" />
+      </svg>
+    );
+  }
+
+  if (name === "trend") {
+    return (
+      <svg {...props}>
+        <path d="m3 17 6-6 4 4 8-8" />
+        <path d="M15 7h6v6" />
+      </svg>
+    );
+  }
+
+  if (name === "arrow") {
+    return (
+      <svg {...props} width="20" height="20">
+        <path d="M5 12h14" />
+        <path d="m13 6 6 6-6 6" />
+      </svg>
+    );
+  }
+
+  if (name === "calendar") {
+    return (
+      <svg {...props}>
+        <rect x="3" y="5" width="18" height="16" rx="2" />
+        <path d="M16 3v4M8 3v4M3 10h18" />
+      </svg>
+    );
+  }
+
+  if (name === "bag") {
+    return (
+      <svg {...props}>
+        <path d="M6 8h12l1 13H5L6 8Z" />
+        <path d="M9 8a3 3 0 0 1 6 0" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg {...props}>
+      <path d="m12 3 1.1 3.4a5 5 0 0 0 3.2 3.2l3.4 1.1-3.4 1.1a5 5 0 0 0-3.2 3.2L12 18.5 10.9 15a5 5 0 0 0-3.2-3.2l-3.4-1.1 3.4-1.1a5 5 0 0 0 3.2-3.2L12 3Z" />
+      <path d="m19 17 .5 1.5L21 19l-1.5.5L19 21l-.5-1.5L17 19l1.5-.5L19 17Z" />
+    </svg>
+  );
+}
+
+function getTimeBasedGreeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 18) return "Good afternoon";
+  return "Good evening";
+}
+
+function toMoney(value) {
+  const amount = Number(value);
+  if (!Number.isFinite(amount)) return "$0.00";
+  return amount.toLocaleString(undefined, {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: amount % 1 === 0 ? 0 : 2,
+    maximumFractionDigits: 2,
+  });
+}
+
+function currentMonthKey() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function formatPlanDate(value) {
+  if (!value) return "Date not selected";
+  const date = new Date(`${value}T12:00:00`);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat(undefined, {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  }).format(date);
+}
+
+function latestByDate(items) {
+  return [...items].sort((a, b) => {
+    const aTime = new Date(a?.createdAt || a?.visitedAt || 0).getTime();
+    const bTime = new Date(b?.createdAt || b?.visitedAt || 0).getTime();
+    return bTime - aTime;
+  })[0];
+}
+
 export default function MapHomeScreen() {
   const nav = useNavigate();
-  const [lastDestination, setLastDestination] = useState(null);
-  const [selectedZone, setSelectedZone] = useState(null);
-  const [hoveredZone, setHoveredZone] = useState(null);
-  const [imageLoaded, setImageLoaded] = useState(false);
-  const [showVideoIntro, setShowVideoIntro] = useState(() => {
-    const seen = readJSON(VIDEO_INTRO_SEEN_KEY, null);
-    return !seen;
+  const { openConcierge } = useOutletContext() || {};
+  const [showVideoIntro, setShowVideoIntro] = useState(
+    () => !readJSON(VIDEO_INTRO_SEEN_KEY, null),
+  );
+  const [budget, setBudget] = useState(() => {
+    const saved = Number(readJSON(WEEKLY_BUDGET_KEY, 0));
+    return Number.isFinite(saved) && saved > 0 ? saved : 0;
   });
+  const [budgetDraft, setBudgetDraft] = useState(() => (budget ? String(budget) : ""));
+  const [editingBudget, setEditingBudget] = useState(false);
 
-  useEffect(() => {
-    const last = readJSON(LAST_DESTINATION_KEY, null);
-    setLastDestination(last);
+  const snapshot = useMemo(() => {
+    const profile = readJSON(PROFILE_KEY, null) || {};
+    const savingsHistory = readJSON(SAVINGS_HISTORY_KEY, []);
+    const mealHistory = readJSON(MEAL_HISTORY_KEY, []);
+    const everydayItems = readJSON(GROCERY_ITEMS_KEY, []);
+    const mealItems = readJSON(MEAL_ITEMS_KEY, []);
+    const pricingSummary = readJSON(PRICING_SUMMARY_KEY, null);
+    const lastDestination = readJSON(LAST_DESTINATION_KEY, null);
+    const safeSavings = Array.isArray(savingsHistory) ? savingsHistory : [];
+    const safeMeals = Array.isArray(mealHistory) ? mealHistory.filter((meal) => !meal?.hidden) : [];
+    const itemCount = [everydayItems, mealItems].reduce(
+      (total, list) => total + (Array.isArray(list) ? list.filter((item) => item?.name).length : 0),
+      0,
+    );
+    const monthSavings = safeSavings
+      .filter((entry) => entry?.monthKey === currentMonthKey())
+      .reduce((total, entry) => total + Number(entry?.savings || 0), 0);
+
+    return {
+      firstName: String(profile?.firstName || "").trim(),
+      mealHistory: safeMeals,
+      latestMeal: latestByDate(safeMeals),
+      itemCount,
+      monthSavings,
+      pricingSummary,
+      lastDestination,
+    };
   }, []);
 
-  // Mall zones with their locations and destinations
-  const zones = [
-    {
-      id: "north-wing",
-      name: "North Wing",
-      section: "NORTH",
-      stores: [
-        { id: "grocery-lab", label: "Grocery Stores", icon: "🛒", route: "/app/grocery-lab" },
-      ],
-    },
-    {
-      id: "east-wing",
-      name: "East Wing",
-      section: "EAST",
-      stores: [
-        { id: "meal-planner", label: "Meal Planning", icon: "🍽️", route: "/app/meal-planner" },
-      ],
-    },
-    {
-      id: "south-wing",
-      name: "South Wing",
-      section: "SOUTH",
-      stores: [
-        { id: "community", label: "Community", icon: "👥", route: "/app/community" },
-      ],
-    },
-  ];
+  const recommendation = useMemo(() => {
+    if (!snapshot.mealHistory.length) {
+      return {
+        eyebrow: "A simple place to begin",
+        title: "Plan one meal for this week",
+        text: "Choose a date, meal, and preferences. 3C Mall can carry the ingredients into your grocery list.",
+        label: "Plan my first meal",
+        route: "/app/meal-planner",
+        icon: "calendar",
+      };
+    }
 
-  // Flatten all stores for quick access
-  const allStores = zones.flatMap(zone => 
-    zone.stores.map(store => ({ ...store, zone: zone.id, zoneName: zone.name }))
-  );
+    if (!snapshot.itemCount) {
+      return {
+        eyebrow: "Your next step",
+        title: "Turn your meal into a shopping list",
+        text: "Your meal plan is ready. Add its ingredients and any household extras before comparing stores.",
+        label: "Build my list",
+        route: "/app/grocery-lab",
+        icon: "list",
+      };
+    }
 
-  const handleStoreClick = (store) => {
-    setSelectedZone(store.id);
-    
-    // Save as last destination
+    if (!snapshot.pricingSummary) {
+      return {
+        eyebrow: "Your list is ready",
+        title: "Compare your store options",
+        text: `You have ${snapshot.itemCount} ${snapshot.itemCount === 1 ? "item" : "items"} ready to review in Grocery Lab.`,
+        label: "Compare stores",
+        route: "/app/grocery-lab",
+        icon: "compare",
+      };
+    }
+
+    return {
+      eyebrow: "Ready when you are",
+      title: `Review ${snapshot.pricingSummary.winnerStoreName || "your store plan"}`,
+      text: "Your latest grocery comparison is saved. Check the details before you decide where to shop.",
+      label: "Review comparison",
+      route: "/app/grocery-lab",
+      icon: "bag",
+    };
+  }, [snapshot]);
+
+  function goTo(route, label) {
     writeJSON(LAST_DESTINATION_KEY, {
-      id: store.id,
-      label: store.label,
-      route: store.route,
+      label,
+      route,
       visitedAt: new Date().toISOString(),
     });
+    nav(route);
+  }
 
-    // Small delay for visual feedback, then navigate
-    setTimeout(() => {
-      nav(store.route);
-    }, 400);
-  };
-
-  const handleZoneClick = (zone) => {
-    // If zone has only one store, go directly there
-    if (zone.stores.length === 1) {
-      handleStoreClick(zone.stores[0]);
+  function handleQuickAction(action) {
+    if (action.id === "concierge") {
+      openConcierge?.();
+      return;
     }
-  };
+    goTo(action.route, action.title);
+  }
 
-  const handleContinue = () => {
-    if (lastDestination?.route) {
-      nav(lastDestination.route);
-    }
-  };
-
-  const isStoreLastVisited = (storeId) => {
-    return lastDestination?.id === storeId;
-  };
+  function saveBudget(event) {
+    event.preventDefault();
+    const nextBudget = Number(budgetDraft);
+    if (!Number.isFinite(nextBudget) || nextBudget <= 0) return;
+    setBudget(nextBudget);
+    writeJSON(WEEKLY_BUDGET_KEY, nextBudget);
+    setEditingBudget(false);
+  }
 
   return (
     <>
-      {/* Video Intro — One-time entry experience */}
       <VideoIntro
         open={showVideoIntro}
-        onComplete={() => setShowVideoIntro(false)}
+        onComplete={() => {
+          writeJSON(VIDEO_INTRO_SEEN_KEY, true);
+          setShowVideoIntro(false);
+        }}
       />
 
-      {/* Main Directory Screen */}
-      <div className="map-home-screen">
-      {/* Subtle top bar with profile access */}
-      <div className="map-header">
-        <div className="map-brand">3C MALL</div>
-        <button 
-          className="map-profile-btn"
-          onClick={() => nav("/app/profile")}
-          aria-label="Profile"
-        >
-          <span className="profile-icon">👤</span>
-        </button>
-      </div>
-
-      {/* Main mall directory container */}
-      <div className="map-container">
-        <div className="directory-kiosk">
-          {/* Directory Header */}
-          <div className="directory-header">
-            <div className="directory-title">DIRECTORY</div>
-          </div>
-
-          {/* Mall Floor Plan (3D isometric style) */}
-          <div className="directory-display" style={{
-            backgroundImage: imageLoaded ? 'url(/brand/RUIDd533a251cbb24608833e7205326c34bd.png)' : 'none',
-            backgroundSize: 'cover',
-            /* Lower the background image so the top-left grocery area aligns with map markers */
-            backgroundPosition: 'center 60%',
-            backgroundRepeat: 'no-repeat',
-            position: 'relative',
-            imageRendering: 'auto',
-            WebkitFontSmoothing: 'antialiased',
-            WebkitBackfaceVisibility: 'hidden'
-          }}>
-            {/* Preload image */}
-            <img 
-              src="/brand/RUIDd533a251cbb24608833e7205326c34bd.png" 
-              alt=""
-              onLoad={() => setImageLoaded(true)}
-              style={{ display: 'none' }}
-            />
-            
-            {/* Overlay for better text readability */}
-            <div style={{
-              position: 'absolute',
-              inset: 0,
-              background: 'linear-gradient(135deg, rgba(15, 15, 15, 0.85) 0%, rgba(26, 26, 26, 0.75) 100%)',
-              zIndex: 0
-            }} />
-            
-            <div className="floor-plan">
-              {/* North Wing - Top */}
-              <div 
-                className={`floor-wing floor-north ${hoveredZone === 'north-wing' ? 'hovered' : ''} ${selectedZone === 'grocery-lab' ? 'selected' : ''}`}
-                onClick={() => handleZoneClick(zones[0])}
-                onMouseEnter={() => setHoveredZone('north-wing')}
-                onMouseLeave={() => setHoveredZone(null)}
-              >
-                <div className="wing-zone-label">GROCERY STORES</div>
-                <div className="wing-icon">🛒</div>
-                {isStoreLastVisited('grocery-lab') && <div className="wing-indicator">●</div>}
-              </div>
-
-              {/* Center Atrium */}
-              <div className="floor-center">
-                <div className="center-icon">✦</div>
-                <div className="center-label">YOU ARE HERE</div>
-              </div>
-
-              {/* East Wing - Right */}
-              <div 
-                className={`floor-wing floor-east ${hoveredZone === 'east-wing' ? 'hovered' : ''} ${selectedZone === 'meal-planner' ? 'selected' : ''}`}
-                onClick={() => handleZoneClick(zones[1])}
-                onMouseEnter={() => setHoveredZone('east-wing')}
-                onMouseLeave={() => setHoveredZone(null)}
-              >
-                <div className="wing-zone-label">MEAL PLANNING</div>
-                <div className="wing-icon">🍽️</div>
-                {isStoreLastVisited('meal-planner') && <div className="wing-indicator">●</div>}
-              </div>
-
-              {/* South Wing - Bottom */}
-              <div 
-                className={`floor-wing floor-south ${hoveredZone === 'south-wing' ? 'hovered' : ''} ${selectedZone === 'community' ? 'selected' : ''}`}
-                onClick={() => handleZoneClick(zones[3])}
-                onMouseEnter={() => setHoveredZone('south-wing')}
-                onMouseLeave={() => setHoveredZone(null)}
-              >
-                <div className="wing-zone-label">COMMUNITY</div>
-                <div className="wing-icon">👥</div>
-                {isStoreLastVisited('community') && <div className="wing-indicator">●</div>}
-              </div>
+      <div className="mall-home">
+        <div className="mall-home-inner">
+          <header className="mall-home-heading">
+            <div>
+              <p className="mall-home-overline">Your 3C Mall home</p>
+              <h1>
+                {getTimeBasedGreeting()}
+                {snapshot.firstName ? `, ${snapshot.firstName}` : ""}.
+              </h1>
+              <p>What would you like help with today?</p>
             </div>
-          </div>
+            <button
+              className="mall-home-profile-button"
+              type="button"
+              onClick={() => nav("/app/profile")}
+              aria-label="Open profile"
+            >
+              <span aria-hidden="true">
+                {snapshot.firstName ? snapshot.firstName.charAt(0).toUpperCase() : "3C"}
+              </span>
+            </button>
+          </header>
 
-          {/* Directory Navigation Buttons */}
-          <div className="directory-nav">
-            {allStores.map((store) => (
+          <section className="mall-home-summary" aria-labelledby="week-summary-title">
+            <div className="mall-home-summary-copy">
+              <span className="mall-home-summary-badge">This week</span>
+              <h2 id="week-summary-title">A clearer way to plan, compare, and shop.</h2>
+              <p>
+                Keep your meals, grocery list, and store choices connected—without jumping between different tools.
+              </p>
+            </div>
+
+            <div className="mall-home-stats">
+              <article className="mall-home-stat">
+                <span className="mall-home-stat-icon is-gold"><HomeIcon name="wallet" /></span>
+                <div>
+                  <p>Weekly grocery budget</p>
+                  {editingBudget ? (
+                    <form className="mall-budget-form" onSubmit={saveBudget}>
+                      <span>$</span>
+                      <input
+                        type="number"
+                        min="1"
+                        step="1"
+                        value={budgetDraft}
+                        onChange={(event) => setBudgetDraft(event.target.value)}
+                        aria-label="Weekly grocery budget"
+                        autoFocus
+                      />
+                      <button type="submit">Save</button>
+                    </form>
+                  ) : (
+                    <>
+                      <strong>{budget ? toMoney(budget) : "Not set yet"}</strong>
+                      <button className="mall-stat-link" type="button" onClick={() => setEditingBudget(true)}>
+                        {budget ? "Update budget" : "Add budget"}
+                      </button>
+                    </>
+                  )}
+                </div>
+              </article>
+
+              <article className="mall-home-stat">
+                <span className="mall-home-stat-icon is-teal"><HomeIcon name="trend" /></span>
+                <div>
+                  <p>Savings tracked this month</p>
+                  <strong>{toMoney(snapshot.monthSavings)}</strong>
+                  <span className="mall-stat-note">
+                    {snapshot.monthSavings > 0 ? "From completed comparisons" : "Complete a comparison to begin"}
+                  </span>
+                </div>
+              </article>
+            </div>
+          </section>
+
+          <section className="mall-home-section" aria-labelledby="quick-actions-title">
+            <div className="mall-section-heading">
+              <div>
+                <p>Choose a destination</p>
+                <h2 id="quick-actions-title">How can 3C Mall help?</h2>
+              </div>
+              <span>One clear step at a time</span>
+            </div>
+
+            <div className="mall-action-grid">
+              {QUICK_ACTIONS.map((action) => (
+                <article className="mall-action-card" key={action.id}>
+                  <span className={`mall-action-icon is-${action.tone}`}>
+                    <HomeIcon name={action.icon} />
+                  </span>
+                  <div>
+                    <h3>{action.title}</h3>
+                    <p>{action.description}</p>
+                  </div>
+                  <button type="button" onClick={() => handleQuickAction(action)}>
+                    <span>{action.buttonLabel}</span>
+                    <HomeIcon name="arrow" />
+                  </button>
+                </article>
+              ))}
+            </div>
+          </section>
+
+          <div className="mall-home-lower-grid">
+            <section className="mall-next-card" aria-labelledby="next-step-title">
+              <div className="mall-next-icon">
+                <HomeIcon name={recommendation.icon} />
+              </div>
+              <div className="mall-next-copy">
+                <p>{recommendation.eyebrow}</p>
+                <h2 id="next-step-title">{recommendation.title}</h2>
+                <span>{recommendation.text}</span>
+              </div>
               <button
-                key={store.id}
-                className={`directory-btn ${isStoreLastVisited(store.id) ? 'active' : ''} ${selectedZone === store.id ? 'selected' : ''}`}
-                onClick={() => handleStoreClick(store)}
+                type="button"
+                onClick={() => goTo(recommendation.route, recommendation.title)}
               >
-                <span className="btn-icon">{store.icon}</span>
-                <span className="btn-label">{store.label}</span>
-                {isStoreLastVisited(store.id) && <span className="btn-indicator">●</span>}
+                {recommendation.label}
+                <HomeIcon name="arrow" />
               </button>
-            ))}
+            </section>
+
+            <section className="mall-recent-card" aria-labelledby="recent-title">
+              <div className="mall-recent-heading">
+                <div>
+                  <p>Your activity</p>
+                  <h2 id="recent-title">Saved for you</h2>
+                </div>
+                {snapshot.lastDestination?.route && (
+                  <button
+                    type="button"
+                    onClick={() => nav(snapshot.lastDestination.route)}
+                  >
+                    Continue
+                  </button>
+                )}
+              </div>
+
+              <div className="mall-recent-list">
+                <button type="button" onClick={() => nav("/app/meal-planner")}>
+                  <span className="mall-recent-icon"><HomeIcon name="calendar" /></span>
+                  <span>
+                    <strong>{snapshot.latestMeal?.mealLabel || "Meal plans"}</strong>
+                    <small>
+                      {snapshot.latestMeal
+                        ? `${formatPlanDate(snapshot.latestMeal.dateISO)} · ${snapshot.latestMeal.recipe?.name || "Saved meal"}`
+                        : "Your saved meals will appear here"}
+                    </small>
+                  </span>
+                  <HomeIcon name="arrow" />
+                </button>
+
+                <button type="button" onClick={() => nav("/app/grocery-lab")}>
+                  <span className="mall-recent-icon"><HomeIcon name="bag" /></span>
+                  <span>
+                    <strong>Shopping list</strong>
+                    <small>
+                      {snapshot.itemCount
+                        ? `${snapshot.itemCount} ${snapshot.itemCount === 1 ? "item" : "items"} ready`
+                        : "Add items when you are ready"}
+                    </small>
+                  </span>
+                  <HomeIcon name="arrow" />
+                </button>
+              </div>
+            </section>
           </div>
+
+          <footer className="mall-home-footer">
+            <span>3C Mall · Concierge · Cost · Community</span>
+            <span>Developed by Ell Vii’s Automations</span>
+          </footer>
         </div>
-      </div>
-
-      {/* Footer actions */}
-      <div className="map-footer">
-        {lastDestination && (
-          <button
-            className="map-action-btn"
-            onClick={handleContinue}
-          >
-            Continue where I left off
-            <span className="action-hint">{lastDestination.label}</span>
-          </button>
-        )}
-        
-        <div className="map-tagline">Choose your directory.</div>
-      </div>
-
-      <style>{`
-        .map-home-screen {
-          position: fixed;
-          top: 0;
-          left: 0;
-          width: 100vw;
-          height: 100vh;
-          background: linear-gradient(180deg, #f5f5f5 0%, #e8e8e8 100%);
-          display: flex;
-          flex-direction: column;
-          overflow: hidden;
-        }
-
-        .map-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 1.5rem 2rem;
-          background: rgba(0, 0, 0, 0.85);
-          border-bottom: 2px solid #d4af37;
-        }
-
-        .map-brand {
-          font-size: 1.25rem;
-          font-weight: 700;
-          color: #d4af37;
-          letter-spacing: 2px;
-          text-transform: uppercase;
-        }
-
-        .map-profile-btn {
-          background: rgba(212, 175, 55, 0.15);
-          border: 2px solid #d4af37;
-          border-radius: 50%;
-          width: 44px;
-          height: 44px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          transition: all 0.3s ease;
-        }
-
-        .map-profile-btn:hover {
-          background: rgba(212, 175, 55, 0.3);
-          transform: scale(1.05);
-        }
-
-        .profile-icon {
-          font-size: 1.25rem;
-        }
-
-        .map-container {
-          flex: 1;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 2rem;
-          position: relative;
-          overflow-y: auto;
-        }
-
-        /* Directory Kiosk */
-        .directory-kiosk {
-          background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%);
-          border: 4px solid #d4af37;
-          border-radius: 16px;
-          box-shadow: 
-            0 20px 60px rgba(0, 0, 0, 0.5),
-            inset 0 1px 0 rgba(212, 175, 55, 0.5);
-          max-width: 800px;
-          width: 100%;
-          overflow: hidden;
-        }
-
-        .directory-header {
-          background: linear-gradient(180deg, #2a2a2a 0%, #1a1a1a 100%);
-          border-bottom: 3px solid #d4af37;
-          padding: 1.5rem;
-          text-align: center;
-          position: relative;
-        }
-
-        .directory-header::before,
-        .directory-header::after {
-          content: '';
-          position: absolute;
-          top: 50%;
-          width: 30px;
-          height: 30px;
-          border: 2px solid #d4af37;
-          border-radius: 50%;
-          transform: translateY(-50%);
-        }
-
-        .directory-header::before {
-          left: 2rem;
-        }
-
-        .directory-header::after {
-          right: 2rem;
-        }
-
-        .directory-title {
-          font-size: 2rem;
-          font-weight: 900;
-          color: #d4af37;
-          letter-spacing: 4px;
-          text-transform: uppercase;
-          text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-        }
-
-        /* Display Area */
-        .directory-display {
-          background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%);
-          padding: 2.5rem;
-          min-height: 400px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border-bottom: 2px solid rgba(212, 175, 55, 0.3);
-          image-rendering: auto;
-          -webkit-font-smoothing: antialiased;
-          -webkit-backface-visibility: hidden;
-        }
-
-        /* Floor Plan (Circular layout) */
-        .floor-plan {
-          position: relative;
-          width: 450px;
-          height: 450px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          perspective: 1000px;
-          margin-top: 40px;
-        }
-
-        .floor-wing {
-          width: 120px;
-          height: 120px;
-          background: linear-gradient(135deg, rgba(212, 175, 55, 0.15), rgba(212, 175, 55, 0.08));
-          border: 2px solid rgba(212, 175, 55, 0.4);
-          border-radius: 50%;
-          cursor: pointer;
-          transition: all 0.3s ease;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          position: absolute;
-          overflow: hidden;
-          transform-style: preserve-3d;
-          box-shadow: 0 0 20px rgba(212, 175, 55, 0.2);
-        }
-
-        .floor-wing::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          background: radial-gradient(circle, transparent, rgba(212, 175, 55, 0.1));
-          opacity: 0;
-          transition: opacity 0.3s ease;
-          border-radius: 50%;
-        }
-
-        .floor-wing:hover::before {
-          opacity: 1;
-        }
-
-        .floor-wing:hover {
-          border-color: #d4af37;
-          transform: scale(1.12);
-          box-shadow: 
-            0 0 40px rgba(212, 175, 55, 0.6),
-            inset 0 0 30px rgba(212, 175, 55, 0.2);
-        }
-
-        .floor-wing.hovered {
-          border-width: 3px;
-          border-color: #d4af37;
-          transform: scale(1.1);
-        }
-
-        .floor-wing.selected {
-          animation: wing-pulse 0.6s ease-out;
-        }
-
-        @keyframes wing-pulse {
-          0% {
-            transform: scale(1);
-            box-shadow: 0 0 20px rgba(212, 175, 55, 0.2);
-          }
-          50% {
-            transform: scale(1.2);
-            box-shadow: 0 0 60px rgba(212, 175, 55, 0.8), inset 0 0 30px rgba(212, 175, 55, 0.3);
-          }
-          100% {
-            transform: scale(1);
-            box-shadow: 0 0 40px rgba(212, 175, 55, 0.5);
-          }
-        }
-
-        .floor-north { 
-          top: 20%;
-          right: 15%;
-          transform: translate(0, -50%);
-        }
-        .floor-west { 
-          left: 0;
-          top: 50%;
-          transform: translateY(-50%);
-        }
-        .floor-center { 
-          width: 150px;
-          height: 150px;
-          background: radial-gradient(circle, rgba(212, 175, 55, 0.25) 0%, rgba(212, 175, 55, 0.08) 100%);
-          border: 3px solid #d4af37;
-          border-radius: 50%;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          gap: 0.5rem;
-          pointer-events: none;
-          box-shadow: 0 0 50px rgba(212, 175, 55, 0.6), inset 0 0 25px rgba(212, 175, 55, 0.25);
-          animation: you-are-here-pulse 2.5s ease-in-out infinite;
-          position: relative;
-          z-index: 2;
-        }
-
-        @keyframes you-are-here-pulse {
-          0% {
-            box-shadow: 0 0 50px rgba(212, 175, 55, 0.6), inset 0 0 25px rgba(212, 175, 55, 0.25);
-            transform: scale(1);
-          }
-          50% {
-            box-shadow: 0 0 80px rgba(212, 175, 55, 0.8), inset 0 0 40px rgba(212, 175, 55, 0.4);
-            transform: scale(1.08);
-          }
-          100% {
-            box-shadow: 0 0 50px rgba(212, 175, 55, 0.6), inset 0 0 25px rgba(212, 175, 55, 0.25);
-            transform: scale(1);
-          }
-        }
-        .floor-east { 
-          right: 15%;
-          top: 50%;
-          transform: translateY(-50%);
-        }
-        .floor-south { 
-          bottom: 20%;
-          left: 50%;
-          transform: translateX(-50%);
-        }
-
-        .wing-zone-label {
-          font-size: 0.7rem;
-          font-weight: 700;
-          color: #d4af37;
-          text-transform: uppercase;
-          letter-spacing: 1px;
-          text-align: center;
-          margin-bottom: 0.25rem;
-          z-index: 1;
-        }
-
-        .wing-icon {
-          font-size: 1.5rem;
-          z-index: 1;
-        }
-
-        .wing-indicator {
-          position: absolute;
-          top: 8px;
-          right: 8px;
-          color: #d4af37;
-          font-size: 1.2rem;
-          animation: pulse 2s ease-in-out infinite;
-        }
-
-        .center-icon {
-          font-size: 2.5rem;
-          color: #d4af37;
-          animation: pin-bounce 1.5s ease-in-out infinite;
-          filter: drop-shadow(0 0 8px rgba(212, 175, 55, 0.6));
-        }
-
-        @keyframes pin-bounce {
-          0%, 100% {
-            transform: translateY(0);
-          }
-          50% {
-            transform: translateY(-8px);
-          }
-        }
-
-        .center-label {
-          font-size: 0.7rem;
-          font-weight: 800;
-          color: #d4af37;
-          text-transform: uppercase;
-          letter-spacing: 1.5px;
-          text-shadow: 0 0 10px rgba(212, 175, 55, 0.4);
-        }
-
-        /* Directory Navigation Buttons */
-        .directory-nav {
-          background: 
-            linear-gradient(180deg, rgba(26, 26, 26, 0.92) 0%, rgba(15, 15, 15, 0.92) 100%),
-            url(/RUIDd533a251cbb24608833e7205326c34bd.png) center/cover no-repeat;
-          padding: 1.5rem;
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-          gap: 0.75rem;
-          position: relative;
-        }
-
-        .directory-btn {
-          background: rgba(212, 175, 55, 0.05);
-          border: 2px solid rgba(212, 175, 55, 0.3);
-          border-radius: 8px;
-          padding: 1rem;
-          display: flex;
-          align-items: center;
-          gap: 0.75rem;
-          cursor: pointer;
-          transition: all 0.3s ease;
-          position: relative;
-          overflow: hidden;
-        }
-
-        .directory-btn::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(135deg, transparent, rgba(212, 175, 55, 0.1));
-          opacity: 0;
-          transition: opacity 0.3s ease;
-        }
-
-        .directory-btn:hover::before {
-          opacity: 1;
-        }
-
-        .directory-btn:hover {
-          background: rgba(212, 175, 55, 0.15);
-          border-color: rgba(212, 175, 55, 0.6);
-          transform: translateX(4px);
-          box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
-        }
-
-        .directory-btn.active {
-          background: rgba(212, 175, 55, 0.2);
-          border-color: #d4af37;
-          box-shadow: 0 0 20px rgba(212, 175, 55, 0.4);
-        }
-
-        .directory-btn.selected {
-          transform: scale(0.98);
-        }
-
-        .btn-icon {
-          font-size: 1.5rem;
-          flex-shrink: 0;
-          z-index: 1;
-        }
-
-        .btn-label {
-          flex: 1;
-          font-size: 0.95rem;
-          font-weight: 600;
-          color: rgba(255, 255, 255, 0.9);
-          text-align: left;
-          z-index: 1;
-        }
-
-        .btn-indicator {
-          color: #d4af37;
-          font-size: 1.2rem;
-          animation: pulse 2s ease-in-out infinite;
-          z-index: 1;
-        }
-
-        /* Footer */
-        .map-footer {
-          padding: 1.5rem 2rem;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 1rem;
-          background: rgba(0, 0, 0, 0.85);
-          border-top: 2px solid #d4af37;
-        }
-
-        .map-action-btn {
-          background: rgba(212, 175, 55, 0.15);
-          border: 2px solid #d4af37;
-          border-radius: 8px;
-          padding: 0.75rem 1.5rem;
-          color: rgba(255, 255, 255, 0.9);
-          font-size: 0.95rem;
-          font-weight: 500;
-          cursor: pointer;
-          transition: all 0.3s ease;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 0.25rem;
-        }
-
-        .map-action-btn:hover {
-          background: rgba(212, 175, 55, 0.3);
-          transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(212, 175, 55, 0.4);
-        }
-
-        .action-hint {
-          font-size: 0.75rem;
-          opacity: 0.7;
-          font-weight: 400;
-        }
-
-        .map-tagline {
-          font-size: 1.1rem;
-          font-weight: 300;
-          color: #d4af37;
-          letter-spacing: 1px;
-          text-align: center;
-        }
-
-        @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.5; }
-        }
-
-        @media (max-width: 1024px) {
-          .directory-kiosk {
-            max-width: 600px;
-          }
-
-          .floor-plan {
-            width: 380px;
-            height: 380px;
-          }
-
-          .floor-wing {
-            width: 100px;
-            height: 100px;
-          }
-        }
-
-        @media (max-width: 768px) {
-          .map-header {
-            padding: 1rem 1.5rem;
-          }
-
-          .map-brand {
-            font-size: 1rem;
-          }
-
-          .map-container {
-            padding: 1rem;
-          }
-
-          .directory-title {
-            font-size: 1.5rem;
-            letter-spacing: 3px;
-          }
-
-          .directory-header::before,
-          .directory-header::after {
-            width: 24px;
-            height: 24px;
-          }
-
-          .directory-header::before { left: 1rem; }
-          .directory-header::after { right: 1rem; }
-
-          .directory-display {
-            padding: 1.5rem;
-            min-height: 320px;
-          }
-
-          .floor-plan {
-            width: 320px;
-            height: 320px;
-          }
-
-          .floor-wing {
-            width: 90px;
-            height: 90px;
-          }
-
-          .wing-zone-label {
-            font-size: 0.6rem;
-          }
-
-          .wing-icon {
-            font-size: 1.25rem;
-          }
-
-          .floor-center {
-            width: 130px;
-            height: 130px;
-          }
-
-          .center-icon {
-            font-size: 1.5rem;
-          }
-
-          .center-label {
-            font-size: 0.55rem;
-          }
-
-          .directory-nav {
-            grid-template-columns: 1fr;
-            padding: 1rem;
-          }
-
-          .map-footer {
-            padding: 1rem 1.5rem;
-          }
-
-          .map-tagline {
-            font-size: 0.95rem;
-          }
-        }
-
-        @media (max-width: 480px) {
-          .directory-title {
-            font-size: 1.2rem;
-            letter-spacing: 2px;
-          }
-
-          .directory-header::before,
-          .directory-header::after {
-            width: 20px;
-            height: 20px;
-          }
-
-          .floor-plan {
-            width: 260px;
-            height: 260px;
-          }
-
-          .floor-wing {
-            width: 75px;
-            height: 75px;
-          }
-
-          .wing-zone-label {
-            font-size: 0.5rem;
-          }
-
-          .wing-icon {
-            font-size: 1rem;
-          }
-
-          .floor-center {
-            width: 110px;
-            height: 110px;
-          }
-
-          .directory-btn {
-            padding: 0.75rem;
-          }
-
-          .btn-icon {
-            font-size: 1.25rem;
-          }
-
-          .btn-label {
-            font-size: 0.85rem;
-          }
-        }
-      `}</style>
       </div>
     </>
   );

@@ -281,20 +281,20 @@ export default function MealPlannerPage() {
 
       <header style={{ display: "flex", justifyContent: "space-between", gap: "1rem", alignItems: "flex-start" }}>
         <div>
-          <p className="kicker">Center • Meal Plans</p>
+          <p className="kicker">Meal Planning Center</p>
           <h1 className="h1">Meal Planner</h1>
-          <p className="sub">Pick your meal, set preferences — then Grocery Lab optimizes your shop. Everything connected in 3C Mall.</p>
+          <p className="sub">Plan a meal around your schedule and preferences, then carry the ingredients into Grocery Lab when you are ready.</p>
 
           <div className="nav-row">
             <button className="btn btn-secondary" onClick={() => nav("/app")}>
-              ← Dashboard
+              ← Home
             </button>
             <button className="btn btn-secondary" onClick={() => nav("/app/grocery-lab")}>
               Grocery Lab →
             </button>
             {mealHistory.length > 0 && (
               <button className="btn btn-ghost" onClick={() => setShowHistory(!showHistory)}>
-                📋 Previous Meals ({totalHistoryCount})
+                Previous Meals ({totalHistoryCount})
               </button>
             )}
           </div>
@@ -322,7 +322,7 @@ export default function MealPlannerPage() {
           <>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: ".75rem" }}>
               <div style={{ color: "var(--gold)", fontWeight: 900, fontSize: "1.15rem" }}>
-                📋 Previous Meals ({visibleHistory.length})
+                Previous Meals ({visibleHistory.length})
               </div>
               {hiddenCount > 0 && (
                 <button

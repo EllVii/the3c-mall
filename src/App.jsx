@@ -176,10 +176,13 @@ function AppContent() {
               }
             >
               <Route index element={<MapHomeScreen />} />
-              <Route path="directory" element={<MapHomeScreen />} />
+              <Route
+                path="directory"
+                element={<Navigate to="/app" replace />}
+              />
               <Route
                 path="map"
-                element={<Navigate to="/app/directory" replace />}
+                element={<Navigate to="/app" replace />}
               />
               <Route path="dashboard" element={<DashboardPage />} />
               <Route path="profile" element={<ProfilePage />} />

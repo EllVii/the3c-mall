@@ -595,7 +595,7 @@ setPricingSummary(normalizePricingSummary(summary));
       <header className="gl-header">
         <div className="gl-header-left">
           <h1 className="gl-title">Grocery Lab</h1>
-          <p className="gl-subtitle">Smart routing for your cart. 3C Mall connects meals, groceries, and strategy.</p>
+          <p className="gl-subtitle">Build your list, compare estimated store totals, and choose the shopping plan that works for you.</p>
           {headerBadge.storeName || headerBadge.modeLabel ? (
             <div className="gl-inline-summary" style={{ marginTop: 6 }}>
               {headerBadge.storeName ? <span className="gl-pill">{headerBadge.storeName}</span> : null}
@@ -614,11 +614,11 @@ setPricingSummary(normalizePricingSummary(summary));
           )}
 
           <button className="gl-btn gl-btn-outline" onClick={() => nav("/app/stores")} type="button">
-            🗺️ Find Nearby Stores
+            Find Nearby Stores
           </button>
 
           <button className="gl-btn gl-btn-primary" onClick={() => nav("/app")} type="button">
-            Dashboard
+            Home
           </button>
         </div>
       </header>
@@ -1001,7 +1001,7 @@ setPricingSummary(normalizePricingSummary(summary));
 
             <div className="gl-card" style={{ background: "rgba(246,220,138,.08)", borderColor: "rgba(246,220,138,.25)", marginBottom: ".7rem" }}>
               <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--gold)", marginBottom: ".4rem" }}>{betaMessaging.groceryLab.title}</div>
-              <p className="small" style={{ margin: 0, color: "rgba(255,255,255,0.8)" }}>
+              <p className="small" style={{ margin: 0, color: "var(--text-secondary)" }}>
                 {betaMessaging.groceryLab.description}
               </p>
             </div>
@@ -1107,7 +1107,7 @@ setPricingSummary(normalizePricingSummary(summary));
             {/* Meal Plan Summary */}
             {mealContext && (
               <div className="gl-card" style={{ marginBottom: 12, backgroundColor: "rgba(246,220,138,.08)", borderLeft: "3px solid var(--gold)" }}>
-                <h3 className="gl-card-title" style={{ color: "var(--gold)" }}>📅 Meal Plan</h3>
+                <h3 className="gl-card-title" style={{ color: "var(--gold)" }}>Meal Plan</h3>
                 <div style={{ display: "grid", gap: 10 }}>
                   <div style={{ padding: "8px 12px", backgroundColor: "rgba(246,220,138,.12)", borderRadius: 6 }}>
                     <div style={{ fontSize: 12, color: "var(--muted)" }}>Meal Type</div>

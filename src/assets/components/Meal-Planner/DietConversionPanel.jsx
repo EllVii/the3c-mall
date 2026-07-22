@@ -48,6 +48,7 @@ export default function DietConversionPanel({ value, onChange }) {
 
   return (
     <section
+      className="mp-preference-panel"
       style={{
         border: "1px solid rgba(255,255,255,0.12)",
         borderRadius: "18px",

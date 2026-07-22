@@ -16,9 +16,9 @@ export default defineConfig({
       manifest: {
         name: "3C Mall",
         short_name: "3C Mall",
-        description: "Carnivore • Cost • Community — Lifestyle Intelligence OS",
-        theme_color: "#050912",
-        background_color: "#050912",
+        description: "Concierge • Cost • Community — plan meals, compare groceries, and shop with clarity.",
+        theme_color: "#17364a",
+        background_color: "#f7f3e9",
         display: "standalone",
         scope: "/",
         start_url: "/app",

@@ -18,6 +18,40 @@ const AVATAR_PRESETS = {
   boy: ['👦', '👦🏻', '👦🏽']
 };
 
+function ProfileIcon({ name }) {
+  const props = {
+    width: 24,
+    height: 24,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 1.8,
+    strokeLinecap: "round",
+    strokeLinejoin: "round",
+    "aria-hidden": true,
+  };
+
+  const paths = {
+    camera: <><path d="M14.5 5 13 3h-2L9.5 5H6a3 3 0 0 0-3 3v9a3 3 0 0 0 3 3h12a3 3 0 0 0 3-3V8a3 3 0 0 0-3-3h-3.5Z" /><circle cx="12" cy="12.5" r="4" /></>,
+    check: <><circle cx="12" cy="12" r="9" /><path d="m8 12 2.5 2.5L16 9" /></>,
+    flame: <path d="M12 22c4.4 0 7-3.2 7-7.2 0-3.1-1.8-6-5.3-9.4.1 2.2-.7 3.8-2 4.8.2-2.8-1.3-5.4-4.1-8.2.1 4.3-2.6 6.5-2.6 10.6C5 18 8 22 12 22Z" />,
+    chart: <><path d="M4 20V10" /><path d="M10 20V4" /><path d="M16 20v-7" /><path d="M22 20H2" /></>,
+    cart: <><path d="M3 4h2l2.1 10.1a2 2 0 0 0 2 1.6h7.8a2 2 0 0 0 2-1.6L20 8H6" /><circle cx="9" cy="20" r="1" /><circle cx="17" cy="20" r="1" /></>,
+    meal: <><path d="M7 3v8" /><path d="M4.5 3v5A2.5 2.5 0 0 0 7 10.5 2.5 2.5 0 0 0 9.5 8V3" /><path d="M7 10.5V21" /><path d="M16 3v18" /><path d="M16 3c3 2 4 5 4 8h-4" /></>,
+    book: <><path d="M4 5.5A3.5 3.5 0 0 1 7.5 2H11v17H7.5A3.5 3.5 0 0 0 4 22V5.5Z" /><path d="M20 5.5A3.5 3.5 0 0 0 16.5 2H13v17h3.5A3.5 3.5 0 0 1 20 22V5.5Z" /></>,
+    pin: <><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z" /><circle cx="12" cy="10" r="2.5" /></>,
+    clipboard: <><rect x="5" y="4" width="14" height="17" rx="2" /><path d="M9 4.5V3h6v1.5" /><path d="M9 10h6M9 14h6" /></>,
+    settings: <><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-4V21a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H2.8v-4H3a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1A1.7 1.7 0 0 0 9 4.6 1.7 1.7 0 0 0 10 3v-.2h4V3a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2v4H21a1.7 1.7 0 0 0-1.6 1Z" /></>,
+    eye: <><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z" /><circle cx="12" cy="12" r="2.5" /></>,
+    eyeOff: <><path d="m3 3 18 18" /><path d="M10.6 6.2A10.8 10.8 0 0 1 12 6c6.5 0 10 6 10 6a15.2 15.2 0 0 1-2.2 2.9M6.2 6.2C3.5 8 2 12 2 12s3.5 6 10 6a10 10 0 0 0 3-.4" /></>,
+    video: <><rect x="3" y="5" width="14" height="14" rx="2" /><path d="m17 10 4-2v8l-4-2" /></>,
+    home: <><path d="m3 10 9-7 9 7" /><path d="M5 9v11h14V9" /><path d="M9 20v-6h6v6" /></>,
+    logout: <><path d="M10 5V3H4v18h6v-2" /><path d="M13 8l4 4-4 4" /><path d="M17 12H8" /></>,
+  };
+
+  return <svg {...props}>{paths[name] || paths.clipboard}</svg>;
+}
+
 export default function ProfilePage() {
   const nav = useNavigate();
   const { signOut } = useAuth();
@@ -133,7 +167,7 @@ export default function ProfilePage() {
   }
 
   const handleBack = () => {
-    nav("/app/directory");
+    nav("/app");
   };
 
   const handleSettings = () => {
@@ -229,9 +263,9 @@ export default function ProfilePage() {
   const formatShoppingMode = (mode) => {
     if (!mode) return "Not Set";
     switch (mode) {
-      case "best_price": return "Best Price 💰";
-      case "loyal": return "Store Loyal 🏪";
-      case "balanced": return "Balanced ⚖️";
+      case "best_price": return "Best Price";
+      case "loyal": return "Store Loyal";
+      case "balanced": return "Balanced";
       default: return "Not Set";
     }
   };
@@ -249,7 +283,7 @@ export default function ProfilePage() {
             <h2>Profile Not Found</h2>
             <p>Please complete onboarding to create your profile.</p>
             <button className="btn btn-primary" onClick={() => nav("/app")}>
-              Go to Dashboard
+              Go Home
             </button>
           </div>
         </div>
@@ -273,7 +307,7 @@ export default function ProfilePage() {
       <div className="profile-container">
         {/* Back button */}
         <button className="profile-back-btn" onClick={handleBack}>
-          ← Back to Map
+          ← Back to Home
         </button>
 
         {/* Profile Header with Enhanced Design */}
@@ -298,32 +332,19 @@ export default function ProfilePage() {
                   />
                 )
               ) : (
-                <span className="profile-avatar-icon">👤</span>
+                <span className="profile-avatar-initial" aria-label={`${profile?.firstName || "Guest"} profile`}>
+                  {(profile?.firstName || "G").charAt(0).toUpperCase()}
+                </span>
               )}
               <div className="profile-avatar-ring"></div>
               <button
+                className="profile-camera-button"
+                type="button"
                 onClick={() => setShowImageUpload(true)}
-                style={{
-                  position: 'absolute',
-                  bottom: '0',
-                  right: '0',
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '50%',
-                  background: 'rgba(255, 215, 0, 0.9)',
-                  border: '2px solid #0a0a0a',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '1rem',
-                  transition: 'all 0.2s'
-                }}
+                aria-label="Change profile picture"
                 title="Change profile picture"
-                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 215, 0, 1)'}
-                onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255, 215, 0, 0.9)'}
               >
-                📷
+                <ProfileIcon name="camera" />
               </button>
             </div>
             
@@ -337,21 +358,21 @@ export default function ProfilePage() {
           {/* Stats Cards */}
           <div className="profile-stats">
             <div className="stat-card">
-              <div className="stat-icon">✅</div>
+              <div className="stat-icon"><ProfileIcon name="check" /></div>
               <div className="stat-content">
                 <div className="stat-value">{stats.todayTasks}</div>
                 <div className="stat-label">Today</div>
               </div>
             </div>
             <div className="stat-card">
-              <div className="stat-icon">🔥</div>
+              <div className="stat-icon"><ProfileIcon name="flame" /></div>
               <div className="stat-content">
                 <div className="stat-value">{stats.streak}</div>
                 <div className="stat-label">Day Streak</div>
               </div>
             </div>
             <div className="stat-card">
-              <div className="stat-icon">📊</div>
+              <div className="stat-icon"><ProfileIcon name="chart" /></div>
               <div className="stat-content">
                 <div className="stat-value">{stats.totalTasks}</div>
                 <div className="stat-label">Total Tasks</div>
@@ -399,16 +420,14 @@ export default function ProfilePage() {
               {formatStoreName(profile?.defaultStoreId) && (
                 <div className="profile-detail-item">
                   <span className="profile-detail-label">Default Store</span>
-                  <span className="profile-detail-value">
-                    🏪 {formatStoreName(profile.defaultStoreId)}
-                  </span>
+                  <span className="profile-detail-value">{formatStoreName(profile.defaultStoreId)}</span>
                 </div>
               )}
               
               {profile?.birthMonth && (
                 <div className="profile-detail-item">
                   <span className="profile-detail-label">Birthday</span>
-                  <span className="profile-detail-value">🎂 {profile.birthMonth}</span>
+                  <span className="profile-detail-value">{profile.birthMonth}</span>
                 </div>
               )}
             </div>
@@ -418,7 +437,7 @@ export default function ProfilePage() {
               <h2 className="profile-section-title">Quick Actions</h2>
               <div className="profile-actions-grid">
                 <button className="profile-action-card" onClick={() => nav('/app/grocery-lab')}>
-                  <div className="profile-action-icon">🛒</div>
+                  <div className="profile-action-icon"><ProfileIcon name="cart" /></div>
                   <div className="profile-action-content">
                     <div className="profile-action-title">Grocery Lab</div>
                     <div className="profile-action-desc">Start shopping</div>
@@ -426,7 +445,7 @@ export default function ProfilePage() {
                 </button>
 
                 <button className="profile-action-card" onClick={() => nav('/app/meal-planner')}>
-                  <div className="profile-action-icon">🍽️</div>
+                  <div className="profile-action-icon"><ProfileIcon name="meal" /></div>
                   <div className="profile-action-content">
                     <div className="profile-action-title">Meal Planner</div>
                     <div className="profile-action-desc">Plan your meals</div>
@@ -434,15 +453,15 @@ export default function ProfilePage() {
                 </button>
 
                 <button className="profile-action-card" onClick={() => nav('/app/recipes')}>
-                  <div className="profile-action-icon">📖</div>
+                  <div className="profile-action-icon"><ProfileIcon name="book" /></div>
                   <div className="profile-action-content">
                     <div className="profile-action-title">Recipes</div>
                     <div className="profile-action-desc">Search & browse recipes</div>
                   </div>
                 </button>
 
-                <button className="profile-action-card" onClick={() => nav('/app/store-locator')}>
-                  <div className="profile-action-icon">📍</div>
+                <button className="profile-action-card" onClick={() => nav('/app/stores')}>
+                  <div className="profile-action-icon"><ProfileIcon name="pin" /></div>
                   <div className="profile-action-content">
                     <div className="profile-action-title">Store Locator</div>
                     <div className="profile-action-desc">Find nearby stores</div>
@@ -482,7 +501,7 @@ export default function ProfilePage() {
                 </div>
               ) : (
                 <div className="activity-empty">
-                  <div className="empty-icon">📋</div>
+                  <div className="empty-icon"><ProfileIcon name="clipboard" /></div>
                   <p>No activity yet. Start exploring to see your history here!</p>
                 </div>
               )}
@@ -498,7 +517,7 @@ export default function ProfilePage() {
               
               <div className="profile-actions-grid">
                 <button className="profile-action-card" onClick={handleSettings}>
-                  <div className="profile-action-icon">⚙️</div>
+                  <div className="profile-action-icon"><ProfileIcon name="settings" /></div>
                   <div className="profile-action-content">
                     <div className="profile-action-title">App Settings</div>
                     <div className="profile-action-desc">Theme, preferences, and more</div>
@@ -507,7 +526,7 @@ export default function ProfilePage() {
 
                 <button className="profile-action-card" onClick={toggleConciergeVisibility}>
                   <div className="profile-action-icon">
-                    {conciergeHidden ? "👁️" : "🙈"}
+                    <ProfileIcon name={conciergeHidden ? "eye" : "eyeOff"} />
                   </div>
                   <div className="profile-action-content">
                     <div className="profile-action-title">
@@ -522,7 +541,7 @@ export default function ProfilePage() {
                 </button>
 
                 <button className="profile-action-card" onClick={handleRewatchIntro}>
-                  <div className="profile-action-icon">🎬</div>
+                  <div className="profile-action-icon"><ProfileIcon name="video" /></div>
                   <div className="profile-action-content">
                     <div className="profile-action-title">Rewatch Intro Video</div>
                     <div className="profile-action-desc">Watch the welcome video again</div>
@@ -530,10 +549,10 @@ export default function ProfilePage() {
                 </button>
 
                 <button className="profile-action-card" onClick={() => nav('/app')}>
-                  <div className="profile-action-icon">🏠</div>
+                  <div className="profile-action-icon"><ProfileIcon name="home" /></div>
                   <div className="profile-action-content">
-                    <div className="profile-action-title">Dashboard</div>
-                    <div className="profile-action-desc">Return to main dashboard</div>
+                    <div className="profile-action-title">Home</div>
+                    <div className="profile-action-desc">Return to your 3C Mall home</div>
                   </div>
                 </button>
 
@@ -541,7 +560,7 @@ export default function ProfilePage() {
                   className="profile-action-card profile-action-danger" 
                   onClick={handleLogout}
                 >
-                  <div className="profile-action-icon">🚪</div>
+                  <div className="profile-action-icon"><ProfileIcon name="logout" /></div>
                   <div className="profile-action-content">
                     <div className="profile-action-title">Sign Out</div>
                     <div className="profile-action-desc">Exit your account</div>
