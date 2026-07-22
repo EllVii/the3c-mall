@@ -69,6 +69,36 @@ async function ensureAuthSchema(env) {
     )`),
   ]);
 
+  // CREATE TABLE IF NOT EXISTS cannot repair an older table that already
+  // exists with fewer columns. Upgrade those legacy tables in place so the
+  // current queries work while preserving all existing accounts and rows.
+  const requiredColumns = {
+    users: {
+      password_hash: "TEXT",
+      password_salt: "TEXT",
+      password_iterations: "INTEGER DEFAULT 210000",
+      email_verified_at: "TEXT",
+      status: "TEXT DEFAULT 'active'",
+      created_at: "TEXT",
+      updated_at: "TEXT",
+    },
+    rate_limits: {
+      window_start: "INTEGER DEFAULT 0",
+      request_count: "INTEGER DEFAULT 0",
+      updated_at: "TEXT",
+    },
+  };
+
+  for (const [table, columns] of Object.entries(requiredColumns)) {
+    const schema = await env.DB.prepare(`PRAGMA table_info(${table})`).all();
+    const existing = new Set((schema.results || []).map((column) => column.name));
+    for (const [column, definition] of Object.entries(columns)) {
+      if (!existing.has(column)) {
+        await env.DB.prepare(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`).run();
+      }
+    }
+  }
+
   authSchemaReady = true;
 }
 
