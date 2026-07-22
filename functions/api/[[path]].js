@@ -83,6 +83,7 @@ async function ensureAuthSchema(env) {
       updated_at: "TEXT",
     },
     rate_limits: {
+      rate_key: "TEXT",
       window_start: "INTEGER DEFAULT 0",
       request_count: "INTEGER DEFAULT 0",
       updated_at: "TEXT",
@@ -246,14 +247,22 @@ function clientKey(request, suffix) {
 async function checkRateLimit(env, key, limit, windowSeconds) {
   const now = Math.floor(Date.now() / 1000);
   const windowStart = now - (now % windowSeconds);
-  await env.DB.prepare(
-    `INSERT INTO rate_limits (rate_key, window_start, request_count, updated_at)
-     VALUES (?, ?, 1, CURRENT_TIMESTAMP)
-     ON CONFLICT(rate_key) DO UPDATE SET
-       request_count = CASE WHEN window_start = excluded.window_start THEN request_count + 1 ELSE 1 END,
-       window_start = excluded.window_start,
-       updated_at = CURRENT_TIMESTAMP`,
-  ).bind(key, windowStart).run();
+  const existing = await env.DB.prepare(
+    "SELECT window_start, request_count FROM rate_limits WHERE rate_key = ?",
+  ).bind(key).first();
+  if (existing) {
+    await env.DB.prepare(
+      `UPDATE rate_limits
+       SET request_count = CASE WHEN window_start = ? THEN request_count + 1 ELSE 1 END,
+           window_start = ?, updated_at = CURRENT_TIMESTAMP
+       WHERE rate_key = ?`,
+    ).bind(windowStart, windowStart, key).run();
+  } else {
+    await env.DB.prepare(
+      `INSERT INTO rate_limits (rate_key, window_start, request_count, updated_at)
+       VALUES (?, ?, 1, CURRENT_TIMESTAMP)`,
+    ).bind(key, windowStart).run();
+  }
   const row = await env.DB.prepare(
     "SELECT window_start, request_count FROM rate_limits WHERE rate_key = ?",
   ).bind(key).first();
