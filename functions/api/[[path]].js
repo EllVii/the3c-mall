@@ -57,6 +57,12 @@ async function ensureAuthSchema(env) {
       request_count INTEGER NOT NULL,
       updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     )`),
+    env.DB.prepare(`CREATE TABLE IF NOT EXISTS auth_rate_limits_v2 (
+      rate_key TEXT PRIMARY KEY,
+      window_start INTEGER NOT NULL,
+      request_count INTEGER NOT NULL,
+      updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )`),
     env.DB.prepare(`CREATE TABLE IF NOT EXISTS audit_log (
       id TEXT PRIMARY KEY,
       actor_user_id TEXT,
@@ -248,23 +254,23 @@ async function checkRateLimit(env, key, limit, windowSeconds) {
   const now = Math.floor(Date.now() / 1000);
   const windowStart = now - (now % windowSeconds);
   const existing = await env.DB.prepare(
-    "SELECT window_start, request_count FROM rate_limits WHERE rate_key = ?",
+    "SELECT window_start, request_count FROM auth_rate_limits_v2 WHERE rate_key = ?",
   ).bind(key).first();
   if (existing) {
     await env.DB.prepare(
-      `UPDATE rate_limits
+      `UPDATE auth_rate_limits_v2
        SET request_count = CASE WHEN window_start = ? THEN request_count + 1 ELSE 1 END,
            window_start = ?, updated_at = CURRENT_TIMESTAMP
        WHERE rate_key = ?`,
     ).bind(windowStart, windowStart, key).run();
   } else {
     await env.DB.prepare(
-      `INSERT INTO rate_limits (rate_key, window_start, request_count, updated_at)
+      `INSERT INTO auth_rate_limits_v2 (rate_key, window_start, request_count, updated_at)
        VALUES (?, ?, 1, CURRENT_TIMESTAMP)`,
     ).bind(key, windowStart).run();
   }
   const row = await env.DB.prepare(
-    "SELECT window_start, request_count FROM rate_limits WHERE rate_key = ?",
+    "SELECT window_start, request_count FROM auth_rate_limits_v2 WHERE rate_key = ?",
   ).bind(key).first();
   return row && Number(row.window_start) === windowStart && Number(row.request_count) <= limit;
 }
