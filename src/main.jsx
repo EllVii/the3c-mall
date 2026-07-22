@@ -26,6 +26,15 @@ ReactDOM.createRoot(document.getElementById("root")).render(
 
 // Register immediately so an updated worker can replace older cached app-shell
 // behavior without waiting for the browser to become idle.
+let reloadingForNewWorker = false;
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (reloadingForNewWorker) return;
+    reloadingForNewWorker = true;
+    window.location.reload();
+  });
+}
+
 registerSW({
   immediate: true,
   onRegisteredSW(_swUrl, registration) {
