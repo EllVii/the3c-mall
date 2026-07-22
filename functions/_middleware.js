@@ -21,7 +21,9 @@ export async function onRequest(context) {
   const headers = new Headers(response.headers);
   headers.set("x-content-type-options", "nosniff");
   headers.set("referrer-policy", "strict-origin-when-cross-origin");
-  headers.set("permissions-policy", "camera=(), microphone=(), geolocation=()");
+  // Keep camera and microphone disabled while allowing the 3C Mall site to
+  // request the shopper's location for Leaflet's nearby-store experience.
+  headers.set("permissions-policy", "camera=(), microphone=(), geolocation=(self)");
   headers.set("cross-origin-opener-policy", "same-origin");
 
   if (url.protocol === "https:") {
