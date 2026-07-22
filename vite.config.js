@@ -42,12 +42,14 @@ export default defineConfig({
         ],
       },
       workbox: {
-        // Keep the install shell small. Videos load only when a user requests them.
-        globPatterns: ["**/*.{js,css,html,ico,png,svg,webp,woff2}"],
+        // Cache versioned assets, but never cache the HTML navigation response.
+        // Security and Permissions-Policy headers must come from Cloudflare on
+        // every page load so shoppers receive the current geolocation policy.
+        globPatterns: ["**/*.{js,css,ico,png,svg,webp,woff2}"],
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
         cleanupOutdatedCaches: true,
-        navigateFallback: "/index.html",
-        navigateFallbackDenylist: [/^\/api\//],
+        clientsClaim: true,
+        skipWaiting: true,
       },
     }),
   ],
