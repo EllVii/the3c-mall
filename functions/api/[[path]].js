@@ -1,6 +1,10 @@
 const SESSION_COOKIE = "threec_session";
 const SESSION_TTL_SECONDS = 60 * 60 * 24 * 14;
-const PASSWORD_ITERATIONS = 210000;
+// Cloudflare Workers caps a single PBKDF2 operation at 100,000 iterations.
+// Keep new hashes within that limit so credential verification cannot crash
+// after a matching account is found.
+const PASSWORD_ITERATIONS = 100000;
+const MAX_PASSWORD_ITERATIONS = 100000;
 const MAX_JSON_BYTES = 64 * 1024;
 const MAX_RECEIPT_BYTES = 10 * 1024 * 1024;
 let authSchemaReady = false;
@@ -17,7 +21,7 @@ async function ensureAuthSchema(env) {
       email TEXT NOT NULL UNIQUE,
       password_hash TEXT NOT NULL,
       password_salt TEXT NOT NULL,
-      password_iterations INTEGER NOT NULL DEFAULT 210000,
+      password_iterations INTEGER NOT NULL DEFAULT 100000,
       email_verified_at TEXT,
       status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'disabled', 'deleted')),
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -82,7 +86,7 @@ async function ensureAuthSchema(env) {
     users: {
       password_hash: "TEXT",
       password_salt: "TEXT",
-      password_iterations: "INTEGER DEFAULT 210000",
+      password_iterations: "INTEGER DEFAULT 100000",
       email_verified_at: "TEXT",
       status: "TEXT DEFAULT 'active'",
       created_at: "TEXT",
@@ -144,6 +148,19 @@ function hexToBytes(hex) {
   return result;
 }
 
+function base64UrlToBytes(value) {
+  const encoded = String(value || "");
+  if (!/^[a-zA-Z0-9_-]+$/.test(encoded)) return new Uint8Array();
+  try {
+    const normalized = encoded.replaceAll("-", "+").replaceAll("_", "/");
+    const padded = normalized + "=".repeat((4 - (normalized.length % 4)) % 4);
+    const binary = atob(padded);
+    return Uint8Array.from(binary, (character) => character.charCodeAt(0));
+  } catch {
+    return new Uint8Array();
+  }
+}
+
 function timingSafeEqual(left, right) {
   const a = typeof left === "string" ? new TextEncoder().encode(left) : left;
   const b = typeof right === "string" ? new TextEncoder().encode(right) : right;
@@ -185,6 +202,14 @@ function isoAfter(seconds) {
 
 async function hashPassword(password, saltHex = null, iterations = PASSWORD_ITERATIONS) {
   const salt = saltHex ? hexToBytes(saltHex) : crypto.getRandomValues(new Uint8Array(16));
+  if (
+    salt.length !== 16 ||
+    !Number.isInteger(iterations) ||
+    iterations < 1 ||
+    iterations > MAX_PASSWORD_ITERATIONS
+  ) {
+    throw new Error("Unsupported password hash parameters");
+  }
   const key = await crypto.subtle.importKey(
     "raw",
     new TextEncoder().encode(password),
@@ -205,8 +230,57 @@ async function hashPassword(password, saltHex = null, iterations = PASSWORD_ITER
 }
 
 async function verifyPassword(password, user) {
-  const derived = await hashPassword(password, user.password_salt, user.password_iterations);
-  return timingSafeEqual(hexToBytes(derived.hash), hexToBytes(user.password_hash));
+  const storedHash = String(user?.password_hash || "");
+
+  // Accounts created by the first D1 authentication implementation stored a
+  // single encoded value: pbkdf2_sha256$iterations$salt$hash. Preserve those
+  // accounts and upgrade them after their next successful login.
+  if (storedHash.startsWith("pbkdf2_sha256$")) {
+    const [algorithm, iterationsText, saltText, expectedText, ...extra] = storedHash.split("$");
+    const iterations = Number(iterationsText);
+    const salt = base64UrlToBytes(saltText);
+    const expected = base64UrlToBytes(expectedText);
+    if (
+      algorithm !== "pbkdf2_sha256" ||
+      extra.length > 0 ||
+      !Number.isInteger(iterations) ||
+      iterations < 1 ||
+      iterations > MAX_PASSWORD_ITERATIONS ||
+      salt.length !== 16 ||
+      expected.length !== 32
+    ) {
+      return { valid: false, needsUpgrade: false };
+    }
+
+    try {
+      const derived = await hashPassword(password, bytesToHex(salt), iterations);
+      const valid = timingSafeEqual(hexToBytes(derived.hash), expected);
+      return { valid, needsUpgrade: valid };
+    } catch {
+      return { valid: false, needsUpgrade: false };
+    }
+  }
+
+  const iterations = Number(user?.password_iterations);
+  const salt = hexToBytes(String(user?.password_salt || ""));
+  const expected = hexToBytes(storedHash);
+  if (
+    !Number.isInteger(iterations) ||
+    iterations < 1 ||
+    iterations > MAX_PASSWORD_ITERATIONS ||
+    salt.length !== 16 ||
+    expected.length !== 32
+  ) {
+    return { valid: false, needsUpgrade: false };
+  }
+
+  try {
+    const derived = await hashPassword(password, bytesToHex(salt), iterations);
+    const valid = timingSafeEqual(hexToBytes(derived.hash), expected);
+    return { valid, needsUpgrade: valid && iterations !== PASSWORD_ITERATIONS };
+  } catch {
+    return { valid: false, needsUpgrade: false };
+  }
 }
 
 function parseCookies(request) {
@@ -306,14 +380,15 @@ async function currentUser(request, env, { required = false } = {}) {
   return row;
 }
 
-async function createSession(request, env, userId) {
+async function createSession(env, userId) {
   const token = randomToken(32);
   const tokenHash = await sha256Hex(token);
-  const userAgentHash = await sha256Hex(request.headers.get("user-agent") || "unknown");
+  // Use columns shared by both the original and current sessions schemas.
+  // The legacy table stores user-agent data under a different column name.
   await env.DB.prepare(
-    `INSERT INTO sessions (id, user_id, token_hash, user_agent_hash, expires_at)
-     VALUES (?, ?, ?, ?, ?)`,
-  ).bind(crypto.randomUUID(), userId, tokenHash, userAgentHash, isoAfter(SESSION_TTL_SECONDS)).run();
+    `INSERT INTO sessions (id, user_id, token_hash, expires_at)
+     VALUES (?, ?, ?, ?)`,
+  ).bind(crypto.randomUUID(), userId, tokenHash, isoAfter(SESSION_TTL_SECONDS)).run();
   return token;
 }
 
@@ -411,13 +486,24 @@ async function handleLogin(request, env) {
     `SELECT id, email, password_hash, password_salt, password_iterations, email_verified_at, status
      FROM users WHERE email = ?`,
   ).bind(email).first();
-  const valid = user && user.status === "active" && await verifyPassword(String(body.password || ""), user);
-  if (!valid) {
+  const password = String(body.password || "");
+  const passwordCheck = user && user.status === "active"
+    ? await verifyPassword(password, user)
+    : { valid: false, needsUpgrade: false };
+  if (!passwordCheck.valid) {
     await audit(env, "auth.login_failed", user?.id || null, "user", user?.id || null);
     return error("Email or password is incorrect", 401, "invalid_credentials");
   }
   if (!user.email_verified_at) return error("Verify your email before logging in", 403, "email_not_verified");
-  const token = await createSession(request, env, user.id);
+  if (passwordCheck.needsUpgrade) {
+    const upgraded = await hashPassword(password);
+    await env.DB.prepare(
+      `UPDATE users
+       SET password_hash = ?, password_salt = ?, password_iterations = ?, updated_at = CURRENT_TIMESTAMP
+       WHERE id = ?`,
+    ).bind(upgraded.hash, upgraded.salt, upgraded.iterations, user.id).run();
+  }
+  const token = await createSession(env, user.id);
   await audit(env, "auth.login", user.id, "session", null);
   return json({ user: publicUser(user) }, 200, { "set-cookie": sessionCookie(token) });
 }
