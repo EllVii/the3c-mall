@@ -1,21 +1,37 @@
 {
-  "name": "3C Mall",
+  "id": "/app",
+  "name": "3C Mall: Meal Planning & Grocery Tools",
   "short_name": "3C Mall",
-  "description": "Concierge • Cost • Community — plan meals, compare groceries, and shop with clarity.",
+  "description": "Plan meals, compare estimated grocery costs, organize household shopping, and access guided lifestyle tools.",
+  "lang": "en-US",
+  "dir": "ltr",
   "start_url": "/app",
+  "scope": "/",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "orientation": "any",
   "background_color": "#f7f3e9",
   "theme_color": "#17364a",
+  "categories": ["food", "health", "shopping", "lifestyle"],
+  "prefer_related_applications": false,
   "icons": [
     {
       "src": "/icons/icon-192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
       "src": "/icons/icon-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }

@@ -1,2 +1,8 @@
-/   /app   301
-/*  /index.html  200
+/features  /features/index.html  200
+/pricing   /pricing/index.html   200
+/terms     /terms/index.html     200
+/privacy   /privacy/index.html   200
+/login     /login/index.html     200
+/app       /app/index.html       200
+/app/*     /app/index.html       200
+/*         /index.html           200

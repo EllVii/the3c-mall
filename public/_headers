@@ -1,5 +1,30 @@
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+
 /manifest.json
   Content-Type: application/manifest+json
 
 /manifest.webmanifest
   Content-Type: application/manifest+json
+
+/robots.txt
+  Content-Type: text/plain; charset=utf-8
+
+/sitemap.xml
+  Content-Type: application/xml; charset=utf-8
+
+/app
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+/app/*
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+/login
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+/health/*
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+/comment-limit
+  X-Robots-Tag: noindex, nofollow, noarchive

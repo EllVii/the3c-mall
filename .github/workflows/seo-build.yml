@@ -1,0 +1,47 @@
+name: SEO Build Validation
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  seo-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Build application and SEO pages
+        run: npm run build
+
+      - name: Verify generated SEO routes
+        run: |
+          test -f dist/index.html
+          test -f dist/features/index.html
+          test -f dist/pricing/index.html
+          test -f dist/privacy/index.html
+          test -f dist/terms/index.html
+          test -f dist/login/index.html
+          test -f dist/app/index.html
+          test -f dist/404.html
+          grep -q 'rel="canonical" href="https://the3cmall.com/"' dist/index.html
+          grep -q 'rel="canonical" href="https://the3cmall.com/features"' dist/features/index.html
+          grep -q 'rel="canonical" href="https://the3cmall.com/pricing"' dist/pricing/index.html
+          grep -q 'noindex, nofollow, noarchive' dist/login/index.html
+          grep -q 'noindex, nofollow, noarchive' dist/app/index.html
+          grep -q 'id="seo-structured-data"' dist/index.html

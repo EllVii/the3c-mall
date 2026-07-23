@@ -1,20 +1,152 @@
 <!doctype html>
-<html lang="en">
+<html lang="en-US">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#17364a" />
-    <link rel="manifest" href="/manifest.json" />
+    <meta name="color-scheme" content="dark light" />
+    <meta name="application-name" content="3C Mall" />
+    <meta name="apple-mobile-web-app-title" content="3C Mall" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+
+    <title>3C Mall | Smart Meal Planning &amp; Grocery Cost Comparison</title>
+    <meta
+      name="description"
+      content="Plan meals, compare grocery costs, organize household shopping, and get guided support with the 3C Mall lifestyle app."
+    />
+    <meta
+      name="robots"
+      content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+    />
+    <meta
+      name="googlebot"
+      content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+    />
+    <link rel="canonical" href="https://the3cmall.com/" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="3C Mall" />
+    <meta property="og:locale" content="en_US" />
+    <meta
+      property="og:title"
+      content="3C Mall | Smart Meal Planning &amp; Grocery Cost Comparison"
+    />
+    <meta
+      property="og:description"
+      content="Plan meals, compare grocery costs, organize household shopping, and get guided support with the 3C Mall lifestyle app."
+    />
+    <meta property="og:url" content="https://the3cmall.com/" />
+    <meta
+      property="og:image"
+      content="https://the3cmall.com/brand/3c-mall-entrance.jpg"
+    />
+    <meta
+      property="og:image:alt"
+      content="3C Mall meal planning and grocery lifestyle application"
+    />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta
+      name="twitter:title"
+      content="3C Mall | Smart Meal Planning &amp; Grocery Cost Comparison"
+    />
+    <meta
+      name="twitter:description"
+      content="Plan meals, compare grocery costs, organize household shopping, and get guided support with the 3C Mall lifestyle app."
+    />
+    <meta
+      name="twitter:image"
+      content="https://the3cmall.com/brand/3c-mall-entrance.jpg"
+    />
+
+    <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="icon" href="/favicon.ico" />
     <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png" />
     <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png" />
     <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png" />
     <link rel="icon" type="image/png" sizes="512x512" href="/icons/icon-512.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
-    <title>3C Mall</title>
+
+    <script type="application/ld+json" id="seo-structured-data">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://the3cmall.com/#organization",
+            "name": "3C Mall",
+            "url": "https://the3cmall.com/",
+            "logo": {
+              "@type": "ImageObject",
+              "url": "https://the3cmall.com/icons/icon-512.png"
+            }
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://the3cmall.com/#website",
+            "url": "https://the3cmall.com/",
+            "name": "3C Mall",
+            "alternateName": "The 3C Mall",
+            "description": "Plan meals, compare grocery costs, organize household shopping, and get guided support with the 3C Mall lifestyle app.",
+            "publisher": {
+              "@id": "https://the3cmall.com/#organization"
+            }
+          },
+          {
+            "@type": "Service",
+            "@id": "https://the3cmall.app/app#service",
+            "name": "3C Mall Web Application",
+            "serviceType": "Meal planning and grocery cost comparison application",
+            "url": "https://the3cmall.app/app",
+            "description": "Plan meals, compare grocery costs, organize household shopping, and get guided support with the 3C Mall lifestyle app.",
+            "image": "https://the3cmall.com/brand/3c-mall-entrance.jpg",
+            "provider": {
+              "@id": "https://the3cmall.com/#organization"
+            },
+            "creator": {
+              "@type": "Organization",
+              "name": "Ell Vii's Automations",
+              "url": "https://ellviisautomations.com/"
+            },
+            "offers": [
+              {
+                "@type": "Offer",
+                "name": "Basic",
+                "price": "0",
+                "priceCurrency": "USD"
+              },
+              {
+                "@type": "Offer",
+                "name": "Pro",
+                "price": "14.99",
+                "priceCurrency": "USD"
+              },
+              {
+                "@type": "Offer",
+                "name": "Family",
+                "price": "24.99",
+                "priceCurrency": "USD"
+              }
+            ]
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>
+    <noscript>
+      <main>
+        <h1>3C Mall</h1>
+        <p>
+          3C Mall is a guided meal planning and grocery cost comparison app for
+          households. Explore the <a href="/features">features</a>, review
+          <a href="/pricing">pricing</a>, or enable JavaScript to use the app.
+        </p>
+      </main>
+    </noscript>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
