@@ -25,7 +25,7 @@ export default function SiteLayout() {
       <header className="site-header">
         <div className="site-header-inner">
           <a className="site-brand" href={`${MARKETING_ORIGIN}/`} aria-label="3C Mall home">
-            <img src="/brand/3c-emblem.png" alt="" width="42" height="42" />
+            <img src="/icons/3c-mall.png" alt="" width="58" height="58" />
             <span>
               <strong>3C Mall</strong>
               <small>Concierge · Cost · Community</small>

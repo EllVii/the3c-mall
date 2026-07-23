@@ -1,5 +1,6 @@
 .site-shell {
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   background: var(--bg0, #05070d);
@@ -35,7 +36,7 @@
 
 .site-header-inner {
   width: min(1220px, calc(100% - 2rem));
-  min-height: 78px;
+  min-height: 88px;
   margin: 0 auto;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
@@ -53,11 +54,13 @@
 }
 
 .site-brand img {
-  width: 42px;
-  height: 42px;
+  width: 58px;
+  height: 58px;
   flex: 0 0 auto;
   object-fit: contain;
-  filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.34));
+  filter:
+    drop-shadow(0 8px 18px rgba(0, 0, 0, 0.4))
+    drop-shadow(0 0 12px rgba(126, 224, 255, 0.12));
 }
 
 .site-brand span {
@@ -67,7 +70,7 @@
 }
 
 .site-brand strong {
-  font-size: 1rem;
+  font-size: 1.08rem;
   line-height: 1.1;
   letter-spacing: -0.02em;
 }
@@ -167,6 +170,7 @@
 
 .site-main {
   flex: 1;
+  min-width: 0;
 }
 
 .site-footer {
@@ -272,6 +276,15 @@
   .site-header-inner {
     grid-template-columns: 1fr auto;
     gap: 0.7rem;
+  }
+
+  .site-brand {
+    gap: 0.55rem;
+  }
+
+  .site-brand img {
+    width: 50px;
+    height: 50px;
   }
 
   .site-brand small,
