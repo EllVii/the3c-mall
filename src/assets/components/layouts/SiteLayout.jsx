@@ -42,6 +42,18 @@ export default function SiteLayout() {
 
       <footer style={{ padding: "2rem 1.25rem", borderTop: "1px solid var(--line)", textAlign: "center", fontSize: "0.8rem", color: "rgba(255,255,255,0.6)" }}>
         <div>{betaMessaging.website.footer}</div>
+        <div style={{ marginTop: "0.75rem" }}>
+          Technology platform developed by{" "}
+          <a
+            href="https://ellviisautomations.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: "var(--gold)", fontWeight: 800 }}
+          >
+            Ell Vii&apos;s Automations
+          </a>
+          .
+        </div>
       </footer>
     </div>
   );
