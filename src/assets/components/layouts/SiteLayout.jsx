@@ -103,17 +103,18 @@ export default function SiteLayout() {
             Terms of Service
           </Link>
         </nav>
-        <div style={{ marginTop: "0.75rem" }}>
-          Technology platform developed by{" "}
+        <div style={{ marginTop: "0.75rem", lineHeight: 1.6 }}>
+          3C Mall is designed, developed, and supported by{" "}
           <a
             href="https://ellviisautomations.com/"
             target="_blank"
-            rel="noopener noreferrer"
+            rel="author external noopener noreferrer"
+            aria-label="Ell Vii's Automations website development, automation, CRM, and SEO services"
             style={{ color: "var(--gold)", fontWeight: 800 }}
           >
             Ell Vii&apos;s Automations
           </a>
-          .
+          , an Arizona website development, automation, CRM, and SEO company.
         </div>
       </footer>
     </div>
