@@ -1,120 +1,97 @@
 import React from "react";
-import { Link, NavLink, Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import { betaMessaging } from "../../../utils/betaMessaging.js";
+import "../../../styles/SiteLayout.css";
 
-const linkStyle = ({ isActive }) => ({
-  color: isActive ? "var(--gold)" : "var(--blue)",
-  textDecoration: "none",
-  fontWeight: 900,
-  letterSpacing: "0.08em",
-  textTransform: "uppercase",
-  fontSize: "0.78rem",
-  padding: "0.35rem 0.6rem",
-  borderRadius: "999px",
-  border: isActive
-    ? "1px solid rgba(246,220,138,0.65)"
-    : "1px solid rgba(126,224,255,0.22)",
-  background: isActive ? "rgba(20,14,5,0.55)" : "rgba(4,8,18,0.35)",
-});
+const MARKETING_ORIGIN = "https://the3cmall.com";
+const APP_ORIGIN = "https://the3cmall.app";
+
+const NAV_ITEMS = [
+  { label: "Home", href: `${MARKETING_ORIGIN}/`, path: "/" },
+  { label: "Features", href: `${MARKETING_ORIGIN}/features`, path: "/features" },
+  { label: "Pricing", href: `${MARKETING_ORIGIN}/pricing`, path: "/pricing" },
+];
 
 export default function SiteLayout() {
+  const { pathname } = useLocation();
+  const normalizedPath = pathname !== "/" ? pathname.replace(/\/$/, "") : "/";
+
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "var(--bg0)",
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
-      <header style={{ padding: "1rem 1.25rem", borderBottom: "1px solid var(--line)" }}>
-        <div
-          style={{
-            display: "flex",
-            gap: "0.6rem",
-            flexWrap: "wrap",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <nav
-            aria-label="Primary navigation"
-            style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap", alignItems: "center" }}
-          >
-            <NavLink to="/" style={linkStyle} end>
-              Home
-            </NavLink>
-            <NavLink to="/features" style={linkStyle}>
-              Features
-            </NavLink>
-            <NavLink to="/pricing" style={linkStyle}>
-              Pricing
-            </NavLink>
-            <a href="https://the3cmall.app/app" style={linkStyle({ isActive: false })}>
-              Beta Access
-            </a>
+    <div className="site-shell">
+      <a className="site-skip-link" href="#main-content">
+        Skip to main content
+      </a>
+
+      <header className="site-header">
+        <div className="site-header-inner">
+          <a className="site-brand" href={`${MARKETING_ORIGIN}/`} aria-label="3C Mall home">
+            <img src="/brand/3c-emblem.png" alt="" width="42" height="42" />
+            <span>
+              <strong>3C Mall</strong>
+              <small>Concierge · Cost · Community</small>
+            </span>
+          </a>
+
+          <nav className="site-nav" aria-label="Primary navigation">
+            {NAV_ITEMS.map((item) => {
+              const isActive = normalizedPath === item.path;
+              return (
+                <a
+                  key={item.path}
+                  href={item.href}
+                  className={isActive ? "is-active" : undefined}
+                  aria-current={isActive ? "page" : undefined}
+                >
+                  {item.label}
+                </a>
+              );
+            })}
           </nav>
-          <div
-            style={{
-              fontSize: "0.75rem",
-              fontWeight: 600,
-              color: "rgba(246,220,138,0.9)",
-              padding: "0.25rem 0.5rem",
-              borderRadius: "0.35rem",
-              background: "rgba(20,14,5,0.35)",
-              border: "1px solid rgba(246,220,138,0.3)",
-              whiteSpace: "nowrap",
-            }}
-            title={betaMessaging.appBadge.tooltip}
-          >
-            {betaMessaging.appBadge.label}
+
+          <div className="site-header-actions">
+            <span className="site-beta-status" title={betaMessaging.appBadge.tooltip}>
+              {betaMessaging.appBadge.label}
+            </span>
+            <a className="site-action site-action-secondary" href={`${APP_ORIGIN}/login`}>
+              Sign in
+            </a>
+            <a className="site-action site-action-primary" href={`${MARKETING_ORIGIN}/#beta-access`}>
+              Join beta
+            </a>
           </div>
         </div>
       </header>
 
-      <main style={{ padding: "0.25rem 0", flex: 1 }}>
+      <main id="main-content" className="site-main">
         <Outlet />
       </main>
 
-      <footer
-        style={{
-          padding: "2rem 1.25rem",
-          borderTop: "1px solid var(--line)",
-          textAlign: "center",
-          fontSize: "0.8rem",
-          color: "rgba(255,255,255,0.6)",
-        }}
-      >
-        <div>{betaMessaging.website.footer}</div>
-        <nav
-          aria-label="Legal navigation"
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            gap: "1rem",
-            flexWrap: "wrap",
-            marginTop: "0.75rem",
-          }}
-        >
-          <Link to="/privacy" style={{ color: "inherit" }}>
-            Privacy Policy
-          </Link>
-          <Link to="/terms" style={{ color: "inherit" }}>
-            Terms of Service
-          </Link>
-        </nav>
-        <div style={{ marginTop: "0.75rem", lineHeight: 1.6 }}>
-          3C Mall is designed, developed, and supported by{" "}
-          <a
-            href="https://ellviisautomations.com/"
-            target="_blank"
-            rel="author external noopener noreferrer"
-            aria-label="Ell Vii's Automations website development, automation, CRM, and SEO services"
-            style={{ color: "var(--gold)", fontWeight: 800 }}
-          >
-            Ell Vii&apos;s Automations
-          </a>
-          , an Arizona website development, automation, CRM, and SEO company.
+      <footer className="site-footer">
+        <div className="site-footer-inner">
+          <div className="site-footer-brand">
+            <strong>3C Mall</strong>
+            <span>{betaMessaging.website.footer}</span>
+          </div>
+
+          <nav className="site-footer-nav" aria-label="Footer navigation">
+            <a href={`${MARKETING_ORIGIN}/features`}>Features</a>
+            <a href={`${MARKETING_ORIGIN}/pricing`}>Pricing</a>
+            <a href={`${MARKETING_ORIGIN}/privacy`}>Privacy Policy</a>
+            <a href={`${MARKETING_ORIGIN}/terms`}>Terms of Service</a>
+          </nav>
+
+          <p className="site-developer-credit">
+            3C Mall is designed, developed, and supported by{" "}
+            <a
+              href="https://ellviisautomations.com/"
+              target="_blank"
+              rel="author external noopener noreferrer"
+              aria-label="Ell Vii's Automations website development, automation, CRM, and SEO services"
+            >
+              Ell Vii&apos;s Automations
+            </a>
+            , an Arizona website development, automation, CRM, and SEO company.
+          </p>
         </div>
       </footer>
     </div>

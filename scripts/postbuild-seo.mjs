@@ -12,9 +12,9 @@ const SOCIAL_IMAGE = `${MARKETING_ORIGIN}/brand/3c-mall-entrance.jpg`;
 const pages = [
   {
     output: "index.html",
-    title: "3C Mall | Smart Meal Planning & Grocery Cost Comparison",
+    title: "3C Mall | Budget Meal Planning & Grocery Cost Comparison",
     description:
-      "Plan meals, compare grocery costs, organize household shopping, and get guided support with the 3C Mall lifestyle app.",
+      "Plan meals around your household budget, compare grocery unit prices and store estimates, and build one connected shopping list with 3C Mall.",
     canonical: `${MARKETING_ORIGIN}/`,
     robots:
       "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1",
