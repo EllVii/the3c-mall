@@ -5,6 +5,8 @@ const DIST_DIR = path.resolve("dist");
 const TEMPLATE_PATH = path.join(DIST_DIR, "index.html");
 const MARKETING_ORIGIN = "https://the3cmall.com";
 const APP_ORIGIN = "https://the3cmall.app";
+const DEVELOPER_ORIGIN = "https://ellviisautomations.com";
+const DEVELOPER_ORGANIZATION_ID = `${DEVELOPER_ORIGIN}/#organization`;
 const SOCIAL_IMAGE = `${MARKETING_ORIGIN}/brand/3c-mall-entrance.jpg`;
 
 const pages = [
@@ -93,6 +95,15 @@ function replaceOrInsert(html, pattern, replacement) {
 function buildSchema(page) {
   if (!page.schemaType) return null;
 
+  const developerOrganization = {
+    "@type": "Organization",
+    "@id": DEVELOPER_ORGANIZATION_ID,
+    name: "Ell Vii's Automations",
+    url: `${DEVELOPER_ORIGIN}/`,
+    description:
+      "Arizona technology company providing website development, SEO, CRM, chatbot, and business automation services.",
+  };
+
   const organization = {
     "@type": "Organization",
     "@id": `${MARKETING_ORIGIN}/#organization`,
@@ -102,6 +113,7 @@ function buildSchema(page) {
       "@type": "ImageObject",
       url: `${MARKETING_ORIGIN}/icons/icon-512.png`,
     },
+    creator: { "@id": DEVELOPER_ORGANIZATION_ID },
   };
 
   const website = {
@@ -112,6 +124,8 @@ function buildSchema(page) {
     alternateName: "The 3C Mall",
     description: pages[0].description,
     publisher: { "@id": `${MARKETING_ORIGIN}/#organization` },
+    creator: { "@id": DEVELOPER_ORGANIZATION_ID },
+    copyrightHolder: { "@id": DEVELOPER_ORGANIZATION_ID },
   };
 
   const appService = {
@@ -123,11 +137,7 @@ function buildSchema(page) {
     description: pages[0].description,
     image: SOCIAL_IMAGE,
     provider: { "@id": `${MARKETING_ORIGIN}/#organization` },
-    creator: {
-      "@type": "Organization",
-      name: "Ell Vii's Automations",
-      url: "https://ellviisautomations.com/",
-    },
+    creator: { "@id": DEVELOPER_ORGANIZATION_ID },
     offers: [
       { "@type": "Offer", name: "Basic", price: "0", priceCurrency: "USD" },
       { "@type": "Offer", name: "Pro", price: "14.99", priceCurrency: "USD" },
@@ -135,7 +145,7 @@ function buildSchema(page) {
     ],
   };
 
-  const graph = [organization, website];
+  const graph = [developerOrganization, organization, website];
   if (page.schemaType === "home" || page.schemaType === "pricing") {
     graph.push(appService);
   }
@@ -148,6 +158,7 @@ function buildSchema(page) {
       description: page.description,
       isPartOf: { "@id": `${MARKETING_ORIGIN}/#website` },
       about: { "@id": `${APP_ORIGIN}/app#service` },
+      creator: { "@id": DEVELOPER_ORGANIZATION_ID },
     });
   }
 

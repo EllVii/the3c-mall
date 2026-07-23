@@ -10,6 +10,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="format-detection" content="telephone=no" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <meta name="author" content="Ell Vii's Automations" />
 
     <title>3C Mall | Smart Meal Planning &amp; Grocery Cost Comparison</title>
     <meta
@@ -25,6 +26,7 @@
       content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
     />
     <link rel="canonical" href="https://the3cmall.com/" />
+    <link rel="author" href="https://ellviisautomations.com/" />
 
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="3C Mall" />
@@ -75,12 +77,22 @@
         "@graph": [
           {
             "@type": "Organization",
+            "@id": "https://ellviisautomations.com/#organization",
+            "name": "Ell Vii's Automations",
+            "url": "https://ellviisautomations.com/",
+            "description": "Arizona technology company providing website development, SEO, CRM, chatbot, and business automation services."
+          },
+          {
+            "@type": "Organization",
             "@id": "https://the3cmall.com/#organization",
             "name": "3C Mall",
             "url": "https://the3cmall.com/",
             "logo": {
               "@type": "ImageObject",
               "url": "https://the3cmall.com/icons/icon-512.png"
+            },
+            "creator": {
+              "@id": "https://ellviisautomations.com/#organization"
             }
           },
           {
@@ -92,6 +104,12 @@
             "description": "Plan meals, compare grocery costs, organize household shopping, and get guided support with the 3C Mall lifestyle app.",
             "publisher": {
               "@id": "https://the3cmall.com/#organization"
+            },
+            "creator": {
+              "@id": "https://ellviisautomations.com/#organization"
+            },
+            "copyrightHolder": {
+              "@id": "https://ellviisautomations.com/#organization"
             }
           },
           {
@@ -106,9 +124,7 @@
               "@id": "https://the3cmall.com/#organization"
             },
             "creator": {
-              "@type": "Organization",
-              "name": "Ell Vii's Automations",
-              "url": "https://ellviisautomations.com/"
+              "@id": "https://ellviisautomations.com/#organization"
             },
             "offers": [
               {
@@ -144,6 +160,10 @@
           3C Mall is a guided meal planning and grocery cost comparison app for
           households. Explore the <a href="/features">features</a>, review
           <a href="/pricing">pricing</a>, or enable JavaScript to use the app.
+        </p>
+        <p>
+          3C Mall is designed and developed by
+          <a href="https://ellviisautomations.com/">Ell Vii's Automations</a>.
         </p>
       </main>
     </noscript>

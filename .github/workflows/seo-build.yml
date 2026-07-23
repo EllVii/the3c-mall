@@ -42,6 +42,9 @@ jobs:
           grep -q 'rel="canonical" href="https://the3cmall.com/"' dist/index.html
           grep -q 'rel="canonical" href="https://the3cmall.com/features"' dist/features/index.html
           grep -q 'rel="canonical" href="https://the3cmall.com/pricing"' dist/pricing/index.html
+          grep -q "name=\"author\" content=\"Ell Vii's Automations\"" dist/index.html
+          grep -q 'rel="author" href="https://ellviisautomations.com/"' dist/index.html
+          grep -q 'https://ellviisautomations.com/#organization' dist/index.html
           grep -q 'noindex, nofollow, noarchive' dist/login/index.html
           grep -q 'noindex, nofollow, noarchive' dist/app/index.html
           grep -q 'id="seo-structured-data"' dist/index.html

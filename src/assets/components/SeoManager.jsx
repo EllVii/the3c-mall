@@ -3,6 +3,8 @@ import { useLocation } from "react-router-dom";
 
 const MARKETING_ORIGIN = "https://the3cmall.com";
 const APP_ORIGIN = "https://the3cmall.app";
+const DEVELOPER_ORIGIN = "https://ellviisautomations.com";
+const DEVELOPER_ORGANIZATION_ID = `${DEVELOPER_ORIGIN}/#organization`;
 const SOCIAL_IMAGE = `${MARKETING_ORIGIN}/brand/3c-mall-entrance.jpg`;
 
 const PUBLIC_ROUTES = {
@@ -63,7 +65,26 @@ function upsertCanonical(href) {
   element.setAttribute("href", href);
 }
 
+function upsertAuthorLink(href) {
+  let element = document.head.querySelector('link[rel="author"]');
+  if (!element) {
+    element = document.createElement("link");
+    element.setAttribute("rel", "author");
+    document.head.appendChild(element);
+  }
+  element.setAttribute("href", href);
+}
+
 function buildSchema(metadata) {
+  const developerOrganization = {
+    "@type": "Organization",
+    "@id": DEVELOPER_ORGANIZATION_ID,
+    name: "Ell Vii's Automations",
+    url: `${DEVELOPER_ORIGIN}/`,
+    description:
+      "Arizona technology company providing website development, SEO, CRM, chatbot, and business automation services.",
+  };
+
   const organization = {
     "@type": "Organization",
     "@id": `${MARKETING_ORIGIN}/#organization`,
@@ -73,6 +94,7 @@ function buildSchema(metadata) {
       "@type": "ImageObject",
       url: `${MARKETING_ORIGIN}/icons/icon-512.png`,
     },
+    creator: { "@id": DEVELOPER_ORGANIZATION_ID },
   };
 
   const website = {
@@ -83,6 +105,8 @@ function buildSchema(metadata) {
     alternateName: "The 3C Mall",
     description: PUBLIC_ROUTES["/"].description,
     publisher: { "@id": `${MARKETING_ORIGIN}/#organization` },
+    creator: { "@id": DEVELOPER_ORGANIZATION_ID },
+    copyrightHolder: { "@id": DEVELOPER_ORGANIZATION_ID },
   };
 
   const appService = {
@@ -94,11 +118,7 @@ function buildSchema(metadata) {
     description: PUBLIC_ROUTES["/"].description,
     image: SOCIAL_IMAGE,
     provider: { "@id": `${MARKETING_ORIGIN}/#organization` },
-    creator: {
-      "@type": "Organization",
-      name: "Ell Vii's Automations",
-      url: "https://ellviisautomations.com/",
-    },
+    creator: { "@id": DEVELOPER_ORGANIZATION_ID },
     offers: [
       {
         "@type": "Offer",
@@ -121,7 +141,7 @@ function buildSchema(metadata) {
     ],
   };
 
-  const graph = [organization, website];
+  const graph = [developerOrganization, organization, website];
 
   if (metadata.schemaType === "home" || metadata.schemaType === "pricing") {
     graph.push(appService);
@@ -136,6 +156,7 @@ function buildSchema(metadata) {
       description: metadata.description,
       isPartOf: { "@id": `${MARKETING_ORIGIN}/#website` },
       about: { "@id": `${APP_ORIGIN}/app#service` },
+      creator: { "@id": DEVELOPER_ORGANIZATION_ID },
     });
   }
 
@@ -185,6 +206,7 @@ export default function SeoManager() {
     document.documentElement.lang = "en-US";
 
     upsertMeta("name", "description", description);
+    upsertMeta("name", "author", "Ell Vii's Automations");
     upsertMeta("name", "robots", robots);
     upsertMeta("name", "googlebot", robots);
     upsertMeta("property", "og:type", "website");
@@ -204,6 +226,7 @@ export default function SeoManager() {
     upsertMeta("name", "twitter:description", description);
     upsertMeta("name", "twitter:image", SOCIAL_IMAGE);
     upsertCanonical(canonical);
+    upsertAuthorLink(`${DEVELOPER_ORIGIN}/`);
     updateStructuredData(metadata, indexable);
   }, [pathname]);
 
