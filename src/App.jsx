@@ -31,6 +31,7 @@ const CommentLimitModal = lazy(() => import("./pages/CommentLimitModal.jsx"));
 const TermsOfService = lazy(() => import("./pages/TermsOfService.jsx"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy.jsx"));
 const D1HealthCheck = lazy(() => import("./pages/D1HealthCheck.jsx"));
+const AdminAccessRequests = lazy(() => import("./pages/AdminAccessRequests.jsx"));
 
 const DashboardPage = lazy(() => import("./pages/DashboardPage.jsx"));
 const MealPlannerPage = lazy(() => import("./pages/MealPlannerPage.jsx"));
@@ -154,6 +155,11 @@ function AppContent() {
 
         <Suspense fallback={<LoadingScreen />}>
           <Routes>
+            <Route
+              path="/admin/access-requests"
+              element={<AdminAccessRequests />}
+            />
+
             <Route element={<SiteLayout />}>
               <Route path="/" element={<LandingPage />} />
               <Route path="/features" element={<Features />} />

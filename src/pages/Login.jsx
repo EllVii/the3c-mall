@@ -1,19 +1,26 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import VideoIntro, { VIDEO_INTRO_SEEN_KEY } from "../assets/components/VideoIntro.jsx";
 import { readJSON } from "../utils/Storage";
 
 function Login() {
   const nav = useNavigate();
+  const [searchParams] = useSearchParams();
   const { signIn, signUp, error: authError, loading } = useAuth();
 
   const [mode, setMode] = useState("login");
+  const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [requestReason, setRequestReason] = useState("");
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const [success, setSuccess] = useState(() => (
+    searchParams.get("verified") === "1"
+      ? "Email confirmed. Your access request must still be approved before you can sign in."
+      : ""
+  ));
   
   // Show video intro on first visit (if not seen on landing page)
   const [showVideoIntro, setShowVideoIntro] = useState(() => {
@@ -46,8 +53,8 @@ function Login() {
     setError("");
     setSuccess("");
 
-    if (!email || !password || !confirmPassword) {
-      setError("Please fill in all fields");
+    if (!fullName.trim() || !email || !password || !confirmPassword) {
+      setError("Please fill in all required fields");
       return;
     }
 
@@ -56,14 +63,14 @@ function Login() {
       return;
     }
 
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters");
+    if (password.length < 10) {
+      setError("Password must be at least 10 characters");
       return;
     }
 
-    const { error: signUpError } = await signUp(email, password, {
-      firstName: "",
-      household: "solo",
+    const { data, error: signUpError } = await signUp(email, password, {
+      fullName: fullName.trim(),
+      reason: requestReason.trim(),
     });
 
     if (signUpError) {
@@ -71,13 +78,18 @@ function Login() {
       return;
     }
 
-    setSuccess("✅ Account created! Check your email for confirmation.");
+    setSuccess(
+      data?.message ||
+      "Access request received. Confirm your email, then wait for approval.",
+    );
     setTimeout(() => {
       setMode("login");
+      setFullName("");
       setEmail("");
       setPassword("");
       setConfirmPassword("");
-    }, 2000);
+      setRequestReason("");
+    }, 3500);
   };
 
   return (
@@ -107,6 +119,33 @@ function Login() {
             className="login-form"
             onSubmit={mode === "login" ? handleLogin : handleSignUp}
           >
+            <div className="login-form-heading">
+              <span>PRIVATE BETA ACCESS</span>
+              <h1>{mode === "login" ? "Welcome back" : "Request access"}</h1>
+              <p>
+                {mode === "login"
+                  ? "Sign in with an approved 3C Mall account."
+                  : "New requests are reviewed before an account can enter 3C Mall."}
+              </p>
+            </div>
+
+            {mode === "signup" && (
+              <div className="form-group">
+                <label htmlFor="fullName">Full name</label>
+                <input
+                  id="fullName"
+                  type="text"
+                  placeholder="Your full name"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  disabled={loading}
+                  autoComplete="name"
+                  maxLength={100}
+                  required
+                />
+              </div>
+            )}
+
             {/* Email - Above Password */}
             <div className="form-group">
               <label htmlFor="email">Email</label>
@@ -118,6 +157,7 @@ function Login() {
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={loading}
                 autoComplete="email"
+                required
               />
             </div>
 
@@ -132,6 +172,9 @@ function Login() {
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={loading}
                 autoComplete={mode === "login" ? "current-password" : "new-password"}
+                minLength={mode === "signup" ? 10 : undefined}
+                maxLength={128}
+                required
               />
             </div>
 
@@ -146,18 +189,39 @@ function Login() {
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   disabled={loading}
                   autoComplete="new-password"
+                  minLength={10}
+                  maxLength={128}
+                  required
+                />
+              </div>
+            )}
+
+            {mode === "signup" && (
+              <div className="form-group">
+                <label htmlFor="requestReason">
+                  How would you use 3C Mall?{" "}
+                  <span className="optional-label">(optional)</span>
+                </label>
+                <textarea
+                  id="requestReason"
+                  placeholder="Tell us a little about what you want help with."
+                  value={requestReason}
+                  onChange={(e) => setRequestReason(e.target.value)}
+                  disabled={loading}
+                  maxLength={500}
+                  rows={3}
                 />
               </div>
             )}
 
             {(error || authError) && (
-              <p className="error-message">
-                ❌ {error || authError}
+              <p className="error-message" role="alert">
+                {error || authError}
               </p>
             )}
 
             {success && (
-              <p className="success-message">
+              <p className="success-message" role="status">
                 {success}
               </p>
             )}
@@ -171,19 +235,19 @@ function Login() {
                 ? "Loading..."
                 : mode === "login"
                   ? "Log In"
-                  : "Create Account"}
+                  : "Submit Access Request"}
             </button>
 
             <div className="login-toggle">
               {mode === "login" ? (
                 <p>
-                  Don't have an account?{" "}
+                  Need a 3C Mall login?{" "}
                   <button
                     type="button"
                     onClick={() => setMode("signup")}
                     className="toggle-btn"
                   >
-                    Sign up
+                    Request access
                   </button>
                 </p>
               ) : (
@@ -206,8 +270,8 @@ function Login() {
           .login-page {
             position: relative;
             width: 100vw;
-            height: 100vh;
-            overflow: hidden;
+            min-height: calc(100dvh - 88px);
+            overflow: clip;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -220,7 +284,7 @@ function Login() {
             top: 0;
             left: 0;
             width: 100%;
-            height: 50%;
+            height: min(54vh, 520px);
             z-index: 1;
           }
 
@@ -237,37 +301,49 @@ function Login() {
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(to bottom, transparent 20%, rgba(0, 0, 0, 0.85) 70%, rgba(0, 0, 0, 0.95) 100%);
+            background: linear-gradient(to bottom, rgba(0, 0, 0, 0.02) 10%, rgba(0, 0, 0, 0.78) 72%, #000 100%);
             z-index: 2;
           }
 
           .login-form-container {
             position: relative;
             z-index: 3;
-            width: 100%;
-            max-width: 420px;
-            padding: 1.5rem;
-            padding-bottom: 2.5rem;
+            width: min(100% - 2rem, 470px);
+            padding: clamp(1.25rem, 3vw, 2rem);
             text-align: center;
-            margin-top: auto;
-            margin-bottom: auto;
+            margin: clamp(11rem, 31vh, 20rem) auto 3rem;
+            border: 1px solid rgba(212, 175, 55, 0.28);
+            border-radius: 20px;
+            background: rgba(5, 6, 9, 0.88);
+            box-shadow: 0 24px 70px rgba(0, 0, 0, 0.58);
           }
 
-          .login-branding h1 {
-            font-size: 2.2rem;
-            font-weight: 300;
-            letter-spacing: 0.2em;
-            color: #d4af37;
-            margin: 0 0 0.25rem 0;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+          .login-form-heading {
+            display: grid;
+            gap: 0.38rem;
+            margin-bottom: 0.45rem;
+            text-align: left;
           }
 
-          .login-tagline {
+          .login-form-heading span {
             color: #d4af37;
-            font-size: 0.75rem;
-            letter-spacing: 0.15em;
-            margin: 0 0 1.25rem 0;
-            opacity: 0.9;
+            font-size: 0.68rem;
+            font-weight: 800;
+            letter-spacing: 0.18em;
+          }
+
+          .login-form-heading h1 {
+            margin: 0;
+            color: #fff;
+            font-size: clamp(1.55rem, 4vw, 2rem);
+            line-height: 1.1;
+          }
+
+          .login-form-heading p {
+            margin: 0;
+            color: rgba(255, 255, 255, 0.66);
+            font-size: 0.82rem;
+            line-height: 1.5;
           }
 
           .login-form {
@@ -289,30 +365,46 @@ function Login() {
             letter-spacing: 0.05em;
           }
 
-          .form-group input {
+          .optional-label {
+            color: rgba(255, 255, 255, 0.52);
+            font-weight: 400;
+            letter-spacing: 0;
+          }
+
+          .form-group input,
+          .form-group textarea {
             width: 100%;
             padding: 0.7rem 0.85rem;
             background: rgba(255, 255, 255, 0.1);
             border: 1px solid rgba(212, 175, 55, 0.3);
-            border-radius: 4px;
+            border-radius: 9px;
             color: #fff;
+            font-family: inherit;
             font-size: 0.95rem;
             backdrop-filter: blur(10px);
             transition: all 0.3s ease;
           }
 
-          .form-group input:focus {
+          .form-group textarea {
+            min-height: 78px;
+            resize: vertical;
+          }
+
+          .form-group input:focus,
+          .form-group textarea:focus {
             outline: none;
             border-color: #d4af37;
             background: rgba(255, 255, 255, 0.15);
             box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.1);
           }
 
-          .form-group input::placeholder {
+          .form-group input::placeholder,
+          .form-group textarea::placeholder {
             color: rgba(255, 255, 255, 0.5);
           }
 
-          .form-group input:disabled {
+          .form-group input:disabled,
+          .form-group textarea:disabled {
             opacity: 0.6;
             cursor: not-allowed;
           }
@@ -320,19 +412,23 @@ function Login() {
           .error-message {
             color: #ff6b6b;
             font-size: 0.8rem;
+            line-height: 1.45;
             margin: 0;
-            padding: 0.4rem;
+            padding: 0.65rem 0.75rem;
             background: rgba(255, 107, 107, 0.1);
-            border-radius: 4px;
+            border: 1px solid rgba(255, 107, 107, 0.24);
+            border-radius: 9px;
           }
 
           .success-message {
             color: #51cf66;
             font-size: 0.8rem;
+            line-height: 1.45;
             margin: 0;
-            padding: 0.4rem;
+            padding: 0.65rem 0.75rem;
             background: rgba(81, 207, 102, 0.1);
-            border-radius: 4px;
+            border: 1px solid rgba(81, 207, 102, 0.24);
+            border-radius: 9px;
           }
 
           .login-btn {
@@ -340,7 +436,7 @@ function Login() {
             padding: 0.85rem;
             background: linear-gradient(135deg, #d4af37, #c9a02c);
             border: none;
-            border-radius: 4px;
+            border-radius: 9px;
             color: #000;
             font-size: 0.95rem;
             font-weight: 600;
@@ -393,9 +489,9 @@ function Login() {
             }
 
             .login-form-container {
-              max-width: 90%;
+              width: min(100% - 1.25rem, 470px);
               padding: 1.25rem;
-              padding-bottom: 2rem;
+              margin-top: clamp(9rem, 27vh, 15rem);
             }
           }
 

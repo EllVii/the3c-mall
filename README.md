@@ -60,6 +60,24 @@ Create a production D1 database and R2 bucket in Cloudflare, apply the SQL migra
 
 Secrets must be stored in Cloudflare configuration, not committed to the repository.
 
+## Approval-controlled access
+
+Public registration is an access-request flow. Every new request is stored as
+`pending`, and the API refuses to create or restore a session until an
+administrator changes it to `approved`. Existing accounts are preserved as
+approved when the approval migration is first applied.
+
+Set `ADMIN_NOTIFICATION_EMAIL` as a Cloudflare variable to receive new-request
+alerts. Review requests at `/admin/access-requests` using the
+`ADMIN_API_TOKEN`. The token is checked by the API and is not stored by the
+review page.
+
+Apply D1 migrations before deployment:
+
+```bash
+npx wrangler d1 migrations apply the3c-mall-production --remote
+```
+
 ## Status
 
 The existing application is a working prototype. Phase I is intended to validate technical feasibility, household value, data quality, security controls, and market potential. Prepared documents and code do not substitute for actual pilot evidence, signed letters, external review, or an active grant award.

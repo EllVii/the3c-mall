@@ -13,31 +13,17 @@ import {
   signOutAccount,
   signUpAccount,
 } from "../lib/apiClient.js";
-import { readJSON, writeJSON } from "../utils/Storage.js";
 
 const AuthContext = createContext(null);
-const SESSION_STORAGE_KEY = "auth.session.v1";
 const SESSION_TIMEOUT_MS = 6000;
 
 function messageFrom(error, fallback) {
   return error?.message || fallback;
 }
 
-function readCachedUser() {
-  const cached = readJSON(SESSION_STORAGE_KEY, null);
-  if (!cached?.userId || !cached?.email) return null;
-
-  return {
-    id: cached.userId,
-    email: cached.email,
-    cached: true,
-  };
-}
-
 export function AuthProvider({ children }) {
-  const [initialCachedUser] = useState(readCachedUser);
-  const [user, setUser] = useState(initialCachedUser);
-  const [loading, setLoading] = useState(!initialCachedUser);
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [verifying, setVerifying] = useState(true);
   const [error, setError] = useState(null);
 
@@ -56,35 +42,12 @@ export function AuthProvider({ children }) {
 
         setUser(data?.user || null);
         setError(null);
-
-        if (data?.user) {
-          writeJSON(SESSION_STORAGE_KEY, {
-            userId: data.user.id,
-            email: data.user.email,
-            timestamp: new Date().toISOString(),
-            provider: "cloudflare-d1",
-          });
-        } else {
-          localStorage.removeItem(SESSION_STORAGE_KEY);
-        }
       } catch (sessionError) {
         if (!active) return;
 
-        const canUseCachedSession =
-          Boolean(initialCachedUser) &&
-          ["network_error", "request_timeout"].includes(sessionError?.code);
-
-        if (canUseCachedSession) {
-          setUser(initialCachedUser);
-          setError(
-            "Using your saved session while the sign-in service reconnects.",
-          );
-        } else {
-          console.error("Auth initialization failed", sessionError);
-          setUser(null);
-          localStorage.removeItem(SESSION_STORAGE_KEY);
-          setError("The sign-in service is temporarily unavailable.");
-        }
+        console.error("Auth initialization failed", sessionError);
+        setUser(null);
+        setError("The sign-in service is temporarily unavailable.");
       } finally {
         window.clearTimeout(timeoutId);
         if (active) {
@@ -101,7 +64,7 @@ export function AuthProvider({ children }) {
       window.clearTimeout(timeoutId);
       controller.abort();
     };
-  }, [initialCachedUser]);
+  }, []);
 
   const signUp = async (email, password, metadata = {}) => {
     setLoading(true);
@@ -124,17 +87,10 @@ export function AuthProvider({ children }) {
     try {
       const data = await signInAccount(email, password);
       setUser(data.user);
-      writeJSON(SESSION_STORAGE_KEY, {
-        userId: data.user.id,
-        email: data.user.email,
-        timestamp: new Date().toISOString(),
-        provider: "cloudflare-d1",
-      });
       return { user: data.user, error: null };
     } catch (signInError) {
       const message = messageFrom(signInError, "Sign in failed");
       setUser(null);
-      localStorage.removeItem(SESSION_STORAGE_KEY);
       setError(message);
       return { user: null, error: message };
     } finally {
@@ -148,7 +104,6 @@ export function AuthProvider({ children }) {
     try {
       await signOutAccount();
       setUser(null);
-      localStorage.removeItem(SESSION_STORAGE_KEY);
       return { error: null };
     } catch (signOutError) {
       const message = messageFrom(signOutError, "Sign out failed");
@@ -204,7 +159,6 @@ export function AuthProvider({ children }) {
       resetPassword,
       updatePassword,
       isAuthenticated: Boolean(user),
-      isCachedSession: Boolean(user?.cached),
     }),
     [user, loading, verifying, error],
   );
