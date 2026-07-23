@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /cdn-cgi/
+
+Sitemap: https://the3cmall.com/sitemap.xml
