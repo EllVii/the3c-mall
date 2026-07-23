@@ -1,6 +1,8 @@
 # 3C Mall
 
-3C Mall is a household grocery-comparison, meal-planning, and food-budget decision-support software platform developed by Ell Vii’s Automations LLC.
+3C Mall is a household grocery-comparison, meal-planning, and food-budget decision-support software platform developed by [Ell Vii’s Automations LLC](https://ellviisautomations.com/).
+
+Project website: [the3cmall.app](https://the3cmall.app/)
 
 The platform helps households organize meal ideas, build grocery lists, compare estimated retailer and unit-cost information, and review planning progress. It is designed to reduce fragmentation across grocery planning tasks while keeping the user in control of final decisions.
 
