@@ -14,6 +14,9 @@ import { AuthProvider, useAuth } from "./context/AuthContext.jsx";
 // Tutorial
 import { TutorialProvider, useTutorial } from "./context/TutorialContext.jsx";
 
+// SEO
+import SeoManager from "./assets/components/SeoManager.jsx";
+
 // Load layouts and routes only when they are needed.
 const QuickTutorial = lazy(() => import("./assets/components/QuickTutorial.jsx"));
 const AlphaRouteChip = lazy(() => import("./assets/components/AlphaRouteChip.jsx"));
@@ -133,87 +136,91 @@ function AppContent() {
   }, [host, isDotApp, pathname]);
 
   return (
-    <div className="app-shell">
-      {showAlphaChip && (
-        <Suspense fallback={null}>
-          <AlphaRouteChip />
-        </Suspense>
-      )}
+    <>
+      <SeoManager />
 
-      {isAppPath && showTutorial && (
-        <Suspense fallback={null}>
-          <QuickTutorial open={showTutorial} onComplete={completeTutorial} />
-        </Suspense>
-      )}
+      <div className="app-shell">
+        {showAlphaChip && (
+          <Suspense fallback={null}>
+            <AlphaRouteChip />
+          </Suspense>
+        )}
 
-      <Suspense fallback={<LoadingScreen />}>
-        <Routes>
-          <Route element={<SiteLayout />}>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/features" element={<Features />} />
-            <Route path="/pricing" element={<Pricing />} />
-            <Route path="/comment-limit" element={<CommentLimitModal />} />
-            <Route path="/terms" element={<TermsOfService />} />
-            <Route path="/privacy" element={<PrivacyPolicy />} />
-            <Route path="/health/d1" element={<D1HealthCheck />} />
-            <Route
-              path="/health/supabase"
-              element={<Navigate to="/health/d1" replace />}
-            />
-          </Route>
+        {isAppPath && showTutorial && (
+          <Suspense fallback={null}>
+            <QuickTutorial open={showTutorial} onComplete={completeTutorial} />
+          </Suspense>
+        )}
 
-          <Route element={<AuthArea />}>
+        <Suspense fallback={<LoadingScreen />}>
+          <Routes>
             <Route element={<SiteLayout />}>
-              <Route path="/login" element={<Login />} />
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/features" element={<Features />} />
+              <Route path="/pricing" element={<Pricing />} />
+              <Route path="/comment-limit" element={<CommentLimitModal />} />
+              <Route path="/terms" element={<TermsOfService />} />
+              <Route path="/privacy" element={<PrivacyPolicy />} />
+              <Route path="/health/d1" element={<D1HealthCheck />} />
+              <Route
+                path="/health/supabase"
+                element={<Navigate to="/health/d1" replace />}
+              />
             </Route>
 
-            <Route
-              path="/app"
-              element={
-                <ProtectedRoute>
-                  <AppLayout />
-                </ProtectedRoute>
-              }
-            >
-              <Route index element={<MapHomeScreen />} />
-              <Route
-                path="directory"
-                element={<Navigate to="/app" replace />}
-              />
-              <Route
-                path="map"
-                element={<Navigate to="/app" replace />}
-              />
-              <Route path="dashboard" element={<DashboardPage />} />
-              <Route path="profile" element={<ProfilePage />} />
-              <Route path="user-profile" element={<UserProfilePage />} />
-              <Route path="meal-planner" element={<MealPlannerPage />} />
-              <Route
-                path="meal-plans"
-                element={<Navigate to="/app/meal-planner" replace />}
-              />
-              <Route path="grocery-lab" element={<GroceryLabPage />} />
-              <Route path="cancel" element={<Cancel />} />
-              <Route path="community" element={<CommunityPage />} />
-              <Route path="fitness" element={<FitnessZone />} />
-              <Route path="stores" element={<StoreLocatorPage />} />
-              <Route
-                path="store"
-                element={<Navigate to="/app/stores" replace />}
-              />
-              <Route path="pt" element={<PTModePage />} />
-              <Route path="recipes" element={<RecipesPage />} />
-              <Route path="recipes/:id" element={<RecipeDetailPage />} />
-              <Route path="pilot" element={<PilotStudyPage />} />
-              <Route path="coming-soon" element={<ComingSoon />} />
-              <Route path="*" element={<Navigate to="/app" replace />} />
-            </Route>
-          </Route>
+            <Route element={<AuthArea />}>
+              <Route element={<SiteLayout />}>
+                <Route path="/login" element={<Login />} />
+              </Route>
 
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Suspense>
-    </div>
+              <Route
+                path="/app"
+                element={
+                  <ProtectedRoute>
+                    <AppLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route index element={<MapHomeScreen />} />
+                <Route
+                  path="directory"
+                  element={<Navigate to="/app" replace />}
+                />
+                <Route
+                  path="map"
+                  element={<Navigate to="/app" replace />}
+                />
+                <Route path="dashboard" element={<DashboardPage />} />
+                <Route path="profile" element={<ProfilePage />} />
+                <Route path="user-profile" element={<UserProfilePage />} />
+                <Route path="meal-planner" element={<MealPlannerPage />} />
+                <Route
+                  path="meal-plans"
+                  element={<Navigate to="/app/meal-planner" replace />}
+                />
+                <Route path="grocery-lab" element={<GroceryLabPage />} />
+                <Route path="cancel" element={<Cancel />} />
+                <Route path="community" element={<CommunityPage />} />
+                <Route path="fitness" element={<FitnessZone />} />
+                <Route path="stores" element={<StoreLocatorPage />} />
+                <Route
+                  path="store"
+                  element={<Navigate to="/app/stores" replace />}
+                />
+                <Route path="pt" element={<PTModePage />} />
+                <Route path="recipes" element={<RecipesPage />} />
+                <Route path="recipes/:id" element={<RecipeDetailPage />} />
+                <Route path="pilot" element={<PilotStudyPage />} />
+                <Route path="coming-soon" element={<ComingSoon />} />
+                <Route path="*" element={<Navigate to="/app" replace />} />
+              </Route>
+            </Route>
+
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Suspense>
+      </div>
+    </>
   );
 }
 
