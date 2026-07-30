@@ -114,6 +114,23 @@ export function changePassword(password) {
   });
 }
 
+export function getAccessRequests(adminToken, status = "pending") {
+  return apiRequest(
+    `/api/admin/access-requests?status=${encodeURIComponent(status)}`,
+    {
+      headers: { Authorization: `Bearer ${adminToken}` },
+    },
+  );
+}
+
+export function reviewAccessRequest(adminToken, userId, decision, note = "") {
+  return apiRequest("/api/admin/access-requests", {
+    method: "PATCH",
+    headers: { Authorization: `Bearer ${adminToken}` },
+    body: { userId, decision, note },
+  });
+}
+
 export function loadProfileValue(key) {
   return apiRequest(`/api/profile?key=${encodeURIComponent(key)}`);
 }

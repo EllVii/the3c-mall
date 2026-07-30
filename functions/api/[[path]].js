@@ -37,6 +37,20 @@ async function ensureAuthSchema(env) {
       expires_at TEXT NOT NULL,
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     )`),
+    env.DB.prepare(`CREATE TABLE IF NOT EXISTS account_access (
+      user_id TEXT PRIMARY KEY,
+      approval_status TEXT NOT NULL DEFAULT 'pending' CHECK (approval_status IN ('pending', 'approved', 'rejected')),
+      full_name TEXT,
+      request_reason TEXT,
+      requested_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      decided_at TEXT,
+      decision_note TEXT,
+      decided_by TEXT,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )`),
+    env.DB.prepare(
+      "CREATE INDEX IF NOT EXISTS idx_account_access_status_requested ON account_access(approval_status, requested_at)",
+    ),
     env.DB.prepare(`CREATE TABLE IF NOT EXISTS email_verification_tokens (
       id TEXT PRIMARY KEY,
       user_id TEXT NOT NULL,
@@ -109,6 +123,22 @@ async function ensureAuthSchema(env) {
       }
     }
   }
+
+  // Accounts that existed before approval controls were introduced are known
+  // users and remain approved. New signups explicitly insert a pending row in
+  // the same database batch as their user record.
+  await env.DB.prepare(
+    `INSERT OR IGNORE INTO account_access (
+      user_id, approval_status, requested_at, decided_at, decided_by
+    )
+    SELECT
+      id,
+      'approved',
+      COALESCE(created_at, CURRENT_TIMESTAMP),
+      COALESCE(updated_at, CURRENT_TIMESTAMP),
+      'legacy_migration'
+    FROM users`,
+  ).run();
 
   authSchemaReady = true;
 }
@@ -194,6 +224,19 @@ function validEmail(value) {
 
 function validPassword(value) {
   return typeof value === "string" && value.length >= 10 && value.length <= 128;
+}
+
+function cleanText(value, maxLength) {
+  return String(value || "").trim().replace(/\s+/g, " ").slice(0, maxLength);
+}
+
+function escapeHtml(value) {
+  return String(value || "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }
 
 function isoAfter(seconds) {
@@ -368,9 +411,20 @@ async function currentUser(request, env, { required = false } = {}) {
   }
   const tokenHash = await sha256Hex(token);
   const row = await env.DB.prepare(
-    `SELECT users.id, users.email, users.email_verified_at, users.status, sessions.id AS session_id
-     FROM sessions JOIN users ON users.id = sessions.user_id
-     WHERE sessions.token_hash = ? AND sessions.expires_at > CURRENT_TIMESTAMP AND users.status = 'active'`,
+    `SELECT
+       users.id,
+       users.email,
+       users.email_verified_at,
+       users.status,
+       COALESCE(account_access.approval_status, 'approved') AS approval_status,
+       sessions.id AS session_id
+     FROM sessions
+     JOIN users ON users.id = sessions.user_id
+     LEFT JOIN account_access ON account_access.user_id = users.id
+     WHERE sessions.token_hash = ?
+       AND sessions.expires_at > CURRENT_TIMESTAMP
+       AND users.status = 'active'
+       AND COALESCE(account_access.approval_status, 'approved') = 'approved'`,
   ).bind(tokenHash).first();
   if (!row) {
     if (required) throw new Response(JSON.stringify({ error: "Authentication required", code: "unauthorized" }), { status: 401, headers: { "content-type": "application/json" } });
@@ -419,18 +473,27 @@ function publicUser(row) {
     id: row.id,
     email: row.email,
     emailVerified: Boolean(row.email_verified_at),
+    approvalStatus: row.approval_status || "approved",
   };
 }
 
 async function handleSignup(request, env) {
-  if (!(await checkRateLimit(env, clientKey(request, "signup"), 8, 3600))) return error("Too many attempts", 429, "rate_limited");
+  if (!(await checkRateLimit(env, clientKey(request, "signup"), 5, 3600))) return error("Too many attempts", 429, "rate_limited");
   const body = await readJson(request);
   const email = normalizeEmail(body.email);
+  const fullName = cleanText(body.metadata?.fullName, 100);
+  const requestReason = cleanText(body.metadata?.reason, 500);
   if (!validEmail(email)) return error("Enter a valid email address");
   if (!validPassword(body.password)) return error("Password must be 10 to 128 characters");
+  if (fullName.length < 2) return error("Enter your full name");
 
   const existing = await env.DB.prepare("SELECT id FROM users WHERE email = ?").bind(email).first();
-  if (existing) return json({ ok: true, message: "If the address is eligible, verification instructions will be sent." }, 202);
+  if (existing) {
+    return json({
+      ok: true,
+      message: "If the address is eligible, access-request instructions will be sent.",
+    }, 202);
+  }
 
   const userId = crypto.randomUUID();
   const password = await hashPassword(body.password);
@@ -442,6 +505,11 @@ async function handleSignup(request, env) {
        VALUES (?, ?, ?, ?, ?)`,
     ).bind(userId, email, password.hash, password.salt, password.iterations),
     env.DB.prepare(
+      `INSERT INTO account_access (
+        user_id, approval_status, full_name, request_reason, requested_at
+      ) VALUES (?, 'pending', ?, ?, CURRENT_TIMESTAMP)`,
+    ).bind(userId, fullName, requestReason || null),
+    env.DB.prepare(
       `INSERT INTO email_verification_tokens (id, user_id, token_hash, expires_at)
        VALUES (?, ?, ?, ?)`,
     ).bind(crypto.randomUUID(), userId, tokenHash, isoAfter(60 * 60 * 24)),
@@ -451,13 +519,33 @@ async function handleSignup(request, env) {
   const verificationUrl = `${origin}/api/auth/verify-email?token=${encodeURIComponent(rawToken)}`;
   const delivery = await sendTransactionalEmail(env, {
     to: email,
-    subject: "Verify your 3C Mall email",
-    html: `<p>Verify your email to activate your 3C Mall account.</p><p><a href="${verificationUrl}">Verify email</a></p><p>This link expires in 24 hours.</p>`,
+    subject: "Confirm your 3C Mall access request",
+    html: `<p>Confirm your email for your 3C Mall access request.</p><p><a href="${verificationUrl}">Confirm email</a></p><p>This link expires in 24 hours. Confirming your email does not grant access; your request must also be approved.</p>`,
   });
-  await audit(env, "auth.signup", userId, "user", userId, { delivery: delivery.sent });
-  const response = { ok: true, message: "Check your email for verification instructions.", emailDeliveryConfigured: Boolean(env.RESEND_API_KEY) };
+
+  let adminNotification = { sent: false, reason: "admin_email_not_configured" };
+  const adminEmail = normalizeEmail(env.ADMIN_NOTIFICATION_EMAIL);
+  if (validEmail(adminEmail)) {
+    const reviewUrl = `${origin}/admin/access-requests`;
+    adminNotification = await sendTransactionalEmail(env, {
+      to: adminEmail,
+      subject: "New 3C Mall access request",
+      html: `<p>A new access request is ready for review.</p><p><strong>Name:</strong> ${escapeHtml(fullName)}<br><strong>Email:</strong> ${escapeHtml(email)}${requestReason ? `<br><strong>Reason:</strong> ${escapeHtml(requestReason)}` : ""}</p><p><a href="${reviewUrl}">Review access requests</a></p>`,
+    });
+  }
+
+  await audit(env, "auth.access_requested", userId, "user", userId, {
+    verificationDelivery: delivery.sent,
+    adminNotification: adminNotification.sent,
+  });
+  const response = {
+    ok: true,
+    status: "pending",
+    message: "Access request received. Confirm your email, then wait for approval. We will email you after your request is reviewed.",
+    emailDeliveryConfigured: Boolean(env.RESEND_API_KEY),
+  };
   if (env.PILOT_SHOW_AUTH_LINKS === "true") response.verificationUrl = verificationUrl;
-  return json(response, 201);
+  return json(response, 202);
 }
 
 async function handleVerifyEmail(request, env) {
@@ -483,8 +571,18 @@ async function handleLogin(request, env) {
   const body = await readJson(request);
   const email = normalizeEmail(body.email);
   const user = await env.DB.prepare(
-    `SELECT id, email, password_hash, password_salt, password_iterations, email_verified_at, status
-     FROM users WHERE email = ?`,
+    `SELECT
+       users.id,
+       users.email,
+       users.password_hash,
+       users.password_salt,
+       users.password_iterations,
+       users.email_verified_at,
+       users.status,
+       COALESCE(account_access.approval_status, 'approved') AS approval_status
+     FROM users
+     LEFT JOIN account_access ON account_access.user_id = users.id
+     WHERE users.email = ?`,
   ).bind(email).first();
   const password = String(body.password || "");
   const passwordCheck = user && user.status === "active"
@@ -493,6 +591,22 @@ async function handleLogin(request, env) {
   if (!passwordCheck.valid) {
     await audit(env, "auth.login_failed", user?.id || null, "user", user?.id || null);
     return error("Email or password is incorrect", 401, "invalid_credentials");
+  }
+  if (user.approval_status === "pending") {
+    await audit(env, "auth.login_pending_approval", user.id, "user", user.id);
+    return error(
+      "Your access request is still being reviewed. We will email you after a decision.",
+      403,
+      "approval_pending",
+    );
+  }
+  if (user.approval_status !== "approved") {
+    await audit(env, "auth.login_not_approved", user.id, "user", user.id);
+    return error(
+      "This access request was not approved. Contact 3C Mall support if you believe this is a mistake.",
+      403,
+      "access_not_approved",
+    );
   }
   if (!user.email_verified_at) return error("Verify your email before logging in", 403, "email_not_verified");
   if (passwordCheck.needsUpgrade) {
@@ -528,7 +642,16 @@ async function handlePasswordResetRequest(request, env) {
   if (!(await checkRateLimit(env, clientKey(request, "password-reset"), 8, 3600))) return error("Too many attempts", 429, "rate_limited");
   const body = await readJson(request);
   const email = normalizeEmail(body.email);
-  const user = validEmail(email) ? await env.DB.prepare("SELECT id, email FROM users WHERE email = ? AND status = 'active'").bind(email).first() : null;
+  const user = validEmail(email)
+    ? await env.DB.prepare(
+      `SELECT users.id, users.email
+       FROM users
+       LEFT JOIN account_access ON account_access.user_id = users.id
+       WHERE users.email = ?
+         AND users.status = 'active'
+         AND COALESCE(account_access.approval_status, 'approved') = 'approved'`,
+    ).bind(email).first()
+    : null;
   let resetUrl = null;
   if (user) {
     const rawToken = randomToken(32);
@@ -749,12 +872,224 @@ async function handleWaitlist(request, env) {
   return json({ ok: true }, 201);
 }
 
-async function handleAdminSummary(request, env) {
+function hasAdminAccess(request, env) {
   const supplied = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") || "";
-  if (!env.ADMIN_API_TOKEN || !timingSafeEqual(supplied, env.ADMIN_API_TOKEN)) return error("Unauthorized", 401, "unauthorized");
-  const [users, verified, consents, events, feedback, receipts, reimbursement, waitlist] = await Promise.all([
-    env.DB.prepare("SELECT COUNT(*) AS count FROM users WHERE status = 'active'").first(),
-    env.DB.prepare("SELECT COUNT(*) AS count FROM users WHERE email_verified_at IS NOT NULL AND status = 'active'").first(),
+  return Boolean(env.ADMIN_API_TOKEN) && timingSafeEqual(supplied, env.ADMIN_API_TOKEN);
+}
+
+async function handleAdminAccessRequests(request, env) {
+  if (!hasAdminAccess(request, env)) return error("Unauthorized", 401, "unauthorized");
+
+  const url = new URL(request.url);
+  const requestedStatus = String(url.searchParams.get("status") || "pending").toLowerCase();
+  const allowedStatuses = new Set(["pending", "approved", "rejected", "all"]);
+  if (!allowedStatuses.has(requestedStatus)) {
+    return error("Status must be pending, approved, rejected, or all");
+  }
+
+  const rawLimit = Number.parseInt(url.searchParams.get("limit") || "100", 10);
+  const limit = Math.min(Math.max(Number.isFinite(rawLimit) ? rawLimit : 100, 1), 200);
+  const query = requestedStatus === "all"
+    ? env.DB.prepare(
+      `SELECT
+         users.id AS user_id,
+         users.email,
+         users.email_verified_at,
+         users.status AS account_status,
+         account_access.approval_status,
+         account_access.full_name,
+         account_access.request_reason,
+         account_access.requested_at,
+         account_access.decided_at,
+         account_access.decision_note,
+         account_access.decided_by
+       FROM account_access
+       JOIN users ON users.id = account_access.user_id
+       ORDER BY
+         CASE account_access.approval_status WHEN 'pending' THEN 0 ELSE 1 END,
+         datetime(account_access.requested_at) DESC
+       LIMIT ?`,
+    ).bind(limit)
+    : env.DB.prepare(
+      `SELECT
+         users.id AS user_id,
+         users.email,
+         users.email_verified_at,
+         users.status AS account_status,
+         account_access.approval_status,
+         account_access.full_name,
+         account_access.request_reason,
+         account_access.requested_at,
+         account_access.decided_at,
+         account_access.decision_note,
+         account_access.decided_by
+       FROM account_access
+       JOIN users ON users.id = account_access.user_id
+       WHERE account_access.approval_status = ?
+       ORDER BY datetime(account_access.requested_at) DESC
+       LIMIT ?`,
+    ).bind(requestedStatus, limit);
+
+  const [rows, groupedCounts] = await Promise.all([
+    query.all(),
+    env.DB.prepare(
+      `SELECT approval_status, COUNT(*) AS count
+       FROM account_access
+       GROUP BY approval_status`,
+    ).all(),
+  ]);
+  const counts = { pending: 0, approved: 0, rejected: 0 };
+  for (const item of groupedCounts.results || []) {
+    if (Object.hasOwn(counts, item.approval_status)) {
+      counts[item.approval_status] = Number(item.count || 0);
+    }
+  }
+
+  return json({
+    counts,
+    requests: (rows.results || []).map((row) => ({
+      userId: row.user_id,
+      email: row.email,
+      emailVerified: Boolean(row.email_verified_at),
+      accountStatus: row.account_status,
+      approvalStatus: row.approval_status,
+      fullName: row.full_name || "",
+      reason: row.request_reason || "",
+      requestedAt: row.requested_at,
+      decidedAt: row.decided_at,
+      decisionNote: row.decision_note || "",
+      decidedBy: row.decided_by || "",
+    })),
+  });
+}
+
+async function handleAdminReviewAccessRequest(request, env) {
+  if (!hasAdminAccess(request, env)) return error("Unauthorized", 401, "unauthorized");
+
+  const body = await readJson(request);
+  const userId = cleanText(body.userId, 100);
+  const decision = String(body.decision || "").toLowerCase();
+  const decisionNote = cleanText(body.note, 500);
+  if (!userId) return error("User ID is required");
+  if (!["approved", "rejected"].includes(decision)) {
+    return error("Decision must be approved or rejected");
+  }
+
+  const accessRequest = await env.DB.prepare(
+    `SELECT
+       users.id,
+       users.email,
+       users.email_verified_at,
+       users.status AS account_status,
+       account_access.approval_status,
+       account_access.full_name
+     FROM account_access
+     JOIN users ON users.id = account_access.user_id
+     WHERE users.id = ?`,
+  ).bind(userId).first();
+  if (!accessRequest) return error("Access request not found", 404, "not_found");
+  if (accessRequest.account_status !== "active") {
+    return error("This account is not active", 409, "account_inactive");
+  }
+
+  const origin = String(env.APP_ORIGIN || new URL(request.url).origin).replace(/\/$/, "");
+  const statements = [
+    env.DB.prepare(
+      `UPDATE account_access
+       SET approval_status = ?,
+           decided_at = CURRENT_TIMESTAMP,
+           decision_note = ?,
+           decided_by = 'admin_api'
+       WHERE user_id = ?`,
+    ).bind(decision, decisionNote || null, userId),
+  ];
+
+  let verificationUrl = null;
+  if (decision === "approved" && !accessRequest.email_verified_at) {
+    const rawToken = randomToken(32);
+    const tokenHash = await sha256Hex(rawToken);
+    verificationUrl = `${origin}/api/auth/verify-email?token=${encodeURIComponent(rawToken)}`;
+    statements.push(
+      env.DB.prepare(
+        `UPDATE email_verification_tokens
+         SET used_at = COALESCE(used_at, CURRENT_TIMESTAMP)
+         WHERE user_id = ? AND used_at IS NULL`,
+      ).bind(userId),
+      env.DB.prepare(
+        `INSERT INTO email_verification_tokens (id, user_id, token_hash, expires_at)
+         VALUES (?, ?, ?, ?)`,
+      ).bind(crypto.randomUUID(), userId, tokenHash, isoAfter(60 * 60 * 24)),
+    );
+  }
+  if (decision === "rejected") {
+    statements.push(env.DB.prepare("DELETE FROM sessions WHERE user_id = ?").bind(userId));
+  }
+  await env.DB.batch(statements);
+
+  const signInUrl = `${origin}/login`;
+  const delivery = decision === "approved"
+    ? await sendTransactionalEmail(env, {
+      to: accessRequest.email,
+      subject: "Your 3C Mall access is approved",
+      html: verificationUrl
+        ? `<p>Your 3C Mall access request has been approved.</p><p><a href="${verificationUrl}">Confirm your email and finish access</a></p><p>This confirmation link expires in 24 hours.</p>`
+        : `<p>Your 3C Mall access request has been approved.</p><p><a href="${signInUrl}">Sign in to 3C Mall</a></p>`,
+    })
+    : await sendTransactionalEmail(env, {
+      to: accessRequest.email,
+      subject: "Update on your 3C Mall access request",
+      html: "<p>Your 3C Mall access request was reviewed and was not approved at this time.</p><p>If you believe this was a mistake, please contact 3C Mall support.</p>",
+    });
+
+  await audit(
+    env,
+    decision === "approved" ? "admin.access_approved" : "admin.access_rejected",
+    null,
+    "user",
+    userId,
+    {
+      previousStatus: accessRequest.approval_status,
+      notificationSent: delivery.sent,
+    },
+  );
+
+  const response = {
+    ok: true,
+    request: {
+      userId,
+      email: accessRequest.email,
+      fullName: accessRequest.full_name || "",
+      approvalStatus: decision,
+      emailVerified: Boolean(accessRequest.email_verified_at),
+    },
+    notificationSent: delivery.sent,
+  };
+  if (env.PILOT_SHOW_AUTH_LINKS === "true" && verificationUrl) {
+    response.verificationUrl = verificationUrl;
+  }
+  return json(response);
+}
+
+async function handleAdminSummary(request, env) {
+  if (!hasAdminAccess(request, env)) return error("Unauthorized", 401, "unauthorized");
+  const [users, verified, pending, rejected, consents, events, feedback, receipts, reimbursement, waitlist] = await Promise.all([
+    env.DB.prepare(
+      `SELECT COUNT(*) AS count
+       FROM users
+       LEFT JOIN account_access ON account_access.user_id = users.id
+       WHERE users.status = 'active'
+         AND COALESCE(account_access.approval_status, 'approved') = 'approved'`,
+    ).first(),
+    env.DB.prepare(
+      `SELECT COUNT(*) AS count
+       FROM users
+       LEFT JOIN account_access ON account_access.user_id = users.id
+       WHERE users.email_verified_at IS NOT NULL
+         AND users.status = 'active'
+         AND COALESCE(account_access.approval_status, 'approved') = 'approved'`,
+    ).first(),
+    env.DB.prepare("SELECT COUNT(*) AS count FROM account_access WHERE approval_status = 'pending'").first(),
+    env.DB.prepare("SELECT COUNT(*) AS count FROM account_access WHERE approval_status = 'rejected'").first(),
     env.DB.prepare("SELECT COUNT(*) AS count FROM pilot_consents WHERE withdrawn_at IS NULL").first(),
     env.DB.prepare("SELECT COUNT(*) AS count FROM pilot_events").first(),
     env.DB.prepare("SELECT COUNT(*) AS count FROM pilot_feedback").first(),
@@ -777,6 +1112,8 @@ async function handleAdminSummary(request, env) {
     totals: {
       users: Number(users?.count || 0),
       verifiedUsers: Number(verified?.count || 0),
+      pendingAccessRequests: Number(pending?.count || 0),
+      rejectedAccessRequests: Number(rejected?.count || 0),
       activeConsents: Number(consents?.count || 0),
       events: Number(events?.count || 0),
       feedbackResponses: Number(feedback?.count || 0),
@@ -827,6 +1164,8 @@ async function route(request, env) {
     case "POST /api/pilot/feedback": return handlePilotFeedback(request, env);
     case "POST /api/pilot/receipts": return handleReceiptUpload(request, env);
     case "POST /api/report/waitlist": return handleWaitlist(request, env);
+    case "GET /api/admin/access-requests": return handleAdminAccessRequests(request, env);
+    case "PATCH /api/admin/access-requests": return handleAdminReviewAccessRequest(request, env);
     case "GET /api/admin/pilot-summary": return handleAdminSummary(request, env);
     case "GET /api/health":
     case "GET /api/health/d1": return handleHealth(env);
@@ -839,7 +1178,7 @@ export async function onRequest(context) {
     return new Response(null, {
       status: 204,
       headers: {
-        "access-control-allow-methods": "GET,POST,PUT,OPTIONS",
+        "access-control-allow-methods": "GET,POST,PUT,PATCH,OPTIONS",
         "access-control-allow-headers": "content-type,authorization",
         "access-control-max-age": "86400",
       },

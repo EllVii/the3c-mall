@@ -6,6 +6,7 @@
   "vars": {
     "APP_ORIGIN": "https://the3cmall.app",
     "FROM_EMAIL": "3C Mall <no-reply@the3cmall.app>",
+    "ADMIN_NOTIFICATION_EMAIL": "hello@ellviisautomations.com",
     "PILOT_SHOW_AUTH_LINKS": "false"
   },
   "d1_databases": [
