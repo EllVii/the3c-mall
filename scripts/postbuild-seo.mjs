@@ -1,83 +1,18 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
+import {
+  APP_ORIGIN,
+  DEVELOPER_ORIGIN,
+  INDEX_ROBOTS,
+  MARKETING_ORIGIN,
+  SEO_ROUTES,
+  SEO_ROUTE_ENTRIES,
+  SOCIAL_IMAGE,
+} from "../src/utils/publicSeoRoutes.js";
 
 const DIST_DIR = path.resolve("dist");
 const TEMPLATE_PATH = path.join(DIST_DIR, "index.html");
-const MARKETING_ORIGIN = "https://the3cmall.com";
-const APP_ORIGIN = "https://the3cmall.app";
-const DEVELOPER_ORIGIN = "https://ellviisautomations.com";
 const DEVELOPER_ORGANIZATION_ID = `${DEVELOPER_ORIGIN}/#organization`;
-const SOCIAL_IMAGE = `${MARKETING_ORIGIN}/brand/3c-mall-entrance.jpg`;
-
-const pages = [
-  {
-    output: "index.html",
-    title: "3C Mall | Budget Meal Planning & Grocery Cost Comparison",
-    description:
-      "Plan meals around your household budget, compare grocery unit prices and store estimates, and build one connected shopping list with 3C Mall.",
-    canonical: `${MARKETING_ORIGIN}/`,
-    robots:
-      "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1",
-    schemaType: "home",
-  },
-  {
-    output: "features/index.html",
-    title: "Meal Planning & Grocery Comparison Features | 3C Mall",
-    description:
-      "Explore 3C Mall features for guided meal planning, grocery cost comparison, household organization, fitness, and community support.",
-    canonical: `${MARKETING_ORIGIN}/features`,
-    robots:
-      "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1",
-    schemaType: "webpage",
-  },
-  {
-    output: "pricing/index.html",
-    title: "3C Mall Pricing | Meal Planning and Grocery Tools",
-    description:
-      "Compare 3C Mall plans for meal planning, estimated grocery comparisons, household profiles, pickup, and optional delivery tools.",
-    canonical: `${MARKETING_ORIGIN}/pricing`,
-    robots:
-      "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1",
-    schemaType: "pricing",
-  },
-  {
-    output: "terms/index.html",
-    title: "Terms of Service | 3C Mall",
-    description:
-      "Review the terms that govern access to and use of the 3C Mall website and lifestyle planning application.",
-    canonical: `${MARKETING_ORIGIN}/terms`,
-    robots:
-      "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1",
-    schemaType: "webpage",
-  },
-  {
-    output: "privacy/index.html",
-    title: "Privacy Policy | 3C Mall",
-    description:
-      "Learn how 3C Mall handles account, household, grocery planning, and application data.",
-    canonical: `${MARKETING_ORIGIN}/privacy`,
-    robots:
-      "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1",
-    schemaType: "webpage",
-  },
-  {
-    output: "login/index.html",
-    title: "Sign In | 3C Mall",
-    description: "Secure sign-in for the 3C Mall application.",
-    canonical: `${APP_ORIGIN}/login`,
-    robots: "noindex, nofollow, noarchive",
-    schemaType: null,
-  },
-  {
-    output: "app/index.html",
-    title: "3C Mall App",
-    description:
-      "Secure access to the 3C Mall meal planning and grocery organization application.",
-    canonical: `${APP_ORIGIN}/app`,
-    robots: "noindex, nofollow, noarchive",
-    schemaType: null,
-  },
-];
 
 function escapeHtml(value) {
   return String(value)
@@ -92,8 +27,23 @@ function replaceOrInsert(html, pattern, replacement) {
   return html.replace("</head>", `  ${replacement}\n  </head>`);
 }
 
+function buildBreadcrumbSchema(page) {
+  if (!page.breadcrumbs?.length) return null;
+
+  return {
+    "@type": "BreadcrumbList",
+    "@id": `${page.canonical}#breadcrumb`,
+    itemListElement: page.breadcrumbs.map((item, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: item.name,
+      item: item.url,
+    })),
+  };
+}
+
 function buildSchema(page) {
-  if (!page.schemaType) return null;
+  if (page.robots !== INDEX_ROBOTS || !page.schemaType) return null;
 
   const developerOrganization = {
     "@type": "Organization",
@@ -122,7 +72,7 @@ function buildSchema(page) {
     url: `${MARKETING_ORIGIN}/`,
     name: "3C Mall",
     alternateName: "The 3C Mall",
-    description: pages[0].description,
+    description: SEO_ROUTES["/"].description,
     publisher: { "@id": `${MARKETING_ORIGIN}/#organization` },
     creator: { "@id": DEVELOPER_ORGANIZATION_ID },
     copyrightHolder: { "@id": DEVELOPER_ORGANIZATION_ID },
@@ -134,7 +84,7 @@ function buildSchema(page) {
     name: "3C Mall Web Application",
     serviceType: "Meal planning and grocery cost comparison application",
     url: `${APP_ORIGIN}/app`,
-    description: pages[0].description,
+    description: SEO_ROUTES["/"].description,
     image: SOCIAL_IMAGE,
     provider: { "@id": `${MARKETING_ORIGIN}/#organization` },
     creator: { "@id": DEVELOPER_ORGANIZATION_ID },
@@ -145,22 +95,52 @@ function buildSchema(page) {
     ],
   };
 
-  const graph = [developerOrganization, organization, website];
+  const webpageType = page.schemaType === "collection" ? "CollectionPage" : "WebPage";
+  const webpage = {
+    "@type": webpageType,
+    "@id": `${page.canonical}#webpage`,
+    url: page.canonical,
+    name: page.title,
+    description: page.description,
+    isPartOf: { "@id": `${MARKETING_ORIGIN}/#website` },
+    about: { "@id": `${APP_ORIGIN}/app#service` },
+    creator: { "@id": DEVELOPER_ORGANIZATION_ID },
+    breadcrumb: page.breadcrumbs?.length
+      ? { "@id": `${page.canonical}#breadcrumb` }
+      : undefined,
+  };
+
+  if (page.hasPart?.length) {
+    webpage.hasPart = page.hasPart.map((url) => ({ "@id": `${url}#article` }));
+  }
+
+  const graph = [developerOrganization, organization, website, webpage];
+
   if (page.schemaType === "home" || page.schemaType === "pricing") {
     graph.push(appService);
   }
-  if (page.schemaType === "webpage" || page.schemaType === "pricing") {
+
+  if (page.schemaType === "article") {
+    const articleId = `${page.canonical}#article`;
+    webpage.mainEntity = { "@id": articleId };
     graph.push({
-      "@type": "WebPage",
-      "@id": `${page.canonical}#webpage`,
-      url: page.canonical,
-      name: page.title,
+      "@type": "Article",
+      "@id": articleId,
+      headline: page.headline,
       description: page.description,
-      isPartOf: { "@id": `${MARKETING_ORIGIN}/#website` },
-      about: { "@id": `${APP_ORIGIN}/app#service` },
-      creator: { "@id": DEVELOPER_ORGANIZATION_ID },
+      url: page.canonical,
+      mainEntityOfPage: { "@id": `${page.canonical}#webpage` },
+      image: SOCIAL_IMAGE,
+      datePublished: page.datePublished,
+      dateModified: page.dateModified,
+      keywords: page.keywords,
+      author: { "@id": DEVELOPER_ORGANIZATION_ID },
+      publisher: { "@id": `${MARKETING_ORIGIN}/#organization` },
     });
   }
+
+  const breadcrumb = buildBreadcrumbSchema(page);
+  if (breadcrumb) graph.push(breadcrumb);
 
   return { "@context": "https://schema.org", "@graph": graph };
 }
@@ -171,6 +151,7 @@ function applyMetadata(template, page) {
   const description = escapeHtml(page.description);
   const canonical = escapeHtml(page.canonical);
   const robots = escapeHtml(page.robots);
+  const isArticle = page.schemaType === "article";
 
   html = replaceOrInsert(html, /<title>[\s\S]*?<\/title>/i, `<title>${title}</title>`);
   html = replaceOrInsert(
@@ -193,8 +174,14 @@ function applyMetadata(template, page) {
     /<link\s+rel=["']canonical["'][^>]*>/i,
     `<link rel="canonical" href="${canonical}" />`,
   );
+  html = replaceOrInsert(
+    html,
+    /<link\s+rel=["']author["'][^>]*>/i,
+    `<link rel="author" href="${DEVELOPER_ORIGIN}/" />`,
+  );
 
   const socialTags = [
+    [/<meta\s+property=["']og:type["'][^>]*>/i, `<meta property="og:type" content="${isArticle ? "article" : "website"}" />`],
     [/<meta\s+property=["']og:title["'][^>]*>/i, `<meta property="og:title" content="${title}" />`],
     [/<meta\s+property=["']og:description["'][^>]*>/i, `<meta property="og:description" content="${description}" />`],
     [/<meta\s+property=["']og:url["'][^>]*>/i, `<meta property="og:url" content="${canonical}" />`],
@@ -204,6 +191,22 @@ function applyMetadata(template, page) {
 
   for (const [pattern, replacement] of socialTags) {
     html = replaceOrInsert(html, pattern, replacement);
+  }
+
+  const articlePatterns = [
+    /<meta\s+property=["']article:published_time["'][^>]*>\s*/i,
+    /<meta\s+property=["']article:modified_time["'][^>]*>\s*/i,
+    /<meta\s+property=["']article:author["'][^>]*>\s*/i,
+  ];
+  for (const pattern of articlePatterns) html = html.replace(pattern, "");
+
+  if (isArticle) {
+    const articleTags = [
+      `<meta property="article:published_time" content="${escapeHtml(page.datePublished)}" />`,
+      `<meta property="article:modified_time" content="${escapeHtml(page.dateModified)}" />`,
+      `<meta property="article:author" content="${DEVELOPER_ORIGIN}/" />`,
+    ].join("\n  ");
+    html = html.replace("</head>", `  ${articleTags}\n  </head>`);
   }
 
   const schema = buildSchema(page);
@@ -223,7 +226,7 @@ function applyMetadata(template, page) {
 
 const template = await readFile(TEMPLATE_PATH, "utf8");
 
-for (const page of pages) {
+for (const [, page] of SEO_ROUTE_ENTRIES) {
   const outputPath = path.join(DIST_DIR, page.output);
   await mkdir(path.dirname(outputPath), { recursive: true });
   await writeFile(outputPath, applyMetadata(template, page), "utf8");
@@ -239,4 +242,4 @@ const notFound = applyMetadata(template, {
 });
 await writeFile(path.join(DIST_DIR, "404.html"), notFound, "utf8");
 
-console.log(`Generated SEO HTML for ${pages.length} routes plus 404.html.`);
+console.log(`Generated SEO HTML for ${SEO_ROUTE_ENTRIES.length} routes plus 404.html.`);
