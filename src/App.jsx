@@ -16,6 +16,11 @@ import { TutorialProvider, useTutorial } from "./context/TutorialContext.jsx";
 
 // SEO
 import SeoManager from "./assets/components/SeoManager.jsx";
+import {
+  APP_ORIGIN,
+  INDEXABLE_ROUTE_PATHS,
+  MARKETING_ORIGIN,
+} from "./utils/publicSeoRoutes.js";
 
 // Load layouts and routes only when they are needed.
 const QuickTutorial = lazy(() => import("./assets/components/QuickTutorial.jsx"));
@@ -26,6 +31,8 @@ const AppLayout = lazy(() => import("./assets/components/layouts/AppLayout.jsx")
 const LandingPage = lazy(() => import("./pages/LandingPage.jsx"));
 const Features = lazy(() => import("./pages/Features.jsx"));
 const Pricing = lazy(() => import("./pages/Pricing.jsx"));
+const Resources = lazy(() => import("./pages/Resources.jsx"));
+const ResourceArticle = lazy(() => import("./pages/ResourceArticle.jsx"));
 const Login = lazy(() => import("./pages/Login.jsx"));
 const CommentLimitModal = lazy(() => import("./pages/CommentLimitModal.jsx"));
 const TermsOfService = lazy(() => import("./pages/TermsOfService.jsx"));
@@ -98,25 +105,32 @@ function AppContent() {
 
   useEffect(() => {
     const isDotCom = host === "the3cmall.com" || host.endsWith(".the3cmall.com");
-    const marketingRoutes = ["/", "/features", "/pricing"];
+    const normalizedPath = pathname !== "/" ? pathname.replace(/\/$/, "") : "/";
 
     if (isDotCom && pathname.startsWith("/app")) {
       window.location.replace(
-        `https://the3cmall.app${pathname}${window.location.search}${window.location.hash}`,
+        `${APP_ORIGIN}${pathname}${window.location.search}${window.location.hash}`,
       );
       return;
     }
 
     if (isDotCom && pathname === "/login") {
       window.location.replace(
-        `https://the3cmall.app/login${window.location.search}${window.location.hash}`,
+        `${APP_ORIGIN}/login${window.location.search}${window.location.hash}`,
       );
       return;
     }
 
-    if (isDotApp && marketingRoutes.includes(pathname)) {
+    if (isDotApp && normalizedPath === "/") {
       window.location.replace(
-        `https://the3cmall.app/app${window.location.search}${window.location.hash}`,
+        `${APP_ORIGIN}/app${window.location.search}${window.location.hash}`,
+      );
+      return;
+    }
+
+    if (isDotApp && INDEXABLE_ROUTE_PATHS.includes(normalizedPath)) {
+      window.location.replace(
+        `${MARKETING_ORIGIN}${normalizedPath}${window.location.search}${window.location.hash}`,
       );
       return;
     }
@@ -158,6 +172,8 @@ function AppContent() {
               <Route path="/" element={<LandingPage />} />
               <Route path="/features" element={<Features />} />
               <Route path="/pricing" element={<Pricing />} />
+              <Route path="/resources" element={<Resources />} />
+              <Route path="/resources/:slug" element={<ResourceArticle />} />
               <Route path="/comment-limit" element={<CommentLimitModal />} />
               <Route path="/terms" element={<TermsOfService />} />
               <Route path="/privacy" element={<PrivacyPolicy />} />
