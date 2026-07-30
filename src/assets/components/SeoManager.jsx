@@ -1,49 +1,15 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
+import {
+  APP_ORIGIN,
+  DEVELOPER_ORIGIN,
+  INDEX_ROBOTS,
+  MARKETING_ORIGIN,
+  SEO_ROUTES,
+  SOCIAL_IMAGE,
+} from "../../utils/publicSeoRoutes.js";
 
-const MARKETING_ORIGIN = "https://the3cmall.com";
-const APP_ORIGIN = "https://the3cmall.app";
-const DEVELOPER_ORIGIN = "https://ellviisautomations.com";
 const DEVELOPER_ORGANIZATION_ID = `${DEVELOPER_ORIGIN}/#organization`;
-const SOCIAL_IMAGE = `${MARKETING_ORIGIN}/brand/3c-mall-entrance.jpg`;
-
-const PUBLIC_ROUTES = {
-  "/": {
-    title: "3C Mall | Budget Meal Planning & Grocery Cost Comparison",
-    description:
-      "Plan meals around your household budget, compare grocery unit prices and store estimates, and build one connected shopping list with 3C Mall.",
-    canonical: `${MARKETING_ORIGIN}/`,
-    schemaType: "home",
-  },
-  "/features": {
-    title: "Meal Planning & Grocery Comparison Features | 3C Mall",
-    description:
-      "Explore 3C Mall features for guided meal planning, grocery cost comparison, household organization, fitness, and community support.",
-    canonical: `${MARKETING_ORIGIN}/features`,
-    schemaType: "webpage",
-  },
-  "/pricing": {
-    title: "3C Mall Pricing | Meal Planning and Grocery Tools",
-    description:
-      "Compare 3C Mall plans for meal planning, estimated grocery comparisons, household profiles, pickup, and optional delivery tools.",
-    canonical: `${MARKETING_ORIGIN}/pricing`,
-    schemaType: "pricing",
-  },
-  "/terms": {
-    title: "Terms of Service | 3C Mall",
-    description:
-      "Review the terms that govern access to and use of the 3C Mall website and lifestyle planning application.",
-    canonical: `${MARKETING_ORIGIN}/terms`,
-    schemaType: "webpage",
-  },
-  "/privacy": {
-    title: "Privacy Policy | 3C Mall",
-    description:
-      "Learn how 3C Mall handles account, household, grocery planning, and application data.",
-    canonical: `${MARKETING_ORIGIN}/privacy`,
-    schemaType: "webpage",
-  },
-};
 
 function upsertMeta(attribute, key, content) {
   let element = document.head.querySelector(`meta[${attribute}="${key}"]`);
@@ -53,6 +19,10 @@ function upsertMeta(attribute, key, content) {
     document.head.appendChild(element);
   }
   element.setAttribute("content", content);
+}
+
+function removeMeta(attribute, key) {
+  document.head.querySelector(`meta[${attribute}="${key}"]`)?.remove();
 }
 
 function upsertCanonical(href) {
@@ -73,6 +43,21 @@ function upsertAuthorLink(href) {
     document.head.appendChild(element);
   }
   element.setAttribute("href", href);
+}
+
+function buildBreadcrumbSchema(metadata) {
+  if (!metadata.breadcrumbs?.length) return null;
+
+  return {
+    "@type": "BreadcrumbList",
+    "@id": `${metadata.canonical}#breadcrumb`,
+    itemListElement: metadata.breadcrumbs.map((item, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: item.name,
+      item: item.url,
+    })),
+  };
 }
 
 function buildSchema(metadata) {
@@ -103,7 +88,7 @@ function buildSchema(metadata) {
     url: `${MARKETING_ORIGIN}/`,
     name: "3C Mall",
     alternateName: "The 3C Mall",
-    description: PUBLIC_ROUTES["/"].description,
+    description: SEO_ROUTES["/"].description,
     publisher: { "@id": `${MARKETING_ORIGIN}/#organization` },
     creator: { "@id": DEVELOPER_ORGANIZATION_ID },
     copyrightHolder: { "@id": DEVELOPER_ORGANIZATION_ID },
@@ -115,50 +100,63 @@ function buildSchema(metadata) {
     name: "3C Mall Web Application",
     serviceType: "Meal planning and grocery cost comparison application",
     url: `${APP_ORIGIN}/app`,
-    description: PUBLIC_ROUTES["/"].description,
+    description: SEO_ROUTES["/"].description,
     image: SOCIAL_IMAGE,
     provider: { "@id": `${MARKETING_ORIGIN}/#organization` },
     creator: { "@id": DEVELOPER_ORGANIZATION_ID },
     offers: [
-      {
-        "@type": "Offer",
-        name: "Basic",
-        price: "0",
-        priceCurrency: "USD",
-      },
-      {
-        "@type": "Offer",
-        name: "Pro",
-        price: "14.99",
-        priceCurrency: "USD",
-      },
-      {
-        "@type": "Offer",
-        name: "Family",
-        price: "24.99",
-        priceCurrency: "USD",
-      },
+      { "@type": "Offer", name: "Basic", price: "0", priceCurrency: "USD" },
+      { "@type": "Offer", name: "Pro", price: "14.99", priceCurrency: "USD" },
+      { "@type": "Offer", name: "Family", price: "24.99", priceCurrency: "USD" },
     ],
   };
 
-  const graph = [developerOrganization, organization, website];
+  const webpageType = metadata.schemaType === "collection" ? "CollectionPage" : "WebPage";
+  const webpage = {
+    "@type": webpageType,
+    "@id": `${metadata.canonical}#webpage`,
+    url: metadata.canonical,
+    name: metadata.title,
+    description: metadata.description,
+    isPartOf: { "@id": `${MARKETING_ORIGIN}/#website` },
+    about: { "@id": `${APP_ORIGIN}/app#service` },
+    creator: { "@id": DEVELOPER_ORGANIZATION_ID },
+    breadcrumb: metadata.breadcrumbs?.length
+      ? { "@id": `${metadata.canonical}#breadcrumb` }
+      : undefined,
+  };
+
+  if (metadata.hasPart?.length) {
+    webpage.hasPart = metadata.hasPart.map((url) => ({ "@id": `${url}#article` }));
+  }
+
+  const graph = [developerOrganization, organization, website, webpage];
 
   if (metadata.schemaType === "home" || metadata.schemaType === "pricing") {
     graph.push(appService);
   }
 
-  if (metadata.schemaType === "webpage" || metadata.schemaType === "pricing") {
+  if (metadata.schemaType === "article") {
+    const articleId = `${metadata.canonical}#article`;
+    webpage.mainEntity = { "@id": articleId };
     graph.push({
-      "@type": "WebPage",
-      "@id": `${metadata.canonical}#webpage`,
-      url: metadata.canonical,
-      name: metadata.title,
+      "@type": "Article",
+      "@id": articleId,
+      headline: metadata.headline,
       description: metadata.description,
-      isPartOf: { "@id": `${MARKETING_ORIGIN}/#website` },
-      about: { "@id": `${APP_ORIGIN}/app#service` },
-      creator: { "@id": DEVELOPER_ORGANIZATION_ID },
+      url: metadata.canonical,
+      mainEntityOfPage: { "@id": `${metadata.canonical}#webpage` },
+      image: SOCIAL_IMAGE,
+      datePublished: metadata.datePublished,
+      dateModified: metadata.dateModified,
+      keywords: metadata.keywords,
+      author: { "@id": DEVELOPER_ORGANIZATION_ID },
+      publisher: { "@id": `${MARKETING_ORIGIN}/#organization` },
     });
   }
+
+  const breadcrumb = buildBreadcrumbSchema(metadata);
+  if (breadcrumb) graph.push(breadcrumb);
 
   return { "@context": "https://schema.org", "@graph": graph };
 }
@@ -186,21 +184,20 @@ export default function SeoManager() {
 
   useEffect(() => {
     const normalizedPath = pathname !== "/" ? pathname.replace(/\/$/, "") : "/";
-    const metadata = PUBLIC_ROUTES[normalizedPath];
-    const indexable = Boolean(metadata);
-    const fallbackTitle = normalizedPath.startsWith("/app")
-      ? "3C Mall App"
-      : "3C Mall";
+    const metadata = SEO_ROUTES[normalizedPath];
+    const indexable = metadata?.robots === INDEX_ROBOTS;
+    const isPrivatePath = normalizedPath.startsWith("/app") || normalizedPath === "/login";
+    const fallbackTitle = normalizedPath.startsWith("/app") ? "3C Mall App" : "3C Mall";
     const fallbackDescription =
       "Secure access to the 3C Mall meal planning and grocery organization application.";
-    const fallbackCanonical = `${APP_ORIGIN}${normalizedPath || "/app"}`;
+    const fallbackOrigin = isPrivatePath ? APP_ORIGIN : MARKETING_ORIGIN;
+    const fallbackCanonical = `${fallbackOrigin}${normalizedPath || "/"}`;
 
     const title = metadata?.title || fallbackTitle;
     const description = metadata?.description || fallbackDescription;
     const canonical = metadata?.canonical || fallbackCanonical;
-    const robots = indexable
-      ? "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
-      : "noindex, nofollow, noarchive";
+    const robots = metadata?.robots || "noindex, nofollow, noarchive";
+    const isArticle = metadata?.schemaType === "article";
 
     document.title = title;
     document.documentElement.lang = "en-US";
@@ -209,7 +206,7 @@ export default function SeoManager() {
     upsertMeta("name", "author", "Ell Vii's Automations");
     upsertMeta("name", "robots", robots);
     upsertMeta("name", "googlebot", robots);
-    upsertMeta("property", "og:type", "website");
+    upsertMeta("property", "og:type", isArticle ? "article" : "website");
     upsertMeta("property", "og:site_name", "3C Mall");
     upsertMeta("property", "og:locale", "en_US");
     upsertMeta("property", "og:title", title);
@@ -225,6 +222,17 @@ export default function SeoManager() {
     upsertMeta("name", "twitter:title", title);
     upsertMeta("name", "twitter:description", description);
     upsertMeta("name", "twitter:image", SOCIAL_IMAGE);
+
+    if (isArticle) {
+      upsertMeta("property", "article:published_time", metadata.datePublished);
+      upsertMeta("property", "article:modified_time", metadata.dateModified);
+      upsertMeta("property", "article:author", `${DEVELOPER_ORIGIN}/`);
+    } else {
+      removeMeta("property", "article:published_time");
+      removeMeta("property", "article:modified_time");
+      removeMeta("property", "article:author");
+    }
+
     upsertCanonical(canonical);
     upsertAuthorLink(`${DEVELOPER_ORIGIN}/`);
     updateStructuredData(metadata, indexable);

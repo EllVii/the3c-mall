@@ -1,15 +1,17 @@
 import React from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { betaMessaging } from "../../../utils/betaMessaging.js";
+import {
+  APP_ORIGIN,
+  MARKETING_ORIGIN,
+} from "../../../utils/publicSeoRoutes.js";
 import "../../../styles/SiteLayout.css";
-
-const MARKETING_ORIGIN = "https://the3cmall.com";
-const APP_ORIGIN = "https://the3cmall.app";
 
 const NAV_ITEMS = [
   { label: "Home", href: `${MARKETING_ORIGIN}/`, path: "/" },
   { label: "Features", href: `${MARKETING_ORIGIN}/features`, path: "/features" },
   { label: "Pricing", href: `${MARKETING_ORIGIN}/pricing`, path: "/pricing" },
+  { label: "Guides", href: `${MARKETING_ORIGIN}/resources`, path: "/resources" },
 ];
 
 export default function SiteLayout() {
@@ -34,7 +36,10 @@ export default function SiteLayout() {
 
           <nav className="site-nav" aria-label="Primary navigation">
             {NAV_ITEMS.map((item) => {
-              const isActive = normalizedPath === item.path;
+              const isActive =
+                item.path === "/resources"
+                  ? normalizedPath.startsWith("/resources")
+                  : normalizedPath === item.path;
               return (
                 <a
                   key={item.path}
@@ -76,6 +81,10 @@ export default function SiteLayout() {
           <nav className="site-footer-nav" aria-label="Footer navigation">
             <a href={`${MARKETING_ORIGIN}/features`}>Features</a>
             <a href={`${MARKETING_ORIGIN}/pricing`}>Pricing</a>
+            <a href={`${MARKETING_ORIGIN}/resources`}>Grocery Guides</a>
+            <a href={`${MARKETING_ORIGIN}/resources/grocery-unit-price-calculator`}>
+              Unit Price Calculator
+            </a>
             <a href={`${MARKETING_ORIGIN}/privacy`}>Privacy Policy</a>
             <a href={`${MARKETING_ORIGIN}/terms`}>Terms of Service</a>
           </nav>
