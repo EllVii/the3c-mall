@@ -22,6 +22,12 @@ function clampNumber(value, fallback, minimum, maximum) {
   return Math.min(Math.max(parsed, minimum), maximum);
 }
 
+function requiredCoordinate(searchParams, key) {
+  const raw = searchParams.get(key);
+  if (raw === null || String(raw).trim() === "") return Number.NaN;
+  return Number(raw);
+}
+
 function normalizeOrigin(value) {
   return String(value || "").trim().replace(/\/+$/, "");
 }
@@ -221,8 +227,8 @@ function normalizeLocation(location, userLat, userLng) {
 
 export async function onRequestGet(context) {
   const url = new URL(context.request.url);
-  const lat = Number(url.searchParams.get("lat"));
-  const lng = Number(url.searchParams.get("lng"));
+  const lat = requiredCoordinate(url.searchParams, "lat");
+  const lng = requiredCoordinate(url.searchParams, "lng");
   const radius = clampNumber(url.searchParams.get("radius"), 10, 1, 50);
   const limit = Math.round(clampNumber(url.searchParams.get("limit"), 25, 1, 50));
 
