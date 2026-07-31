@@ -25,7 +25,10 @@ export async function searchKrogerProducts(options = {}) {
     if (options.start) params.append("start", options.start);
     if (options.fulfillment) params.append("fulfillment", options.fulfillment);
 
-    const response = await fetch(`${API_BASE}/api/kroger/search?${params.toString()}`);
+    const response = await fetch(
+      `${API_BASE}/api/kroger/search?${params.toString()}`,
+      undefined,
+    );
 
     if (!response.ok) {
       const error = await response.json();
@@ -50,11 +53,13 @@ export async function getKrogerProduct(productId, locationId = null) {
     const params = locationId ? `?locationId=${encodeURIComponent(locationId)}` : "";
     const response = await fetch(
       `${API_BASE}/api/kroger/product/${encodeURIComponent(productId)}${params}`,
+      undefined,
     );
 
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.message || "Product lookup failed");
+      const detail = error.message || "Product lookup failed";
+      throw new Error(`Product lookup failed: ${detail}`);
     }
 
     return await response.json();
@@ -118,12 +123,14 @@ export async function ingredientsToGroceryItems(ingredients, locationId = null) 
 export function extractMainIngredient(ingredient) {
   const cleaned = ingredient
     .toLowerCase()
+    .replace(/\d+\s*\/\s*\d+/g, "")
     .replace(/\d+(\.\d+)?/g, "")
     .replace(
       /\b(cup|cups|tablespoon|tablespoons|tbsp|teaspoon|teaspoons|tsp|pound|pounds|lb|lbs|ounce|ounces|oz|gram|grams|g|kg|ml|liter|liters|package|packages|can|cans|of|to|taste|chopped|diced|sliced|minced|fresh|dried|optional)\b/gi,
       "",
     )
     .replace(/[(),]/g, "")
+    .replace(/\s+/g, " ")
     .trim();
 
   return cleaned || ingredient;
@@ -172,7 +179,10 @@ export function formatProductPrice(priceInfo) {
  */
 export async function isKrogerAvailable() {
   try {
-    const response = await fetch(`${API_BASE}/api/kroger/search?term=test&limit=1`);
+    const response = await fetch(
+      `${API_BASE}/api/kroger/search?term=test&limit=1`,
+      undefined,
+    );
     return response.status !== 503;
   } catch {
     return false;
