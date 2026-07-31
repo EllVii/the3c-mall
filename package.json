@@ -10,6 +10,7 @@
     "dev": "vite",
     "build": "vite build && node scripts/postbuild-seo.mjs",
     "lint": "eslint .",
+    "lint:critical": "eslint functions src/lib/apiClient.js src/utils/reportingService.js src/utils/krogerService.js scripts/audit-routes.mjs",
     "preview": "vite preview",
     "test": "jest",
     "test:watch": "jest --watch",
