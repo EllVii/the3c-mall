@@ -60,6 +60,26 @@ function clientKey(request) {
   return `waitlist:${ip}`;
 }
 
+async function tableInfo(env, table) {
+  const result = await env.DB.prepare(`PRAGMA table_info(${table})`).all();
+  return Array.isArray(result.results) ? result.results : [];
+}
+
+async function addMissingColumns(env, table, definitions) {
+  const info = await tableInfo(env, table);
+  const existing = new Set(info.map((column) => column.name));
+
+  for (const [column, definition] of Object.entries(definitions)) {
+    if (!existing.has(column)) {
+      await env.DB.prepare(
+        `ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`,
+      ).run();
+    }
+  }
+
+  return tableInfo(env, table);
+}
+
 async function ensureSchema(env) {
   await env.DB.batch([
     env.DB.prepare(`CREATE TABLE IF NOT EXISTS waitlist (
@@ -75,35 +95,96 @@ async function ensureSchema(env) {
       request_count INTEGER NOT NULL,
       updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     )`),
-    env.DB.prepare("CREATE INDEX IF NOT EXISTS idx_waitlist_created_at ON waitlist(created_at)"),
   ]);
+
+  // The first 3C Mall backend used a different waitlist shape, including an
+  // integer id and camelCase/timestamp date columns. CREATE TABLE IF NOT EXISTS
+  // cannot repair that existing table, so upgrade it in place before creating
+  // indexes or accepting submissions.
+  const waitlistInfo = await addMissingColumns(env, "waitlist", {
+    referrer: "TEXT",
+    source: "TEXT DEFAULT 'website'",
+    created_at: "TEXT",
+  });
+  const waitlistColumns = new Set(waitlistInfo.map((column) => column.name));
+  if (!waitlistColumns.has("email")) {
+    throw new Error("waitlist_email_column_missing");
+  }
+
+  const legacyTimestampColumns = ["createdAt", "timestamp"]
+    .filter((column) => waitlistColumns.has(column));
+  const timestampFallback = legacyTimestampColumns.length > 0
+    ? legacyTimestampColumns.map((column) => `\"${column}\"`).join(", ")
+    : null;
+  const createdAtExpression = timestampFallback
+    ? `COALESCE(created_at, ${timestampFallback}, CURRENT_TIMESTAMP)`
+    : "COALESCE(created_at, CURRENT_TIMESTAMP)";
+
+  await env.DB.batch([
+    env.DB.prepare(
+      `UPDATE waitlist SET source = 'website' WHERE source IS NULL OR TRIM(source) = ''`,
+    ),
+    env.DB.prepare(
+      `UPDATE waitlist SET created_at = ${createdAtExpression}
+       WHERE created_at IS NULL OR TRIM(created_at) = ''`,
+    ),
+  ]);
+
+  await addMissingColumns(env, "rate_limits", {
+    rate_key: "TEXT",
+    window_start: "INTEGER DEFAULT 0",
+    request_count: "INTEGER DEFAULT 0",
+    updated_at: "TEXT",
+  });
+
+  await env.DB.batch([
+    env.DB.prepare(
+      `UPDATE rate_limits SET window_start = 0 WHERE window_start IS NULL`,
+    ),
+    env.DB.prepare(
+      `UPDATE rate_limits SET request_count = 0 WHERE request_count IS NULL`,
+    ),
+    env.DB.prepare(
+      `UPDATE rate_limits SET updated_at = CURRENT_TIMESTAMP WHERE updated_at IS NULL`,
+    ),
+    env.DB.prepare(
+      "CREATE INDEX IF NOT EXISTS idx_waitlist_created_at ON waitlist(created_at)",
+    ),
+    env.DB.prepare(
+      "CREATE INDEX IF NOT EXISTS idx_waitlist_email ON waitlist(email)",
+    ),
+  ]);
+
+  const idColumn = waitlistInfo.find((column) => column.name === "id");
+  return {
+    integerId: Boolean(idColumn?.pk) && /INT/i.test(String(idColumn?.type || "")),
+  };
 }
 
 async function checkRateLimit(env, key) {
   const now = Math.floor(Date.now() / 1000);
   const windowStart = now - (now % RATE_WINDOW_SECONDS);
+  const existing = await env.DB.prepare(
+    "SELECT rowid, window_start, request_count FROM rate_limits WHERE rate_key = ? LIMIT 1",
+  ).bind(key).first();
+
+  if (existing) {
+    const nextCount = Number(existing.window_start) === windowStart
+      ? Number(existing.request_count || 0) + 1
+      : 1;
+    await env.DB.prepare(
+      `UPDATE rate_limits
+       SET window_start = ?, request_count = ?, updated_at = CURRENT_TIMESTAMP
+       WHERE rowid = ?`,
+    ).bind(windowStart, nextCount, existing.rowid).run();
+    return nextCount <= RATE_LIMIT;
+  }
 
   await env.DB.prepare(
     `INSERT INTO rate_limits (rate_key, window_start, request_count, updated_at)
-     VALUES (?, ?, 1, CURRENT_TIMESTAMP)
-     ON CONFLICT(rate_key) DO UPDATE SET
-       request_count = CASE
-         WHEN rate_limits.window_start = excluded.window_start
-         THEN rate_limits.request_count + 1
-         ELSE 1
-       END,
-       window_start = excluded.window_start,
-       updated_at = CURRENT_TIMESTAMP`,
+     VALUES (?, ?, 1, CURRENT_TIMESTAMP)`,
   ).bind(key, windowStart).run();
-
-  const row = await env.DB.prepare(
-    "SELECT window_start, request_count FROM rate_limits WHERE rate_key = ?",
-  ).bind(key).first();
-
-  return (
-    Number(row?.window_start) === windowStart &&
-    Number(row?.request_count || 0) <= RATE_LIMIT
-  );
+  return true;
 }
 
 function notificationRecipients(env) {
@@ -201,6 +282,35 @@ async function routeWaitlistEmail(env, signup) {
   await Promise.allSettled(deliveries);
 }
 
+async function saveSignup(env, signup, schema) {
+  const existing = await env.DB.prepare(
+    "SELECT id FROM waitlist WHERE LOWER(email) = ? LIMIT 1",
+  ).bind(signup.email).first();
+
+  if (existing) {
+    await env.DB.prepare(
+      `UPDATE waitlist
+       SET referrer = COALESCE(?, referrer), source = ?
+       WHERE LOWER(email) = ?`,
+    ).bind(signup.referrer || null, signup.source, signup.email).run();
+    return false;
+  }
+
+  if (schema.integerId) {
+    await env.DB.prepare(
+      `INSERT INTO waitlist (email, referrer, source, created_at)
+       VALUES (?, ?, ?, CURRENT_TIMESTAMP)`,
+    ).bind(signup.email, signup.referrer || null, signup.source).run();
+  } else {
+    await env.DB.prepare(
+      `INSERT INTO waitlist (id, email, referrer, source, created_at)
+       VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+    ).bind(signup.id, signup.email, signup.referrer || null, signup.source).run();
+  }
+
+  return true;
+}
+
 export async function onRequestPost(context) {
   const { request, env } = context;
 
@@ -213,15 +323,15 @@ export async function onRequestPost(context) {
   }
 
   try {
-    await ensureSchema(env);
+    const body = await readJson(request);
+    const email = normalizeEmail(body.email);
+    if (!validEmail(email)) return error("Enter a valid email address");
+
+    const schema = await ensureSchema(env);
 
     if (!(await checkRateLimit(env, clientKey(request)))) {
       return error("Too many attempts", 429, "rate_limited");
     }
-
-    const body = await readJson(request);
-    const email = normalizeEmail(body.email);
-    if (!validEmail(email)) return error("Enter a valid email address");
 
     const signup = {
       id: crypto.randomUUID(),
@@ -231,30 +341,10 @@ export async function onRequestPost(context) {
       timestamp: new Date().toISOString(),
     };
 
-    const insert = await env.DB.prepare(
-      `INSERT INTO waitlist (id, email, referrer, source)
-       VALUES (?, ?, ?, ?)
-       ON CONFLICT(email) DO NOTHING`,
-    ).bind(
-      signup.id,
-      signup.email,
-      signup.referrer || null,
-      signup.source,
-    ).run();
+    const isNewSignup = await saveSignup(env, signup, schema);
+    if (isNewSignup) context.waitUntil(routeWaitlistEmail(env, signup));
 
-    const isNewSignup = Number(insert.meta?.changes || 0) > 0;
-
-    if (!isNewSignup) {
-      await env.DB.prepare(
-        `UPDATE waitlist
-         SET referrer = COALESCE(?, referrer), source = ?
-         WHERE email = ?`,
-      ).bind(signup.referrer || null, signup.source, signup.email).run();
-    } else {
-      context.waitUntil(routeWaitlistEmail(env, signup));
-    }
-
-    return json({ ok: true }, 201);
+    return json({ ok: true, created: isNewSignup }, isNewSignup ? 201 : 200);
   } catch (caught) {
     if (caught?.message === "payload_too_large") {
       return error("Request body is too large", 413, "payload_too_large");
