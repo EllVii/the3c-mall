@@ -94,27 +94,24 @@ jobs:
         run: |
           set -euo pipefail
 
-          status="$(curl --retry 2 --retry-delay 2 --silent --show-error --output /tmp/health.json --write-out '%{http_code}' https://the3cmall.app/api/health)"
-          test "$status" = "200"
-          jq -e '.ok == true and .database == "cloudflare-d1"' /tmp/health.json
-          jq . /tmp/health.json
+          check_json() {
+            local name="$1"
+            local expected="$2"
+            local jq_test="$3"
+            shift 3
+            local output="/tmp/${name}.json"
+            local status
+            status="$(curl --retry 2 --retry-delay 2 --silent --show-error --output "$output" --write-out '%{http_code}' "$@")"
+            echo "$status $name"
+            cat "$output"
+            echo
+            test "$status" = "$expected"
+            jq -e "$jq_test" "$output"
+          }
 
-          status="$(curl --silent --show-error --output /tmp/session.json --write-out '%{http_code}' https://the3cmall.app/api/auth/session)"
-          test "$status" = "200"
-          jq -e '.user == null' /tmp/session.json
-
-          status="$(curl --silent --show-error --output /tmp/waitlist.json --write-out '%{http_code}' -X POST -H 'content-type: application/json' --data '{"email":"not-an-email"}' https://the3cmall.app/api/report/waitlist)"
-          test "$status" = "400"
-          jq -e '.code == "bad_request"' /tmp/waitlist.json
-
-          status="$(curl --silent --show-error --output /tmp/stores.json --write-out '%{http_code}' 'https://the3cmall.app/api/stores/nearby')"
-          test "$status" = "400"
-          jq -e '.code == "invalid_latitude"' /tmp/stores.json
-
-          status="$(curl --silent --show-error --output /tmp/admin.json --write-out '%{http_code}' https://the3cmall.app/api/admin/pilot-summary)"
-          test "$status" = "401"
-          jq -e '.code == "unauthorized"' /tmp/admin.json
-
-          status="$(curl --silent --show-error --output /tmp/r2.json --write-out '%{http_code}' -X POST https://the3cmall.app/api/pilot/receipts)"
-          test "$status" = "401"
-          jq -e '.code == "unauthorized"' /tmp/r2.json
+          check_json health 200 '.ok == true and .database == "cloudflare-d1"' https://the3cmall.app/api/health
+          check_json session 200 '.user == null' https://the3cmall.app/api/auth/session
+          check_json waitlist 400 '.code == "bad_request"' -X POST -H 'content-type: application/json' --data '{"email":"not-an-email"}' https://the3cmall.app/api/report/waitlist
+          check_json stores 400 '.code == "invalid_latitude"' https://the3cmall.app/api/stores/nearby
+          check_json admin 401 '.code == "unauthorized"' https://the3cmall.app/api/admin/pilot-summary
+          check_json r2 401 '.code == "unauthorized"' -X POST https://the3cmall.app/api/pilot/receipts
