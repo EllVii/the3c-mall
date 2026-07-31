@@ -3,7 +3,7 @@ import { apiRequest } from "../lib/apiClient.js";
 export async function reportWaitlistSignup(email) {
   const shouldReport = import.meta.env.VITE_REPORT_WAITLIST !== "false";
   if (!shouldReport) {
-    return { ok: false, skipped: true, reason: "reporting_disabled" };
+    throw new Error("Waitlist reporting is disabled");
   }
 
   return apiRequest("/api/report/waitlist", {
