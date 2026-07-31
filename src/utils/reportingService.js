@@ -2,22 +2,19 @@ import { apiRequest } from "../lib/apiClient.js";
 
 export async function reportWaitlistSignup(email) {
   const shouldReport = import.meta.env.VITE_REPORT_WAITLIST !== "false";
-  if (!shouldReport) return null;
-
-  try {
-    return await apiRequest("/api/report/waitlist", {
-      method: "POST",
-      body: {
-        email,
-        timestamp: new Date().toISOString(),
-        referrer: document.referrer,
-        source: "website",
-      },
-    });
-  } catch (error) {
-    console.error("Waitlist reporting failed", error);
-    return null;
+  if (!shouldReport) {
+    return { ok: false, skipped: true, reason: "reporting_disabled" };
   }
+
+  return apiRequest("/api/report/waitlist", {
+    method: "POST",
+    body: {
+      email,
+      timestamp: new Date().toISOString(),
+      referrer: document.referrer,
+      source: "website",
+    },
+  });
 }
 
 export async function reportBetaCodeUsage(_code, _success) {
