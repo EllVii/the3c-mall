@@ -64,6 +64,24 @@ export default defineConfig([
     rules: sharedRules,
   },
   {
+    files: ["src/**/__tests__/**/*.js", "functions/**/__tests__/**/*.js"],
+    languageOptions: {
+      globals: {
+        ...globals.browser,
+        ...globals.node,
+        ...globals.jest,
+        fail: "readonly",
+      },
+    },
+  },
+  {
+    files: ["functions/api/report/waitlist.js"],
+    rules: {
+      // SQL identifier quotes are assembled inside a template literal.
+      "no-useless-escape": "off",
+    },
+  },
+  {
     files: [
       "scripts/**/*.js",
       "scripts/**/*.mjs",
@@ -77,6 +95,7 @@ export default defineConfig([
         ...globals.node,
         ...globals.jest,
         fetch: "readonly",
+        fail: "readonly",
       },
       parserOptions: { sourceType: "module" },
     },
