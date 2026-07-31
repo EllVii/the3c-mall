@@ -7,10 +7,20 @@ import {
 } from "../lib/apiClient.js";
 
 function jsonResponse(payload, init = {}) {
-  return new Response(JSON.stringify(payload), {
-    status: init.status || 200,
-    headers: { "content-type": "application/json" },
-  });
+  const status = init.status || 200;
+  return {
+    ok: status >= 200 && status < 300,
+    status,
+    headers: {
+      get: jest.fn((name) =>
+        String(name).toLowerCase() === "content-type"
+          ? "application/json"
+          : null,
+      ),
+    },
+    json: jest.fn().mockResolvedValue(payload),
+    text: jest.fn().mockResolvedValue(JSON.stringify(payload)),
+  };
 }
 
 describe("apiClient input and output contracts", () => {
