@@ -1,0 +1,153 @@
+name: Full Stack Routing Audit
+
+on:
+  push:
+    branches:
+      - agent/full-stack-routing-audit
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  frontend-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-audit --no-fund
+      - run: npm run build
+
+  route-contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-audit --no-fund
+      - run: npm run audit:routes
+
+  critical-lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-audit --no-fund
+      - run: npm run lint:critical
+
+  frontend-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-audit --no-fund
+      - run: npm test -- --runInBand
+
+  full-repository-lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-audit --no-fund
+      - run: npm run lint
+
+  legacy-server-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - working-directory: server
+        run: npm install --no-audit --no-fund
+      - working-directory: server
+        run: npm test -- --runInBand
+
+  live-route-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check marketing and application routes
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          check_status() {
+            local expected="$1"
+            local url="$2"
+            local status
+            status="$(curl --retry 2 --retry-delay 2 --silent --show-error --location --output /tmp/body --write-out '%{http_code}' "$url")"
+            echo "$status $url"
+            if [[ "$status" != "$expected" ]]; then
+              cat /tmp/body
+              exit 1
+            fi
+          }
+
+          check_status 200 https://the3cmall.com/
+          check_status 200 https://the3cmall.com/features
+          check_status 200 https://the3cmall.com/pricing
+          check_status 200 https://the3cmall.com/resources
+          check_status 200 https://the3cmall.com/resources/budget-meal-planning
+          check_status 200 https://the3cmall.com/resources/grocery-unit-price-calculator
+          check_status 200 https://the3cmall.com/resources/compare-grocery-prices
+          check_status 200 https://the3cmall.com/privacy
+          check_status 200 https://the3cmall.com/terms
+          check_status 200 https://the3cmall.app/login
+          check_status 200 https://the3cmall.app/app
+
+      - name: Check live D1, R2, and API contracts
+        shell: bash
+        run: |
+          set -uo pipefail
+          failures=0
+
+          check_json() {
+            local name="$1"
+            local expected="$2"
+            local jq_test="$3"
+            shift 3
+            local output="/tmp/${name}.json"
+            local status
+            status="$(curl --retry 2 --retry-delay 2 --silent --show-error --output "$output" --write-out '%{http_code}' "$@")"
+            echo "$status $name"
+            cat "$output"
+            echo
+
+            if [[ "$status" != "$expected" ]] || ! jq -e "$jq_test" "$output" >/dev/null; then
+              echo "FAILED: $name"
+              failures=$((failures + 1))
+            fi
+          }
+
+          check_json health 200 '.ok == true and .database == "cloudflare-d1"' https://the3cmall.app/api/health
+          check_json r2-binding 200 '.receiptStorageConfigured == true' https://the3cmall.app/api/health
+          check_json email-binding 200 '.emailConfigured == true' https://the3cmall.app/api/health
+          check_json session 200 '.user == null' https://the3cmall.app/api/auth/session
+          check_json waitlist 400 '.code == "bad_request"' -X POST -H 'content-type: application/json' --data '{"email":"not-an-email"}' https://the3cmall.app/api/report/waitlist
+          check_json stores 400 '.code == "invalid_latitude"' https://the3cmall.app/api/stores/nearby
+          check_json admin 401 '.code == "unauthorized"' https://the3cmall.app/api/admin/pilot-summary
+          check_json receipts-auth 401 '.code == "unauthorized"' -X POST https://the3cmall.app/api/pilot/receipts
+          check_json unknown-api 404 '.code == "not_found"' https://the3cmall.app/api/does-not-exist
+
+          if [[ "$failures" -ne 0 ]]; then
+            echo "$failures live API checks failed."
+            exit 1
+          fi

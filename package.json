@@ -10,10 +10,12 @@
     "dev": "vite",
     "build": "vite build && node scripts/postbuild-seo.mjs",
     "lint": "eslint .",
+    "lint:critical": "eslint functions src/lib/apiClient.js src/utils/reportingService.js src/utils/krogerService.js scripts/audit-routes.mjs",
     "preview": "vite preview",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "audit:routes": "node scripts/audit-routes.mjs"
   },
   "dependencies": {
     "leaflet": "^1.9.4",
@@ -22,6 +24,7 @@
     "react-router-dom": "^7.9.6"
   },
   "devDependencies": {
+    "@babel/preset-env": "^7.28.5",
     "@babel/preset-react": "^7.23.3",
     "@eslint/js": "^9.39.1",
     "@testing-library/jest-dom": "^6.1.5",

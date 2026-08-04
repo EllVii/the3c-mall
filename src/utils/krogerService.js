@@ -1,7 +1,9 @@
 // src/utils/krogerService.js
-// Frontend service for calling Kroger API through backend proxy
+// Legacy product-search client retained for future Cloudflare route work.
+// Current production APIs are same-origin; never fall back to localhost in a
+// deployed browser build.
 
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:3001';
+const API_BASE = "";
 
 /**
  * Search for grocery products using Kroger API
@@ -15,24 +17,27 @@ const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:3001';
 export async function searchKrogerProducts(options = {}) {
   try {
     const params = new URLSearchParams();
-    
-    if (options.term) params.append('term', options.term);
-    if (options.brand) params.append('brand', options.brand);
-    if (options.locationId) params.append('locationId', options.locationId);
-    if (options.limit) params.append('limit', options.limit);
-    if (options.start) params.append('start', options.start);
-    if (options.fulfillment) params.append('fulfillment', options.fulfillment);
 
-    const response = await fetch(`${API_BASE}/api/kroger/search?${params.toString()}`);
-    
+    if (options.term) params.append("term", options.term);
+    if (options.brand) params.append("brand", options.brand);
+    if (options.locationId) params.append("locationId", options.locationId);
+    if (options.limit) params.append("limit", options.limit);
+    if (options.start) params.append("start", options.start);
+    if (options.fulfillment) params.append("fulfillment", options.fulfillment);
+
+    const response = await fetch(
+      `${API_BASE}/api/kroger/search?${params.toString()}`,
+      undefined,
+    );
+
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.message || 'Product search failed');
+      throw new Error(error.message || "Product search failed");
     }
 
     return await response.json();
   } catch (error) {
-    console.error('❌ Kroger search error:', error);
+    console.error("Kroger search error:", error);
     throw error;
   }
 }
@@ -45,17 +50,21 @@ export async function searchKrogerProducts(options = {}) {
  */
 export async function getKrogerProduct(productId, locationId = null) {
   try {
-    const params = locationId ? `?locationId=${locationId}` : '';
-    const response = await fetch(`${API_BASE}/api/kroger/product/${productId}${params}`);
-    
+    const params = locationId ? `?locationId=${encodeURIComponent(locationId)}` : "";
+    const response = await fetch(
+      `${API_BASE}/api/kroger/product/${encodeURIComponent(productId)}${params}`,
+      undefined,
+    );
+
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.message || 'Product lookup failed');
+      const detail = error.message || "Product lookup failed";
+      throw new Error(`Product lookup failed: ${detail}`);
     }
 
     return await response.json();
   } catch (error) {
-    console.error('❌ Kroger product details error:', error);
+    console.error("Kroger product details error:", error);
     throw error;
   }
 }
@@ -68,32 +77,28 @@ export async function getKrogerProduct(productId, locationId = null) {
  */
 export async function ingredientsToGroceryItems(ingredients, locationId = null) {
   const results = [];
-  
+
   for (const ingredient of ingredients) {
     try {
-      // Extract main ingredient name (simple parsing for MVP)
       const cleanTerm = extractMainIngredient(ingredient);
-      
       const response = await searchKrogerProducts({
         term: cleanTerm,
         locationId,
-        limit: 3 // Get top 3 matches
+        limit: 3,
       });
-      
+
       if (response.success && response.products.length > 0) {
-        // Add best match with original ingredient reference
         results.push({
           ...response.products[0],
           originalIngredient: ingredient,
-          alternates: response.products.slice(1) // Additional options
+          alternates: response.products.slice(1),
         });
       } else {
-        // No match found - add placeholder
         results.push({
           name: ingredient,
           originalIngredient: ingredient,
           matched: false,
-          message: 'Product not found - manual selection needed'
+          message: "Product not found - manual selection needed",
         });
       }
     } catch (error) {
@@ -102,11 +107,11 @@ export async function ingredientsToGroceryItems(ingredients, locationId = null) 
         name: ingredient,
         originalIngredient: ingredient,
         matched: false,
-        error: error.message
+        error: error.message,
       });
     }
   }
-  
+
   return results;
 }
 
@@ -115,16 +120,20 @@ export async function ingredientsToGroceryItems(ingredients, locationId = null) 
  * @param {string} ingredient - Full ingredient string
  * @returns {string} Cleaned search term
  */
-function extractMainIngredient(ingredient) {
-  // Remove common quantity words and measurements
+export function extractMainIngredient(ingredient) {
   const cleaned = ingredient
     .toLowerCase()
-    .replace(/\d+(\.\d+)?/g, '') // Remove numbers
-    .replace(/\b(cup|cups|tablespoon|tablespoons|tbsp|teaspoon|teaspoons|tsp|pound|pounds|lb|lbs|ounce|ounces|oz|gram|grams|g|kg|ml|liter|liters|package|packages|can|cans|of|to|taste|chopped|diced|sliced|minced|fresh|dried|optional)\b/gi, '')
-    .replace(/[(),]/g, '') // Remove punctuation
+    .replace(/\d+\s*\/\s*\d+/g, "")
+    .replace(/\d+(\.\d+)?/g, "")
+    .replace(
+      /\b(cup|cups|tablespoon|tablespoons|tbsp|teaspoon|teaspoons|tsp|pound|pounds|lb|lbs|ounce|ounces|oz|gram|grams|g|kg|ml|liter|liters|package|packages|can|cans|of|to|taste|chopped|diced|sliced|minced|fresh|dried|optional)\b/gi,
+      "",
+    )
+    .replace(/[(),]/g, "")
+    .replace(/\s+/g, " ")
     .trim();
-  
-  return cleaned || ingredient; // Fallback to original if empty
+
+  return cleaned || ingredient;
 }
 
 /**
@@ -133,14 +142,15 @@ function extractMainIngredient(ingredient) {
  * @returns {string|null} Best available image URL
  */
 export function getProductImage(product) {
-  if (!product.images) return null;
-  
-  // Prefer medium, fall back to small/thumbnail
-  return product.images.medium || 
-         product.images.small || 
-         product.images.thumbnail || 
-         product.imageUrl || 
-         null;
+  if (!product?.images) return null;
+
+  return (
+    product.images.medium ||
+    product.images.small ||
+    product.images.thumbnail ||
+    product.imageUrl ||
+    null
+  );
 }
 
 /**
@@ -149,17 +159,17 @@ export function getProductImage(product) {
  * @returns {string} Formatted price string
  */
 export function formatProductPrice(priceInfo) {
-  if (!priceInfo) return 'Price unavailable';
-  
+  if (!priceInfo) return "Price unavailable";
+
   const price = priceInfo.promo || priceInfo.regular;
-  if (!price) return 'Price unavailable';
-  
+  if (!price) return "Price unavailable";
+
   const formatted = `$${price.toFixed(2)}`;
-  
+
   if (priceInfo.promo && priceInfo.promo < priceInfo.regular) {
     return `${formatted} (Sale! Was $${priceInfo.regular.toFixed(2)})`;
   }
-  
+
   return formatted;
 }
 
@@ -169,9 +179,12 @@ export function formatProductPrice(priceInfo) {
  */
 export async function isKrogerAvailable() {
   try {
-    const response = await fetch(`${API_BASE}/api/kroger/search?term=test&limit=1`);
+    const response = await fetch(
+      `${API_BASE}/api/kroger/search?term=test&limit=1`,
+      undefined,
+    );
     return response.status !== 503;
-  } catch (error) {
+  } catch {
     return false;
   }
 }
