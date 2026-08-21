@@ -1,7 +1,7 @@
 /**
  * Beta Messaging Constants
  * Single source of truth for all beta-related copy across the app
- * Updated: January 17, 2026
+ * Updated: August 21, 2026
  */
 
 export const betaMessaging = {
@@ -44,17 +44,17 @@ Live retailer pricing will expand as integrations are approved.
 Comparisons, routing, and recommendations reflect real behavior.`,
   },
 
-  // 5 Beta tester invite / waitlist confirmation
+  // 5 Waitlist confirmation
   betaTesterConfirm: {
-    headline: "You're in 🎉",
-    subheading: 'This beta focuses on flow, clarity, and confidence — not full retailer coverage yet.',
-    mission: 'You\'re helping shape how 3C Mall:',
+    headline: "You're on the waitlist ✓",
+    subheading: 'Thanks for requesting access. Closed-beta invitations are released in limited groups as testing capacity expands.',
+    mission: 'When invited, your feedback will help shape how 3C Mall:',
     missionPoints: [
       'Compares grocery costs',
       'Reduces shopping friction',
       'Connects food, planning, and lifestyle',
     ],
-    closing: 'Thanks for building this with us.',
+    closing: 'We’ll use this email for beta invitations and relevant product updates.',
   },
 
   // 6 Website footer or FAQ
