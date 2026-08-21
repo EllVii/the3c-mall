@@ -1,24 +1,24 @@
 /**
  * Beta Messaging Constants
  * Single source of truth for all beta-related copy across the app
- * Updated: January 17, 2026
+ * Updated: August 21, 2026
  */
 
 export const betaMessaging = {
   // 1 App badge / small UI label (top bar, pricing panel, or footer)
   appBadge: {
-    label: 'Beta · Limited Data Mode',
-    tooltip: 'Some pricing and store integrations are expanding as partner APIs come online.',
+    label: 'Beta · Expanding Store Coverage',
+    tooltip: 'Store and pricing coverage is expanding throughout the closed beta.',
   },
 
   // 2 First-time onboarding screen
   onboarding: {
     title: 'Welcome to 3C Mall (Beta)',
-    description: `You're testing the core experience while additional grocery store integrations — including Kroger — are being finalized.`,
+    description: `You're testing the core 3C Mall experience while store and pricing coverage continues to expand.`,
     highlights: [
-      'Everything you see reflects real decision logic.',
-      'Pricing coverage and store availability will continue expanding as partner APIs go live.',
-      'Your feedback helps shape what launches next.',
+      'Core planning, grocery, and comparison workflows are active.',
+      'Retailer coverage will continue expanding throughout beta.',
+      'Your feedback helps shape the launch experience.',
     ],
   },
 
@@ -32,34 +32,34 @@ export const betaMessaging = {
       'Clear trade-offs',
       'Time and cost awareness',
     ],
-    growth: "As more stores connect, I'll get even better.",
+    growth: "As store coverage expands, I'll get even better.",
   },
 
   // 4 Grocery Lab pricing disclaimer
   groceryLab: {
-    title: 'Beta Preview',
-    description: `Prices shown reflect current logic and test datasets.
-Live retailer pricing will expand as integrations are approved.
+    title: 'Beta Estimates',
+    description: `Store pricing, promotions, package sizes, and availability can change.
+Retailer coverage is expanding throughout beta.
 
-Comparisons, routing, and recommendations reflect real behavior.`,
+Use comparisons as decision support and review the retailer's final price before purchasing.`,
   },
 
-  // 5 Beta tester invite / waitlist confirmation
+  // 5 Waitlist confirmation
   betaTesterConfirm: {
-    headline: "You're in 🎉",
-    subheading: 'This beta focuses on flow, clarity, and confidence — not full retailer coverage yet.',
-    mission: 'You\'re helping shape how 3C Mall:',
+    headline: "You're on the waitlist ✓",
+    subheading: 'Thanks for requesting access. Closed-beta invitations are released in limited groups as testing capacity expands.',
+    mission: 'When invited, your feedback will help shape how 3C Mall:',
     missionPoints: [
       'Compares grocery costs',
       'Reduces shopping friction',
       'Connects food, planning, and lifestyle',
     ],
-    closing: 'Thanks for building this with us.',
+    closing: 'We’ll use this email for beta invitations and relevant product updates.',
   },
 
   // 6 Website footer or FAQ
   website: {
-    footer: '3C Mall is currently in beta. Some retailer integrations are pending approval. Features and data coverage will continue expanding.',
+    footer: '3C Mall is currently in closed beta. Store and pricing coverage is expanding as we validate the experience with real household workflows.',
   },
 
   // 7 Kroger-safe wording (internal / application use)
