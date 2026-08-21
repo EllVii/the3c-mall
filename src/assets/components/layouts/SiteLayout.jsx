@@ -51,6 +51,9 @@ export default function SiteLayout() {
                 </a>
               );
             })}
+            <a className="site-mobile-signin" href={`${APP_ORIGIN}/login`}>
+              Sign in
+            </a>
           </nav>
 
           <div className="site-header-actions">
