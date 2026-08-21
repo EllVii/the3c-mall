@@ -120,6 +120,10 @@
   background: rgba(246, 220, 138, 0.075);
 }
 
+.site-mobile-signin {
+  display: none !important;
+}
+
 .site-header-actions {
   display: flex;
   align-items: center;
@@ -301,6 +305,11 @@
     min-height: 36px;
     padding-inline: 0.68rem;
     font-size: 0.7rem;
+  }
+
+  .site-mobile-signin {
+    display: inline-flex !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
   }
 
   .site-action-primary {
