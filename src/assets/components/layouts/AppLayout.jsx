@@ -2,6 +2,7 @@ import React, { lazy, Suspense, useMemo, useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { getPrefsSafe } from "../../../utils/prefs.js";
 import "./AppLayout.css";
+import "./AppLayoutAdaptive.css";
 
 const ConciergeHub = lazy(() => import("../ConciergeHub.jsx"));
 
@@ -91,6 +92,8 @@ function AppNavLink({ item, mobile = false }) {
     <NavLink
       to={item.route}
       end={item.end}
+      aria-label={item.label}
+      title={mobile ? undefined : item.label}
       className={({ isActive }) =>
         `${mobile ? "mall-bottom-link" : "mall-side-link"}${isActive ? " is-active" : ""}`
       }

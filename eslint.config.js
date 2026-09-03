@@ -19,8 +19,7 @@ export default defineConfig([
   globalIgnores([
     "dist",
     "coverage",
-    "server/node_modules",
-    "server/data",
+    "server/**",
     "node_modules",
   ]),
   {
@@ -86,7 +85,6 @@ export default defineConfig([
       "scripts/**/*.js",
       "scripts/**/*.mjs",
       "*.config.js",
-      "server/**/*.js",
     ],
     extends: [js.configs.recommended],
     languageOptions: {

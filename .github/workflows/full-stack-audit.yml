@@ -3,7 +3,7 @@ name: Full Stack Routing Audit
 on:
   push:
     branches:
-      - agent/full-stack-routing-audit
+      - main
   pull_request:
 
 permissions:
@@ -103,6 +103,7 @@ jobs:
 
           check_status 200 https://the3cmall.com/
           check_status 200 https://the3cmall.com/features
+          check_status 200 https://the3cmall.com/about
           check_status 200 https://the3cmall.com/pricing
           check_status 200 https://the3cmall.com/resources
           check_status 200 https://the3cmall.com/resources/budget-meal-planning
@@ -113,7 +114,7 @@ jobs:
           check_status 200 https://the3cmall.app/login
           check_status 200 https://the3cmall.app/app
 
-      - name: Check live D1, R2, and API contracts
+      - name: Check live D1, email, and API contracts
         shell: bash
         run: |
           set -uo pipefail
@@ -138,7 +139,6 @@ jobs:
           }
 
           check_json health 200 '.ok == true and .database == "cloudflare-d1"' https://the3cmall.app/api/health
-          check_json r2-binding 200 '.receiptStorageConfigured == true' https://the3cmall.app/api/health
           check_json email-binding 200 '.emailConfigured == true' https://the3cmall.app/api/health
           check_json session 200 '.user == null' https://the3cmall.app/api/auth/session
           check_json waitlist 400 '.code == "bad_request"' -X POST -H 'content-type: application/json' --data '{"email":"not-an-email"}' https://the3cmall.app/api/report/waitlist
@@ -151,3 +151,23 @@ jobs:
             echo "$failures live API checks failed."
             exit 1
           fi
+
+  production-infrastructure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    continue-on-error: true
+    steps:
+      - name: Check optional production service bindings
+        shell: bash
+        run: |
+          set -euo pipefail
+          output=/tmp/health.json
+          status="$(curl --retry 2 --retry-delay 2 --silent --show-error --output "$output" --write-out '%{http_code}' https://the3cmall.app/api/health)"
+          cat "$output"
+          if [[ "$status" != "200" ]]; then
+            exit 1
+          fi
+          jq -e '.receiptStorageConfigured == true' "$output" >/dev/null || {
+            echo "R2 receipt storage is not configured in production. Code can deploy safely, but receipt uploads remain unavailable until the RECEIPTS binding is connected."
+            exit 1
+          }

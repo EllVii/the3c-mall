@@ -15,7 +15,8 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "audit:routes": "node scripts/audit-routes.mjs"
+    "audit:routes": "node scripts/audit-routes.mjs",
+    "verify:production": "npm run build && npm run lint:critical && npm test -- --runInBand && npm run audit:routes"
   },
   "dependencies": {
     "leaflet": "^1.9.4",
