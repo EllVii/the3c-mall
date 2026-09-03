@@ -60,6 +60,12 @@ function buildBreadcrumbSchema(metadata) {
   };
 }
 
+function pageSchemaType(schemaType) {
+  if (schemaType === "collection") return "CollectionPage";
+  if (schemaType === "about") return "AboutPage";
+  return "WebPage";
+}
+
 function buildSchema(metadata) {
   const developerOrganization = {
     "@type": "Organization",
@@ -111,9 +117,8 @@ function buildSchema(metadata) {
     ],
   };
 
-  const webpageType = metadata.schemaType === "collection" ? "CollectionPage" : "WebPage";
   const webpage = {
-    "@type": webpageType,
+    "@type": pageSchemaType(metadata.schemaType),
     "@id": `${metadata.canonical}#webpage`,
     url: metadata.canonical,
     name: metadata.title,
