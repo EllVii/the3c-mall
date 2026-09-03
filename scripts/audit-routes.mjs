@@ -1,9 +1,11 @@
-import { readFile } from "node:fs/promises";
+import { access, readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (relativePath) => readFile(path.join(root, relativePath), "utf8");
+const exists = (relativePath) =>
+  access(path.join(root, relativePath)).then(() => true).catch(() => false);
 
 const failures = [];
 const warnings = [];
@@ -31,6 +33,8 @@ const [
   apiClient,
   storeLocator,
   krogerClient,
+  environmentExample,
+  gitignore,
 ] = await Promise.all([
   read("src/App.jsx"),
   read("public/_redirects"),
@@ -42,6 +46,8 @@ const [
   read("src/lib/apiClient.js"),
   read("src/pages/StoreLocatorPage.jsx"),
   read("src/utils/krogerService.js"),
+  read(".env.example"),
+  read(".gitignore"),
 ]);
 
 includesAll(
@@ -49,6 +55,7 @@ includesAll(
   [
     'path="/"',
     'path="/features"',
+    'path="/about"',
     'path="/pricing"',
     'path="/resources"',
     'path="/resources/:slug"',
@@ -95,6 +102,7 @@ includesAll(
   redirects,
   [
     "/features",
+    "/about",
     "/pricing",
     "/resources",
     "/resources/budget-meal-planning",
@@ -210,6 +218,20 @@ check(
   !krogerClient.includes("localhost:3001"),
   "Browser API clients do not fall back to localhost in production",
 );
+
+check(
+  environmentExample.includes("same-origin Cloudflare Pages Functions") &&
+    !environmentExample.includes("threecmall-backend.onrender.com") &&
+    !environmentExample.includes("VITE_SUPABASE"),
+  "Client environment example points to the current Cloudflare architecture",
+);
+check(
+  gitignore.includes(".env*") && gitignore.includes("!.env.example"),
+  "Local environment files are ignored while .env.example remains tracked",
+);
+check(!(await exists(".env")), "Tracked root .env has been removed");
+check(!(await exists("src/assets/components/BetaGate.jsx")), "Legacy client beta gate removed");
+check(!(await exists("src/utils/supabaseTest.js")), "Retired Supabase diagnostic removed");
 
 if (
   krogerClient.includes("/api/kroger/search") ||
