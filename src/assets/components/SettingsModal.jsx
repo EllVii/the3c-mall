@@ -1,13 +1,14 @@
 // src/assets/components/SettingsModal.jsx
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { getPrefsSafe, setNavMode } from "../../utils/prefs";
 import { THEMES, getThemeId, setThemeId, applyTheme as applyThemeToDOM } from "../../utils/Settings/theme.js";
 
 export default function SettingsModal({ open, onClose, prefs, onChange }) {
   const [local, setLocal] = useState(() => prefs || getPrefsSafe());
 
-  // keep local in sync when opened
-  const safePrefs = useMemo(() => prefs || getPrefsSafe(), [prefs]);
+  useEffect(() => {
+    if (open) setLocal(prefs || getPrefsSafe());
+  }, [open, prefs]);
 
   if (!open) return null;
 
@@ -25,7 +26,7 @@ export default function SettingsModal({ open, onClose, prefs, onChange }) {
   }
 
   return (
-    <div className="modal-overlay" role="dialog" aria-modal="true">
+    <div className="modal-overlay" role="dialog" aria-modal="true" aria-label="3C Mall settings">
       <div className="modal-backdrop" onClick={onClose} />
 
       <div className="modal-panel">
@@ -75,15 +76,13 @@ export default function SettingsModal({ open, onClose, prefs, onChange }) {
             </div>
 
             <div className="small" style={{ marginTop: "10px" }}>
-              Current: <strong>{safePrefs?.navMode === "full" ? "Full Mall" : "Focused"}</strong>
+              Current: <strong>{local?.navMode === "full" ? "Full Mall" : "Focused"}</strong>
             </div>
           </div>
         </div>
 
         <div className="modal-foot">
-          <button className="btn btn-ghost" onClick={() => {
-            applyTheme("midnight-lux");
-          }}>
+          <button className="btn btn-ghost" onClick={() => applyTheme("midnight-lux")}>
             Reset theme
           </button>
         </div>
