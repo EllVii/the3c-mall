@@ -42,6 +42,12 @@ function buildBreadcrumbSchema(page) {
   };
 }
 
+function pageSchemaType(schemaType) {
+  if (schemaType === "collection") return "CollectionPage";
+  if (schemaType === "about") return "AboutPage";
+  return "WebPage";
+}
+
 function buildSchema(page) {
   if (page.robots !== INDEX_ROBOTS || !page.schemaType) return null;
 
@@ -95,9 +101,8 @@ function buildSchema(page) {
     ],
   };
 
-  const webpageType = page.schemaType === "collection" ? "CollectionPage" : "WebPage";
   const webpage = {
-    "@type": webpageType,
+    "@type": pageSchemaType(page.schemaType),
     "@id": `${page.canonical}#webpage`,
     url: page.canonical,
     name: page.title,
