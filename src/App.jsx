@@ -16,6 +16,7 @@ import { TutorialProvider, useTutorial } from "./context/TutorialContext.jsx";
 
 // SEO
 import SeoManager from "./assets/components/SeoManager.jsx";
+import PwaUpdateNotice from "./assets/components/PwaUpdateNotice.jsx";
 import {
   APP_ORIGIN,
   INDEXABLE_ROUTE_PATHS,
@@ -31,6 +32,7 @@ const AppLayout = lazy(() => import("./assets/components/layouts/AppLayout.jsx")
 const LandingPage = lazy(() => import("./pages/LandingPage.jsx"));
 const Features = lazy(() => import("./pages/Features.jsx"));
 const Pricing = lazy(() => import("./pages/Pricing.jsx"));
+const About = lazy(() => import("./pages/About.jsx"));
 const Resources = lazy(() => import("./pages/Resources.jsx"));
 const ResourceArticle = lazy(() => import("./pages/ResourceArticle.jsx"));
 const Login = lazy(() => import("./pages/Login.jsx"));
@@ -152,6 +154,7 @@ function AppContent() {
   return (
     <>
       <SeoManager />
+      <PwaUpdateNotice />
 
       <div className="app-shell">
         {showAlphaChip && (
@@ -172,6 +175,7 @@ function AppContent() {
               <Route path="/" element={<LandingPage />} />
               <Route path="/features" element={<Features />} />
               <Route path="/pricing" element={<Pricing />} />
+              <Route path="/about" element={<About />} />
               <Route path="/resources" element={<Resources />} />
               <Route path="/resources/:slug" element={<ResourceArticle />} />
               <Route path="/comment-limit" element={<CommentLimitModal />} />
