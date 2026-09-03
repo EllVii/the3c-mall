@@ -63,6 +63,11 @@ jobs:
           grep -q 'id="seo-structured-data"' dist/index.html
           grep -q 'https://the3cmall.com/about' dist/sitemap.xml
           grep -q 'https://the3cmall.com/resources/budget-meal-planning' dist/sitemap.xml
+          if grep -q 'rel="manifest"' dist/index.html; then
+            echo "Public marketing home must not expose PWA install metadata"
+            exit 1
+          fi
+          grep -q 'rel="manifest"' dist/app/index.html
           if grep -q '<changefreq>\|<priority>' dist/sitemap.xml; then
             echo "Sitemap contains unsupported changefreq or priority elements"
             exit 1
