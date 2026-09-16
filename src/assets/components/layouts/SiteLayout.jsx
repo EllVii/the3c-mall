@@ -90,6 +90,9 @@ export default function SiteLayout() {
             <a href={`${MARKETING_ORIGIN}/resources/grocery-unit-price-calculator`}>
               Unit Price Calculator
             </a>
+            <a href={`${MARKETING_ORIGIN}/resources/meal-planning-app-with-grocery-list`}>
+              Meal Planning App Guide
+            </a>
             <a href={`${MARKETING_ORIGIN}/privacy`}>Privacy Policy</a>
             <a href={`${MARKETING_ORIGIN}/terms`}>Terms of Service</a>
           </nav>

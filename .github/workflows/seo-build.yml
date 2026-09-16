@@ -40,6 +40,7 @@ jobs:
           test -f dist/resources/budget-meal-planning/index.html
           test -f dist/resources/grocery-unit-price-calculator/index.html
           test -f dist/resources/compare-grocery-prices/index.html
+          test -f dist/resources/meal-planning-app-with-grocery-list/index.html
           test -f dist/privacy/index.html
           test -f dist/terms/index.html
           test -f dist/login/index.html
@@ -53,9 +54,13 @@ jobs:
           grep -q 'rel="canonical" href="https://the3cmall.com/pricing"' dist/pricing/index.html
           grep -q 'rel="canonical" href="https://the3cmall.com/resources"' dist/resources/index.html
           grep -q 'rel="canonical" href="https://the3cmall.com/resources/grocery-unit-price-calculator"' dist/resources/grocery-unit-price-calculator/index.html
+          grep -q 'rel="canonical" href="https://the3cmall.com/resources/meal-planning-app-with-grocery-list"' dist/resources/meal-planning-app-with-grocery-list/index.html
           grep -q 'property="og:type" content="article"' dist/resources/grocery-unit-price-calculator/index.html
+          grep -q 'property="og:type" content="article"' dist/resources/meal-planning-app-with-grocery-list/index.html
           grep -q '"@type":"Article"' dist/resources/grocery-unit-price-calculator/index.html
+          grep -q '"@type":"Article"' dist/resources/meal-planning-app-with-grocery-list/index.html
           grep -q '"@type":"BreadcrumbList"' dist/resources/grocery-unit-price-calculator/index.html
+          grep -q '"@type":"BreadcrumbList"' dist/resources/meal-planning-app-with-grocery-list/index.html
           grep -q "name=\"author\" content=\"Ell Vii's Automations\"" dist/index.html
           grep -q 'rel="author" href="https://ellviisautomations.com/"' dist/index.html
           grep -q 'https://ellviisautomations.com/#organization' dist/index.html
@@ -64,6 +69,11 @@ jobs:
           grep -q 'id="seo-structured-data"' dist/index.html
           grep -q 'https://the3cmall.com/about' dist/sitemap.xml
           grep -q 'https://the3cmall.com/resources/budget-meal-planning' dist/sitemap.xml
+          grep -q 'https://the3cmall.com/resources/meal-planning-app-with-grocery-list' dist/sitemap.xml
+          if grep -q '"offers":' dist/pricing/index.html; then
+            echo "Planned beta pricing must not be emitted as an active structured-data Offer"
+            exit 1
+          fi
           if grep -q 'rel="manifest"' dist/index.html; then
             echo "Public marketing home must not expose PWA install metadata"
             exit 1
