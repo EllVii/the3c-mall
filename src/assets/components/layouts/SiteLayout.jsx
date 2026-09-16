@@ -10,6 +10,7 @@ import "../../../styles/SiteLayout.css";
 const NAV_ITEMS = [
   { label: "Home", href: `${MARKETING_ORIGIN}/`, path: "/" },
   { label: "Features", href: `${MARKETING_ORIGIN}/features`, path: "/features" },
+  { label: "About", href: `${MARKETING_ORIGIN}/about`, path: "/about" },
   { label: "Pricing", href: `${MARKETING_ORIGIN}/pricing`, path: "/pricing" },
   { label: "Guides", href: `${MARKETING_ORIGIN}/resources`, path: "/resources" },
 ];
@@ -83,6 +84,7 @@ export default function SiteLayout() {
 
           <nav className="site-footer-nav" aria-label="Footer navigation">
             <a href={`${MARKETING_ORIGIN}/features`}>Features</a>
+            <a href={`${MARKETING_ORIGIN}/about`}>About 3C Mall</a>
             <a href={`${MARKETING_ORIGIN}/pricing`}>Pricing</a>
             <a href={`${MARKETING_ORIGIN}/resources`}>Grocery Guides</a>
             <a href={`${MARKETING_ORIGIN}/resources/grocery-unit-price-calculator`}>

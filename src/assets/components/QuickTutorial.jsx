@@ -1,14 +1,14 @@
 // src/assets/components/QuickTutorial.jsx
 /**
  * Quick Tutorial (30-second guided walkthrough)
- * 
+ *
  * Automatically shows on first load (optional to re-run from Settings)
- * Highlights key features: Meal Planner → Grocery Lab → Savings
- * 
+ * Highlights key features: Meal Planner → Grocery Lab → planning progress
+ *
  * Uses TutorialContext to manage state
  */
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/QuickTutorial.css";
 
@@ -16,16 +16,16 @@ const TUTORIAL_SLIDES = [
   {
     id: "welcome",
     title: "👋 Welcome to 3C Mall",
-    tagline: "Smart grocery shopping, meal planning & wellness",
-    copy: "Tap through this quick 30-second tour to discover your key zones.",
+    tagline: "Household meal and grocery planning in one place",
+    copy: "Tap through this quick tour to see the main parts of your 3C Mall workflow.",
     feature: null,
     icon: "🏬",
   },
   {
     id: "meal-planner",
     title: "🍽️ Meal Planner",
-    tagline: "Plan your meals, auto-generate grocery lists",
-    copy: "Set meals per day, dietary preferences, and let the Concierge suggest balanced menus.",
+    tagline: "Plan meals and carry ingredients forward",
+    copy: "Set your household preferences and build practical meal ideas that can flow into your grocery planning.",
     feature: "meal-planner",
     icon: "📅",
     action: { label: "Try it →", route: "/app/meal-plans" },
@@ -33,25 +33,25 @@ const TUTORIAL_SLIDES = [
   {
     id: "grocery-lab",
     title: "🛒 Grocery Lab",
-    tagline: "Search, compare, optimize your cart",
-    copy: "Find the best prices across stores. See nutrition per $ and get smart substitutions.",
+    tagline: "Compare available options with clearer context",
+    copy: "Review package value and available store estimates while keeping retailer-confirmed price and availability as the final source.",
     feature: "grocery-lab",
     icon: "💰",
     action: { label: "Try it →", route: "/app/grocery-lab" },
   },
   {
-    id: "savings",
-    title: "💵 Track Your Savings",
-    tagline: "See your cost over time",
-    copy: "The Concierge learns your choices and helps you save without sacrifice.",
+    id: "progress",
+    title: "📊 Keep Your Plan Connected",
+    tagline: "See how your household plan comes together",
+    copy: "Use your saved planning context to reduce repeated work and make the next grocery decision easier to understand.",
     feature: null,
     icon: "📊",
   },
   {
     id: "concierge",
     title: "🤖 Meet Your Concierge",
-    tagline: "Your personal AI guide",
-    copy: "Personalize your tone (Coach, Clinical, Chill), then let it guide you through every decision.",
+    tagline: "Guidance when you need the next step",
+    copy: "Use the 3C Concierge for plain-language guidance through planning and comparison choices without replacing your judgment.",
     feature: null,
     icon: "✨",
   },
@@ -69,7 +69,6 @@ const TUTORIAL_SLIDES = [
 export default function QuickTutorial({ open, onComplete }) {
   const nav = useNavigate();
   const [step, setStep] = useState(0);
-  const [autoProgress, setAutoProgress] = useState(false);
 
   const slide = TUTORIAL_SLIDES[step];
   const isLast = step === TUTORIAL_SLIDES.length - 1;
@@ -95,13 +94,6 @@ export default function QuickTutorial({ open, onComplete }) {
     }
   };
 
-  // Auto-advance slides every 3-4 seconds if user clicks "Auto" (optional)
-  useEffect(() => {
-    if (!autoProgress) return;
-    const timer = setTimeout(handleNext, 3500);
-    return () => clearTimeout(timer);
-  }, [autoProgress, step]);
-
   if (!open) return null;
 
   return (
@@ -109,7 +101,6 @@ export default function QuickTutorial({ open, onComplete }) {
       <div className="qt-backdrop" />
 
       <div className="qt-panel">
-        {/* Header */}
         <div className="qt-head">
           <div className="qt-progress">
             <span className="qt-step">Step {step + 1}</span>
@@ -127,7 +118,6 @@ export default function QuickTutorial({ open, onComplete }) {
           </button>
         </div>
 
-        {/* Icon & Title */}
         <div className="qt-content">
           <div className="qt-icon" aria-hidden="true">
             {slide.icon}
@@ -135,10 +125,8 @@ export default function QuickTutorial({ open, onComplete }) {
 
           <h2 className="qt-title">{slide.title}</h2>
           <p className="qt-tagline">{slide.tagline}</p>
-
           <p className="qt-copy">{slide.copy}</p>
 
-          {/* Feature Preview (visual affordance) */}
           {slide.feature && (
             <div className="qt-feature-preview">
               <div className="qt-feature-badge">{slide.feature}</div>
@@ -146,7 +134,6 @@ export default function QuickTutorial({ open, onComplete }) {
           )}
         </div>
 
-        {/* Footer - Navigation & Actions */}
         <div className="qt-foot">
           <div className="qt-dots">
             {TUTORIAL_SLIDES.map((_, idx) => (
@@ -185,7 +172,6 @@ export default function QuickTutorial({ open, onComplete }) {
           </div>
         </div>
 
-        {/* Settings breadcrumb hint */}
         <div className="qt-hint">
           <small>Tip: Access this anytime from <strong>Settings → Experience & Onboarding</strong></small>
         </div>

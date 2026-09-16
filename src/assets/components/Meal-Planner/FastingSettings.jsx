@@ -14,7 +14,7 @@ export default function FastingSettings({ value, onChange }) {
   })();
 
   const [enabled, setEnabled] = useState(value?.enabled ?? saved?.enabled ?? false);
-  const [mode, setMode] = useState(value?.mode ?? saved?.mode ?? "16:8"); // 16:8 | 18:6 | OMAD
+  const [mode, setMode] = useState(value?.mode ?? saved?.mode ?? "16:8");
   const [start, setStart] = useState(value?.start ?? saved?.start ?? "20:00");
   const [end, setEnd] = useState(value?.end ?? saved?.end ?? "12:00");
 
@@ -29,11 +29,12 @@ export default function FastingSettings({ value, onChange }) {
     };
     try {
       writeJSON(FASTING_KEY, payload);
-    } catch {}
+    } catch {
+      // Local-storage failure should not block the planning experience.
+    }
     onChange?.(payload);
   }
 
-  // keep storage + parent synced when local state changes
   useEffect(() => {
     emit();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -45,7 +46,7 @@ export default function FastingSettings({ value, onChange }) {
         <div>
           <div style={{ fontWeight: 900, color: "var(--gold)", fontSize: "1.05rem" }}>Fasting Settings</div>
           <p className="small" style={{ marginTop: ".35rem" }}>
-            Optional. Helps timing suggestions (no judgment).
+            Optional. Helps organize timing preferences without making health recommendations.
           </p>
         </div>
 
@@ -81,7 +82,7 @@ export default function FastingSettings({ value, onChange }) {
           </div>
 
           <p className="small" style={{ marginTop: ".75rem", opacity: 0.85 }}>
-            Saved locally. Beta: link to reminders + grocery timing.
+            Saved locally as a planning preference. This is not medical or nutrition advice.
           </p>
         </>
       )}

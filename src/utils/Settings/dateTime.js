@@ -15,7 +15,9 @@ export function getDateFormat() {
 export function setDateFormat(v) {
   try {
     localStorage.setItem(DATE_KEY, v);
-  } catch {}
+  } catch {
+    // Storage can be blocked in privacy modes; keep the in-memory experience usable.
+  }
 }
 
 export function getTimeFormat() {
@@ -29,7 +31,9 @@ export function getTimeFormat() {
 export function setTimeFormat(v) {
   try {
     localStorage.setItem(TIME_KEY, v);
-  } catch {}
+  } catch {
+    // Storage can be blocked in privacy modes; keep the in-memory experience usable.
+  }
 }
 
 /* Formatting helpers for display */
@@ -51,7 +55,6 @@ export function formatTimeValue(timeHHMM, fmt) {
 
   if (fmt === "24h") return `${String(hh).padStart(2, "0")}:${mm}`;
 
-  // 12h
   const ampm = hh >= 12 ? "PM" : "AM";
   const h12 = hh % 12 === 0 ? 12 : hh % 12;
   return `${h12}:${mm} ${ampm}`;

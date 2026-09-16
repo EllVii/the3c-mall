@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: "autoUpdate",
+      registerType: "prompt",
       manifestFilename: "manifest.webmanifest",
       includeAssets: [
         "favicon.ico",
@@ -35,6 +35,22 @@ export default defineConfig({
         start_url: "/app",
         categories: ["food", "health", "shopping", "lifestyle"],
         prefer_related_applications: false,
+        shortcuts: [
+          {
+            name: "Meal Planning",
+            short_name: "Meals",
+            description: "Open the 3C Mall meal planning workspace.",
+            url: "/app/meal-planner",
+            icons: [{ src: "/icons/icon-192.png", sizes: "192x192", type: "image/png" }],
+          },
+          {
+            name: "Grocery Lab",
+            short_name: "Grocery",
+            description: "Open grocery comparison and shopping tools.",
+            url: "/app/grocery-lab",
+            icons: [{ src: "/icons/icon-192.png", sizes: "192x192", type: "image/png" }],
+          },
+        ],
         icons: [
           {
             src: "/icons/icon-192.png",
@@ -59,12 +75,10 @@ export default defineConfig({
       workbox: {
         // Cache versioned assets, but never cache the HTML navigation response.
         // Security and Permissions-Policy headers must come from Cloudflare on
-        // every page load so shoppers receive the current geolocation policy.
+        // every page load so shoppers receive the current server policy.
         globPatterns: ["**/*.{js,css,ico,png,jpg,jpeg,svg,webp,woff2}"],
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
         cleanupOutdatedCaches: true,
-        clientsClaim: true,
-        skipWaiting: true,
       },
     }),
   ],

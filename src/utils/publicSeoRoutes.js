@@ -37,13 +37,26 @@ export const SEO_ROUTES = {
     output: "pricing/index.html",
     title: "3C Mall Pricing | Meal Planning and Grocery Tools",
     description:
-      "Compare 3C Mall plans for budget meal planning, grocery cost estimates, household profiles, pickup tools, and optional delivery support.",
+      "Compare planned 3C Mall membership options for budget meal planning, grocery cost estimates, household profiles, pickup tools, and optional delivery support.",
     canonical: `${MARKETING_ORIGIN}/pricing`,
     robots: INDEX_ROBOTS,
     schemaType: "pricing",
     breadcrumbs: [
       { name: "Home", url: `${MARKETING_ORIGIN}/` },
       { name: "Pricing", url: `${MARKETING_ORIGIN}/pricing` },
+    ],
+  },
+  "/about": {
+    output: "about/index.html",
+    title: "What Is 3C Mall? Household Grocery Planning Explained",
+    description:
+      "Learn what 3C Mall does, who it is designed for, how grocery value comparisons work, and where retailer-controlled pricing and fulfillment begin.",
+    canonical: `${MARKETING_ORIGIN}/about`,
+    robots: INDEX_ROBOTS,
+    schemaType: "about",
+    breadcrumbs: [
+      { name: "Home", url: `${MARKETING_ORIGIN}/` },
+      { name: "About 3C Mall", url: `${MARKETING_ORIGIN}/about` },
     ],
   },
   "/resources": {

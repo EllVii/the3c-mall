@@ -16,12 +16,13 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 22
+          package-manager-cache: false
 
       - name: Install dependencies
         run: npm install --no-audit --no-fund
@@ -33,6 +34,7 @@ jobs:
         run: |
           test -f dist/index.html
           test -f dist/features/index.html
+          test -f dist/about/index.html
           test -f dist/pricing/index.html
           test -f dist/resources/index.html
           test -f dist/resources/budget-meal-planning/index.html
@@ -45,6 +47,9 @@ jobs:
           test -f dist/404.html
           grep -q 'rel="canonical" href="https://the3cmall.com/"' dist/index.html
           grep -q 'rel="canonical" href="https://the3cmall.com/features"' dist/features/index.html
+          grep -q 'rel="canonical" href="https://the3cmall.com/about"' dist/about/index.html
+          grep -q '"@type":"AboutPage"' dist/about/index.html
+          grep -q '"@type":"BreadcrumbList"' dist/about/index.html
           grep -q 'rel="canonical" href="https://the3cmall.com/pricing"' dist/pricing/index.html
           grep -q 'rel="canonical" href="https://the3cmall.com/resources"' dist/resources/index.html
           grep -q 'rel="canonical" href="https://the3cmall.com/resources/grocery-unit-price-calculator"' dist/resources/grocery-unit-price-calculator/index.html
@@ -57,7 +62,13 @@ jobs:
           grep -q 'noindex, nofollow, noarchive' dist/login/index.html
           grep -q 'noindex, nofollow, noarchive' dist/app/index.html
           grep -q 'id="seo-structured-data"' dist/index.html
+          grep -q 'https://the3cmall.com/about' dist/sitemap.xml
           grep -q 'https://the3cmall.com/resources/budget-meal-planning' dist/sitemap.xml
+          if grep -q 'rel="manifest"' dist/index.html; then
+            echo "Public marketing home must not expose PWA install metadata"
+            exit 1
+          fi
+          grep -q 'rel="manifest"' dist/app/index.html
           if grep -q '<changefreq>\|<priority>' dist/sitemap.xml; then
             echo "Sitemap contains unsupported changefreq or priority elements"
             exit 1

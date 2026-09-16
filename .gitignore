@@ -1,8 +1,12 @@
 node_modules/
 dist/
+coverage/
 .vscode/y*.deb.env
-.env
-.env.local
-.env.*.local
+
+# Local environment files are never committed. Keep only the documented
+# non-secret example file in source control.
+.env*
+!.env.example
+
 server/.env
 server/.env.*

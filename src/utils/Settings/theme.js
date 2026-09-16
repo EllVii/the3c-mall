@@ -34,7 +34,9 @@ export function getThemeId() {
 export function setThemeId(id) {
   try {
     localStorage.setItem(KEY, id);
-  } catch {}
+  } catch {
+    // Theme still applies for the current session when storage is unavailable.
+  }
 }
 
 export function applyTheme(id) {

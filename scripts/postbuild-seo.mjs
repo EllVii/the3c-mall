@@ -27,6 +27,14 @@ function replaceOrInsert(html, pattern, replacement) {
   return html.replace("</head>", `  ${replacement}\n  </head>`);
 }
 
+function removeInstallMetadata(html) {
+  return html
+    .replace(/\s*<link\s+rel=["']manifest["'][^>]*>\s*/gi, "\n")
+    .replace(/\s*<meta\s+name=["']apple-mobile-web-app-capable["'][^>]*>\s*/gi, "\n")
+    .replace(/\s*<meta\s+name=["']apple-mobile-web-app-title["'][^>]*>\s*/gi, "\n")
+    .replace(/\s*<meta\s+name=["']apple-mobile-web-app-status-bar-style["'][^>]*>\s*/gi, "\n");
+}
+
 function buildBreadcrumbSchema(page) {
   if (!page.breadcrumbs?.length) return null;
 
@@ -40,6 +48,12 @@ function buildBreadcrumbSchema(page) {
       item: item.url,
     })),
   };
+}
+
+function pageSchemaType(schemaType) {
+  if (schemaType === "collection") return "CollectionPage";
+  if (schemaType === "about") return "AboutPage";
+  return "WebPage";
 }
 
 function buildSchema(page) {
@@ -95,9 +109,8 @@ function buildSchema(page) {
     ],
   };
 
-  const webpageType = page.schemaType === "collection" ? "CollectionPage" : "WebPage";
   const webpage = {
-    "@type": webpageType,
+    "@type": pageSchemaType(page.schemaType),
     "@id": `${page.canonical}#webpage`,
     url: page.canonical,
     name: page.title,
@@ -152,6 +165,12 @@ function applyMetadata(template, page) {
   const canonical = escapeHtml(page.canonical);
   const robots = escapeHtml(page.robots);
   const isArticle = page.schemaType === "article";
+  const isPublicMarketingPage =
+    page.robots === INDEX_ROBOTS && page.canonical.startsWith(MARKETING_ORIGIN);
+
+  if (isPublicMarketingPage) {
+    html = removeInstallMetadata(html);
+  }
 
   html = replaceOrInsert(html, /<title>[\s\S]*?<\/title>/i, `<title>${title}</title>`);
   html = replaceOrInsert(
