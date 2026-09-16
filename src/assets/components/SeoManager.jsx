@@ -110,11 +110,10 @@ function buildSchema(metadata) {
     image: SOCIAL_IMAGE,
     provider: { "@id": `${MARKETING_ORIGIN}/#organization` },
     creator: { "@id": DEVELOPER_ORGANIZATION_ID },
-    offers: [
-      { "@type": "Offer", name: "Basic", price: "0", priceCurrency: "USD" },
-      { "@type": "Offer", name: "Pro", price: "14.99", priceCurrency: "USD" },
-      { "@type": "Offer", name: "Family", price: "24.99", priceCurrency: "USD" },
-    ],
+    audience: {
+      "@type": "Audience",
+      audienceType: "Households planning meals and groceries",
+    },
   };
 
   const webpage = {
