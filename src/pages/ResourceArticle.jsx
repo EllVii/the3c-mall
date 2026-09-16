@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { Navigate, useParams } from "react-router-dom";
 import { RESOURCE_CARDS, RESOURCE_GUIDES } from "../data/resourceGuides.js";
+import { SEO_ROUTES } from "../utils/publicSeoRoutes.js";
 import "../styles/Resources.css";
 
 const moneyFormatter = new Intl.NumberFormat("en-US", {
@@ -9,6 +10,20 @@ const moneyFormatter = new Intl.NumberFormat("en-US", {
   minimumFractionDigits: 2,
   maximumFractionDigits: 4,
 });
+
+const articleDateFormatter = new Intl.DateTimeFormat("en-US", {
+  month: "long",
+  day: "numeric",
+  year: "numeric",
+  timeZone: "UTC",
+});
+
+function formatArticleDate(value) {
+  if (!value) return null;
+  const parsed = new Date(`${value}T00:00:00Z`);
+  if (Number.isNaN(parsed.getTime())) return value;
+  return articleDateFormatter.format(parsed);
+}
 
 function UnitPriceCalculator() {
   const [unit, setUnit] = useState("ounce");
@@ -117,11 +132,44 @@ function UnitPriceCalculator() {
   );
 }
 
+function ComparisonTable({ table }) {
+  return (
+    <div className="resource-table-wrap" tabIndex="0" role="region" aria-label="Comparison table">
+      <table className="resource-comparison-table">
+        <thead>
+          <tr>
+            {table.headers.map((header) => (
+              <th scope="col" key={header}>{header}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {table.rows.map((row) => (
+            <tr key={row[0]}>
+              {row.map((cell, index) => (
+                index === 0
+                  ? <th scope="row" key={cell}>{cell}</th>
+                  : <td key={`${row[0]}-${index}`}>{cell}</td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 export default function ResourceArticle() {
   const { slug } = useParams();
   const guide = RESOURCE_GUIDES[slug];
 
   if (!guide) return <Navigate to="/resources" replace />;
+
+  const routeMetadata = SEO_ROUTES[`/resources/${slug}`];
+  const publishedDate = formatArticleDate(routeMetadata?.datePublished);
+  const modifiedDate = formatArticleDate(routeMetadata?.dateModified);
+  const showUpdatedDate =
+    routeMetadata?.dateModified && routeMetadata.dateModified !== routeMetadata.datePublished;
 
   const relatedResources = RESOURCE_CARDS.filter((resource) =>
     guide.related.includes(resource.slug),
@@ -143,7 +191,8 @@ export default function ResourceArticle() {
           <h1>{guide.title}</h1>
           <p className="resource-article-summary">{guide.summary}</p>
           <div className="resource-article-meta">
-            <span>Published July 29, 2026</span>
+            {publishedDate && <span>Published {publishedDate}</span>}
+            {showUpdatedDate && modifiedDate && <span>Updated {modifiedDate}</span>}
             <span>{guide.readingTime}</span>
             <span>By 3C Mall and Ell Vii&apos;s Automations</span>
           </div>
@@ -165,9 +214,29 @@ export default function ResourceArticle() {
                   ))}
                 </ul>
               )}
+              {section.table && <ComparisonTable table={section.table} />}
             </section>
           ))}
         </div>
+
+        {guide.sources?.length > 0 && (
+          <aside className="resource-sources" aria-labelledby="resource-sources-title">
+            <strong id="resource-sources-title">Current market references</strong>
+            <p>
+              These sources were checked for the market examples in this guide.
+              Features, pricing, and service availability can change.
+            </p>
+            <ul>
+              {guide.sources.map((source) => (
+                <li key={source.url}>
+                  <a href={source.url} target="_blank" rel="external noopener noreferrer">
+                    {source.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </aside>
+        )}
 
         <aside className="resource-note" aria-label="Price and availability note">
           <strong>Remember:</strong> Grocery prices, availability, promotions, taxes, and
