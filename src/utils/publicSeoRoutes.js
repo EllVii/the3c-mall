@@ -8,6 +8,7 @@ export const INDEX_ROBOTS =
 export const PRIVATE_ROBOTS = "noindex, nofollow, noarchive";
 
 const publishedDate = "2026-07-29";
+const currentGuideDate = "2026-09-16";
 
 export const SEO_ROUTES = {
   "/": {
@@ -63,7 +64,7 @@ export const SEO_ROUTES = {
     output: "resources/index.html",
     title: "Grocery Budget & Meal Planning Guides | 3C Mall",
     description:
-      "Use practical 3C Mall guides for budget meal planning, grocery unit-price comparison, package-size decisions, and comparing store totals.",
+      "Use practical 3C Mall guides for budget meal planning, grocery unit-price comparison, package-size decisions, store totals, and choosing connected planning tools.",
     canonical: `${MARKETING_ORIGIN}/resources`,
     robots: INDEX_ROBOTS,
     schemaType: "collection",
@@ -75,6 +76,7 @@ export const SEO_ROUTES = {
       `${MARKETING_ORIGIN}/resources/budget-meal-planning`,
       `${MARKETING_ORIGIN}/resources/grocery-unit-price-calculator`,
       `${MARKETING_ORIGIN}/resources/compare-grocery-prices`,
+      `${MARKETING_ORIGIN}/resources/meal-planning-app-with-grocery-list`,
     ],
   },
   "/resources/budget-meal-planning": {
@@ -152,6 +154,33 @@ export const SEO_ROUTES = {
       {
         name: "Compare Grocery Prices",
         url: `${MARKETING_ORIGIN}/resources/compare-grocery-prices`,
+      },
+    ],
+  },
+  "/resources/meal-planning-app-with-grocery-list": {
+    output: "resources/meal-planning-app-with-grocery-list/index.html",
+    title: "Meal Planning App With Grocery List: What to Compare | 3C Mall",
+    description:
+      "Compare meal-planning apps by grocery-list handoff, household budget context, unit-price tools, store estimates, sharing, and data portability before switching.",
+    canonical: `${MARKETING_ORIGIN}/resources/meal-planning-app-with-grocery-list`,
+    robots: INDEX_ROBOTS,
+    schemaType: "article",
+    headline: "Meal Planning App With a Grocery List: What to Compare Before Switching",
+    datePublished: currentGuideDate,
+    dateModified: currentGuideDate,
+    keywords: [
+      "meal planning app with grocery list",
+      "meal planner grocery list app",
+      "meal planning app comparison",
+      "grocery budget meal planner",
+      "Mealime alternative",
+    ],
+    breadcrumbs: [
+      { name: "Home", url: `${MARKETING_ORIGIN}/` },
+      { name: "Guides", url: `${MARKETING_ORIGIN}/resources` },
+      {
+        name: "Meal Planning App Comparison",
+        url: `${MARKETING_ORIGIN}/resources/meal-planning-app-with-grocery-list`,
       },
     ],
   },
