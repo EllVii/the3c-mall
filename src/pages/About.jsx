@@ -40,6 +40,25 @@ const DIFFERENTIATORS = [
   },
 ];
 
+const CATEGORY_COMPARISON = [
+  {
+    title: "Meal-planning apps",
+    text: "Often start with recipes and the weekly menu. The key question is whether those choices stay connected to the grocery budget, package value, and shopping decision.",
+  },
+  {
+    title: "Shared grocery-list apps",
+    text: "Often make household coordination easier. The key question is whether the list also understands where items came from, what the household planned, and how value is being compared.",
+  },
+  {
+    title: "Price-comparison tools",
+    text: "Often begin with products or stores. The key question is whether the comparison reflects the meals, quantities, and priorities the household actually needs that week.",
+  },
+  {
+    title: "3C Mall",
+    text: "Is designed to carry household and budget context forward through meals, one shopping list, unit and package-value checks, available store estimates, and a user-controlled final decision.",
+  },
+];
+
 export default function About() {
   return (
     <div className="about-page">
@@ -113,6 +132,33 @@ export default function About() {
               <p>{item.text}</p>
             </article>
           ))}
+        </div>
+      </section>
+
+      <section className="about-section" aria-labelledby="category-title">
+        <div className="about-section-heading">
+          <p className="about-eyebrow">Compare the workflow, not the label</p>
+          <h2 id="category-title">Meal planner, grocery list, and price comparison are different jobs.</h2>
+          <p>
+            3C Mall is positioned between those categories because a household
+            often needs all three decisions to stay connected.
+          </p>
+        </div>
+        <div className="about-answer-grid">
+          {CATEGORY_COMPARISON.map((item) => (
+            <article key={item.title}>
+              <h3>{item.title}</h3>
+              <p>{item.text}</p>
+            </article>
+          ))}
+        </div>
+        <div className="about-actions">
+          <Link
+            className="about-button about-button-secondary"
+            to="/resources/meal-planning-app-with-grocery-list"
+          >
+            Compare meal-planning app workflows
+          </Link>
         </div>
       </section>
 
