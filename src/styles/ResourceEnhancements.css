@@ -1,3 +1,7 @@
+.resources-card-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .resource-table-wrap {
   overflow-x: auto;
   margin-top: 1.25rem;
@@ -87,6 +91,13 @@
   color: #7ee0ff;
   text-decoration-thickness: 1px;
   text-underline-offset: 0.2em;
+}
+
+@media (max-width: 860px) {
+  .resources-card-grid,
+  .resources-card-grid-compact {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 640px) {
