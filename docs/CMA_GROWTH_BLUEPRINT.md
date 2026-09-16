@@ -1,8 +1,10 @@
 # 3C Mall CMA, CX, Search, and PR Growth Blueprint
 
-Last reviewed: 2026-09-03
+Last reviewed: 2026-09-15
 
 This document converts the product architecture into a marketability plan. The goal is to make the same product truth visible to customers, search engines, AI answer systems, partners, reviewers, and media without creating separate contradictory stories.
+
+For the current dated competitor and pricing-positioning review, see `docs/COMPETITIVE_MARKET_REVIEW_2026-09.md`.
 
 ## 1. Core market position
 
@@ -128,9 +130,65 @@ The largest SEO opportunity is external authority:
 
 Owned reciprocal links are useful entity signals but should not be treated as a substitute for independent references.
 
-## 7. AEO and GEO
+## 7. SXO — Search Experience Optimization
 
-For Google, answer/generative optimization should remain grounded in strong SEO and helpful public content, not special markup tricks.
+SXO connects discovery to customer success. A page is not successful merely because it ranks or gets clicked.
+
+The desired path is:
+
+`search/AI intent → accurate result snippet → clear landing page → trust → useful action → successful outcome`
+
+### SXO requirements
+
+- Page title and description must accurately match the landing-page promise.
+- The first screen should answer why the visitor is there.
+- A page should have one dominant next action for its primary intent.
+- Public educational pages should deliver useful value before asking for beta access.
+- Mobile and desktop should preserve the same information hierarchy.
+- Forms must expose real errors instead of showing false success.
+- Calculators must explain assumptions, units, and limitations.
+- Search traffic and conversion traffic should be measured separately.
+
+### SXO metrics
+
+Track:
+- impressions and clicks by page/query;
+- resource-page engagement;
+- calculator starts and completions;
+- guide → beta CTA rate;
+- beta request completion and error rate;
+- return visits;
+- invited-user task completion after sign-in.
+
+## 8. AIO — AI Optimization
+
+For 3C Mall, AIO means making public information easy for AI-assisted systems to retrieve, understand, quote accurately, and connect to the correct entity. It is not a separate ranking trick.
+
+### AIO requirements
+
+- one stable description of 3C Mall across pages and formats;
+- direct visible answers for important questions;
+- descriptive headings, lists, and comparison tables;
+- clear separation of fact, estimate, planned feature, and retailer-controlled information;
+- visible dates on time-sensitive material;
+- original examples, calculators, methodology, and first-party evidence;
+- consistent developer/publisher identity;
+- accessible text around interactive tools and media;
+- structured data that matches visible page content;
+- source/methodology notes where factual claims need support.
+
+### AIO measurement
+
+Use real platform signals where available:
+- Bing Webmaster Tools AI Performance for citations, cited pages, grounding queries, topics/intents, and citation trends;
+- Bing Search Performance;
+- Google Search Console;
+- first-party analytics for referral and conversion behavior;
+- manual AI visibility checks only as qualitative diagnostics, not as a made-up score.
+
+## 9. AEO and GEO
+
+AEO focuses on answering a question clearly. GEO focuses on whether useful 3C Mall material can be retrieved and cited as grounding content.
 
 ### What 3C Mall should do
 
@@ -142,7 +200,8 @@ For Google, answer/generative optimization should remain grounded in strong SEO 
 - use descriptive headings that match real questions;
 - keep structured data accurate to visible content;
 - publish first-party findings when evidence exists;
-- maintain strong page experience and crawlability.
+- maintain strong page experience and crawlability;
+- keep dated material fresh and avoid duplicate thin pages.
 
 The `/about` page was added specifically to improve entity and answer clarity: what 3C Mall is, who it serves, how comparison works, what it does not do, and who builds it.
 
@@ -155,9 +214,9 @@ The `/about` page was added specifically to improve entity and answer clarity: w
 - do not treat `llms.txt` as a Google ranking requirement;
 - do not create separate contradictory “AI copy” and “human copy.”
 
-One clear public truth should serve both people and machines.
+One clear public truth should serve people, search engines, and AI retrieval systems.
 
-## 8. PR
+## 10. PR
 
 ### PR-ready story angles
 
@@ -181,11 +240,11 @@ Maintain one current fact sheet with:
 - public website and secure app distinction;
 - pilot/research status with no implied grant award unless an award actually exists.
 
-### PR-to-SEO loop
+### PR-to-search loop
 
-Good PR should create independent discovery and citations. A press mention has more value when it links to a useful public resource or methodology page, not just the homepage.
+Good PR should create independent discovery and citations. A press mention has more value when it links to a useful public resource or methodology page, not just the homepage. That supports conventional SEO and gives answer/generative systems a stronger independent entity signal.
 
-## 9. Marketability gaps and opportunities
+## 11. Marketability gaps and opportunities
 
 | Opportunity | Current state | Next maturity move |
 | --- | --- | --- |
@@ -194,12 +253,13 @@ Good PR should create independent discovery and citations. A press mention has m
 | Independent authority | limited | targeted partners, community references, media, research contacts |
 | First-party evidence | pilot framework exists | publish only real, consented, anonymized findings |
 | Search content breadth | useful starter hub | build fewer, deeper guides around real household decisions |
-| AEO/GEO | strong technical/content base | expand direct answers and original evidence, not AI gimmicks |
+| SXO | good intent-to-page clarity | instrument resource → calculator/waitlist conversion and failure rates |
+| AIO/AEO/GEO | strong technical/content base | measure Bing AI citations/grounding and expand direct answers/original evidence |
 | Mobile distribution | production PWA foundation | Android closed testing / iOS TestFlight after auth freeze |
 | Customer trust | strong boundary messaging | keep estimates/retailer confirmation language consistent everywhere |
 | Conversion | waitlist is clear | measure completion and drop-off before adding more CTAs |
 
-## 10. Production marketing rule
+## 12. Production marketing rule
 
 A marketing improvement is not complete until the operational effect is checked.
 
@@ -209,5 +269,6 @@ Examples:
 - New retailer claim → verify data source, freshness, disclaimer, and failure state.
 - New app-store promise → verify the feature exists in the submitted build.
 - New pilot statistic → verify evidence, consent, calculation, and wording.
+- New AIO/GEO claim → verify the underlying page is public, crawlable, current, and says the same thing visibly.
 
 Marketability grows fastest when promotion and operations tell the same story.
