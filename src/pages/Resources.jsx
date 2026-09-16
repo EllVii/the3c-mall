@@ -1,6 +1,7 @@
 import React from "react";
 import { RESOURCE_CARDS } from "../data/resourceGuides.js";
 import "../styles/Resources.css";
+import "../styles/ResourceEnhancements.css";
 
 export default function Resources() {
   return (
@@ -10,7 +11,7 @@ export default function Resources() {
         <h1 id="resources-title">Grocery budget and meal-planning guides</h1>
         <p>
           Practical tools for comparing value, planning around a household budget,
-          and making clearer grocery decisions before checkout.
+          choosing connected planning tools, and making clearer grocery decisions before checkout.
         </p>
       </section>
 
