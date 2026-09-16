@@ -150,6 +150,114 @@ export const RESOURCE_GUIDES = {
     ],
     related: ["budget-meal-planning", "grocery-unit-price-calculator"],
   },
+  "meal-planning-app-with-grocery-list": {
+    slug: "meal-planning-app-with-grocery-list",
+    eyebrow: "App selection guide",
+    title: "Meal planning app with a grocery list: what to compare before switching",
+    summary:
+      "A long feature list does not guarantee a simpler grocery week. Compare how an app carries your household context from meal planning into the shopping list, budget, value checks, and final store decision.",
+    readingTime: "8-minute read",
+    sections: [
+      {
+        heading: "Start with the workflow you actually need",
+        paragraphs: [
+          "Meal-planning apps can solve very different problems. Some are strongest at recipe storage, some at shared lists, some at nutrition planning, and some at store-price comparison. Before switching, write down the steps you use every week and identify where information currently gets copied, lost, or rebuilt.",
+          "For a household trying to control grocery spending, the important question is not only whether an app can make a meal plan. It is whether the plan can move into a usable grocery list while keeping budget, package value, and shopping decisions visible.",
+        ],
+      },
+      {
+        heading: "Compare the parts that affect the whole trip",
+        paragraphs: [
+          "Use the same criteria for every app you evaluate. That makes it easier to separate a polished feature page from the workflow your household will actually use.",
+        ],
+        table: {
+          headers: ["Capability", "Why it matters", "What to verify"],
+          rows: [
+            [
+              "Household and budget context",
+              "Meals and purchases need to fit the people and amount you are planning for.",
+              "Can the app keep household preferences and a grocery target visible while planning?",
+            ],
+            [
+              "Meal-to-list handoff",
+              "Rebuilding ingredients manually creates duplicate work and forgotten items.",
+              "Can selected meals move into one editable shopping list?",
+            ],
+            [
+              "Unit and package comparison",
+              "The lowest shelf price can hide a smaller package or higher unit cost.",
+              "Can you compare like-for-like quantities instead of price tags alone?",
+            ],
+            [
+              "Store and fulfillment context",
+              "A lower basket estimate can be offset by substitutions, travel, pickup, or delivery costs.",
+              "Does the app explain what is estimated and what the retailer confirms?",
+            ],
+            [
+              "Household sharing",
+              "A plan breaks down when only one person can see or update it.",
+              "Can the people who shop or cook stay synchronized?",
+            ],
+            [
+              "Data portability",
+              "Service changes, device changes, or shutdowns should not trap your planning history.",
+              "Can you export or otherwise preserve recipes, lists, and account information you rely on?",
+            ],
+          ],
+        },
+      },
+      {
+        heading: "Plan for service changes before they become urgent",
+        paragraphs: [
+          "Mealime currently states that it will shut down on October 21, 2026. That does not make every other meal-planning app a direct replacement; it does make portability and workflow fit more important for people deciding where to move their planning next.",
+          "If a service you use is changing or closing, first preserve the information you can export, list the features you actually use, and separate must-have functions from nice-to-have extras. Then test the replacement with one real week of meals and groceries before rebuilding everything around it.",
+        ],
+        bullets: [
+          "Preserve recipes, lists, notes, and account information where export tools are available.",
+          "Write down the three to five steps you use every week.",
+          "Test one complete planning-to-shopping cycle before committing to a new workflow.",
+          "Check price, platform support, household sharing, and cancellation terms separately.",
+        ],
+      },
+      {
+        heading: "Current products emphasize different strengths",
+        paragraphs: [
+          "Current products illustrate why the category is not one-size-fits-all. AnyList emphasizes shared lists, recipes, and meal planning; Samsung Food combines recipes, meal planning, shopping lists, and optional AI-focused premium tools; Paprika centers recipe management, pantry organization, grocery lists, and meal planning.",
+          "Those are useful capabilities, but they do not automatically answer the same question. Compare the whole household workflow you need rather than choosing only by the number of features on a pricing page.",
+        ],
+      },
+      {
+        heading: "Where 3C Mall is designed to be different",
+        paragraphs: [
+          "3C Mall is being built around a connected sequence: household and budget, meals, one shopping list, unit and package-value clarity, available store estimates, and a user-controlled shopping decision. The goal is to reduce the number of times the same household context has to be recreated across separate tools.",
+          "3C Mall is still in closed beta, and store information can remain estimated until a retailer confirms the final cart. That boundary matters: a planning tool should make tradeoffs clearer without pretending it controls retailer inventory, price, or fulfillment.",
+        ],
+      },
+    ],
+    sources: [
+      {
+        label: "Mealime — shutdown notice and product overview",
+        url: "https://www.mealime.com/",
+      },
+      {
+        label: "AnyList — current feature comparison",
+        url: "https://www.anylist.com/features",
+      },
+      {
+        label: "Samsung Food — meal planning and Food+ features",
+        url: "https://samsungfood.com/food-plus/",
+      },
+      {
+        label: "Paprika Recipe Manager 3 — App Store feature listing",
+        url: "https://apps.apple.com/us/app/paprika-recipe-manager-3/id1303222868",
+      },
+    ],
+    related: [
+      "budget-meal-planning",
+      "grocery-unit-price-calculator",
+      "compare-grocery-prices",
+    ],
+  },
 };
 
 export const RESOURCE_CARDS = [
@@ -173,5 +281,12 @@ export const RESOURCE_CARDS = [
     title: "Compare the full cost of shopping options",
     description:
       "Consider basket totals, package sizes, substitutions, promotions, travel, pickup, and delivery.",
+  },
+  {
+    slug: "meal-planning-app-with-grocery-list",
+    label: "App comparison",
+    title: "Choose a meal-planning app around the full grocery workflow",
+    description:
+      "Compare meal-to-list handoff, budget context, unit value, store estimates, sharing, and data portability before switching.",
   },
 ];
