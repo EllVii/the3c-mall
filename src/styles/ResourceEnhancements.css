@@ -1,0 +1,96 @@
+.resource-table-wrap {
+  overflow-x: auto;
+  margin-top: 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.resource-table-wrap:focus-visible {
+  outline: 3px solid rgba(126, 224, 255, 0.28);
+  outline-offset: 3px;
+}
+
+.resource-comparison-table {
+  width: 100%;
+  min-width: 720px;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.resource-comparison-table th,
+.resource-comparison-table td {
+  padding: 0.95rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  vertical-align: top;
+  line-height: 1.55;
+}
+
+.resource-comparison-table thead th {
+  background: rgba(246, 220, 138, 0.07);
+  color: #f6dc8a;
+  font-size: 0.76rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.resource-comparison-table tbody th {
+  width: 24%;
+  color: #ffffff;
+  font-size: 0.94rem;
+}
+
+.resource-comparison-table td {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.92rem;
+}
+
+.resource-comparison-table tr:last-child th,
+.resource-comparison-table tr:last-child td {
+  border-bottom: 0;
+}
+
+.resource-sources {
+  width: min(760px, calc(100% - 2rem));
+  margin: 0 auto 1rem;
+  padding: 1.15rem 1.25rem;
+  border: 1px solid rgba(246, 220, 138, 0.18);
+  border-radius: 16px;
+  background: rgba(246, 220, 138, 0.045);
+}
+
+.resource-sources > strong {
+  color: #f6dc8a;
+}
+
+.resource-sources p,
+.resource-sources li {
+  color: rgba(255, 255, 255, 0.65);
+  line-height: 1.6;
+}
+
+.resource-sources p {
+  margin: 0.55rem 0 0.8rem;
+}
+
+.resource-sources ul {
+  margin: 0;
+  padding-left: 1.2rem;
+}
+
+.resource-sources li + li {
+  margin-top: 0.45rem;
+}
+
+.resource-sources a {
+  color: #7ee0ff;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+}
+
+@media (max-width: 640px) {
+  .resource-table-wrap {
+    margin-inline: -0.15rem;
+  }
+}
