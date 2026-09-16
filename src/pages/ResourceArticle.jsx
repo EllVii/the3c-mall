@@ -3,6 +3,7 @@ import { Navigate, useParams } from "react-router-dom";
 import { RESOURCE_CARDS, RESOURCE_GUIDES } from "../data/resourceGuides.js";
 import { SEO_ROUTES } from "../utils/publicSeoRoutes.js";
 import "../styles/Resources.css";
+import "../styles/ResourceEnhancements.css";
 
 const moneyFormatter = new Intl.NumberFormat("en-US", {
   style: "currency",
