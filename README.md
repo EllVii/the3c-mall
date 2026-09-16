@@ -33,11 +33,12 @@ The installed PWA reuses the same routes, backend, and authentication system. It
 
 ## Source-of-truth documentation
 
-Before changing routing, authentication, storage, or deployment, read:
+Before changing routing, authentication, storage, deployment, or market positioning, read:
 
 - [`docs/PRODUCTION_BLUEPRINT.md`](./docs/PRODUCTION_BLUEPRINT.md) — current domains, routes, data plumbing, auth boundary, PWA lifecycle, risks, and validation gates.
 - [`docs/MOBILE_APP_READINESS.md`](./docs/MOBILE_APP_READINESS.md) — Google Play / Apple packaging path and auth freeze requirements.
 - [`docs/CMA_GROWTH_BLUEPRINT.md`](./docs/CMA_GROWTH_BLUEPRINT.md) — customer experience, marketability, PR, SEO, AEO, GEO, and content opportunities.
+- [`docs/COMPETITIVE_MARKET_REVIEW_2026-09.md`](./docs/COMPETITIVE_MARKET_REVIEW_2026-09.md) — current competitor review plus CI, CS, CX, UX, UI, TW, PR, AIO, SXO, AEO, GEO, SEO, and CMA opportunities.
 
 Older root-level Supabase, Render, localhost, and early simulation documents are historical implementation records. They are not the production configuration authority. The current production path is Cloudflare + D1 + same-origin `/api/*` unless the production blueprint is intentionally revised.
 
