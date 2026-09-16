@@ -1,8 +1,8 @@
 # 3C Mall Production Blueprint
 
-Last reviewed: 2026-09-03
+Last reviewed: 2026-09-15
 
-This document is the current production map for 3C Mall. It exists to prevent a change in one layer from silently damaging routing, authentication, storage, indexing, or the customer journey in another layer.
+This document is the current production map for 3C Mall. It exists to prevent a change in one layer from silently damaging routing, authentication, storage, indexing, deployment, or the customer journey in another layer.
 
 ## 1. Product surfaces
 
@@ -11,11 +11,31 @@ This document is the current production map for 3C Mall. It exists to prevent a 
 | Public website | `https://the3cmall.com` | Product explanation, features, pricing, About, guides, waitlist | Indexable public content |
 | Secure web app | `https://the3cmall.app/app` | Authenticated household planning application | Noindex |
 | Sign in | `https://the3cmall.app/login` | Authentication entry | Noindex |
-| API | Same origin under `/api/*` on the app deployment | Cloudflare Pages Functions / Workers API | Not a public content surface |
+| API | Same origin under `/api/*` on the app deployment | Cloudflare Pages Functions / Workers runtime | Not a public content surface |
 
 The `.com` and `.app` split is intentional. Public discovery belongs on `.com`; account and app workflows belong on `.app`.
 
-## 2. Frontend architecture
+## 2. Deployment ownership
+
+**Cloudflare Pages is the authoritative application deployment model for this repository.**
+
+The repository contains:
+- a Vite frontend;
+- a `dist` build output;
+- Cloudflare Pages Functions under `functions/`;
+- `wrangler.example.jsonc` as a binding/configuration reference rather than a second standalone Worker deployment target.
+
+A separate Cloudflare Workers Git integration has been observed attempting to deploy the same repository and failing while Cloudflare Pages previews succeed. That is a deployment-ownership conflict, not evidence that the Pages application is broken.
+
+### Deployment rule
+
+There should be one production owner for the web application build. If a Cloudflare Workers Git integration remains attached to this repository, either:
+1. disconnect the stale standalone Worker integration in Cloudflare; or
+2. point it at an intentionally separate Worker project with its own explicit entry point and lifecycle.
+
+Do not modify healthy Pages code merely to satisfy a second deployment integration that is not part of the architecture.
+
+## 3. Frontend architecture
 
 - React 18 + Vite.
 - React Router handles the route tree.
@@ -48,7 +68,7 @@ The `.com` and `.app` split is intentional. Public discovery belongs on `.com`; 
 - Meal Planning and Grocery Lab are exposed as installable app shortcuts.
 - Service-worker updates are user-controlled so an active form or planning session is not force-reloaded.
 
-## 3. Data and API plumbing
+## 4. Data and API plumbing
 
 Current production path:
 
@@ -62,7 +82,12 @@ Primary relational store for account/session/profile/pilot/waitlist data. The ba
 
 `RECEIPTS` is the expected binding for approved pilot receipt/image objects. The code correctly returns a controlled `503 storage_not_configured` when the binding is missing.
 
-**Current infrastructure risk:** the production health endpoint has previously reported `receiptStorageConfigured: false`. This is a Cloudflare environment binding issue, not a frontend routing problem. CI keeps it visible in a separate non-blocking infrastructure job.
+**Current infrastructure risk:** the production health endpoint has reported `receiptStorageConfigured: false`. This is a Cloudflare environment binding issue, not a frontend routing problem. CI keeps it visible in a separate non-blocking infrastructure job.
+
+The production-maturity definition is therefore:
+- code path is safe when the binding is absent;
+- the feature must not be marketed as available until the production binding is actually connected;
+- R2 health stays visible until provisioned.
 
 ### Email
 
@@ -72,7 +97,9 @@ Transactional email is server-side. Client code must never receive an email prov
 
 Store integrations must remain server-side where credentials are required. Browser clients should call deployed `/api/*` routes and must never fall back to localhost or an obsolete backend host in production.
 
-## 4. Authentication boundary
+No retailer partnership, authorization, or live-data status should be represented as confirmed unless the relevant production right/credential is documented.
+
+## 5. Authentication boundary
 
 Authentication is a protected subsystem and is intentionally outside the scope of presentation-only changes.
 
@@ -91,7 +118,7 @@ Do not change signup, login, verification, password reset, session restoration, 
 
 Public marketing describes controlled beta access, while the current backend account-creation path can still support direct email-verified signup. That is an access-policy decision, not a styling bug. Resolve it in a dedicated authentication workstream so existing tester access is not accidentally broken.
 
-## 5. Configuration rules
+## 6. Configuration rules
 
 The repository must not contain a tracked root `.env`.
 
@@ -103,7 +130,7 @@ The repository must not contain a tracked root `.env`.
 - use `.env.example` only for documented non-secret local options;
 - use Cloudflare environment variables, bindings, and secrets for production infrastructure.
 
-## 6. Search and content architecture
+## 7. Search and content architecture
 
 Public indexable routes are declared in `src/utils/publicSeoRoutes.js` and generated into route-specific HTML during `npm run build`.
 
@@ -121,9 +148,9 @@ Current public search surfaces include:
 
 Private app/login pages remain noindex.
 
-The About page serves a specific entity and answer purpose: it explains what 3C Mall is, who it serves, how its comparisons work, what it does not claim, and who develops it. This supports customer trust, public relations, traditional search, and answer/generative discovery without using hidden keyword pages.
+The About page serves a specific entity and answer purpose: it explains what 3C Mall is, who it serves, how its comparisons work, what it does not claim, and who develops it. This supports customer trust, public relations, traditional search, SXO, AIO, AEO, and generative discovery without using hidden keyword pages.
 
-## 7. PWA and cache lifecycle
+## 8. PWA and cache lifecycle
 
 The PWA precaches versioned static assets but not HTML navigation responses. This preserves current Cloudflare response headers on page loads.
 
@@ -135,7 +162,9 @@ Update sequence:
 
 This avoids an automatic reload while a user is planning meals, editing a profile, or working through a shopping flow.
 
-## 8. Security boundary
+PWA registration belongs to the secure `.app` host. Public `.com` pages should remain crawl-first marketing surfaces rather than becoming a second install origin.
+
+## 9. Security boundary
 
 Current production principles:
 - authenticated app and public content are separated by host and route;
@@ -143,11 +172,12 @@ Current production principles:
 - API credentials stay server-side;
 - D1 and R2 are accessed through server functions, not exposed browser credentials;
 - account management stays behind authentication;
-- error conditions should fail closed or show a clear unavailable state rather than fabricate success.
+- error conditions should fail closed or show a clear unavailable state rather than fabricate success;
+- public code must not hard-code unverified partnership, compliance, or authorization claims.
 
 Do not add a broad Content-Security-Policy without first inventorying map, image, form, and third-party resource requirements. A security header that blocks required functionality is not a maturity improvement.
 
-## 9. Validation gates
+## 10. Validation gates
 
 A normal production PR should pass:
 - frontend production build;
@@ -160,12 +190,28 @@ A normal production PR should pass:
 
 Informational/non-current debt is tracked separately:
 - legacy Express/Supabase server tests;
-- full-repository lint debt in inactive/legacy UI areas;
-- optional production R2 binding status.
+- broad UI lint cleanup that is not on the critical runtime path;
+- optional production R2 binding status;
+- stale external deployment integrations that do not own the Pages application.
 
-## 10. Change impact checklist
+A green critical path plus a visible non-blocking infrastructure warning is more truthful than making every unrelated legacy artifact a production blocker.
 
-Before changing a route, data flow, layout, or integration, verify:
+## 11. Search/AI measurement gates
+
+Search and AI visibility work should use measurable signals rather than subjective “100%” scores.
+
+Review:
+- Google Search Console page/query performance;
+- Bing Search Performance;
+- Bing AI Performance citation activity, cited pages, grounding queries, topics, intents, and trends where available;
+- first-party landing, calculator, waitlist, and conversion events;
+- crawl/index coverage for new public routes.
+
+AIO/GEO changes should never introduce hidden copy, invented statistics, duplicate thin pages, or structured data that says more than the visible page.
+
+## 12. Change impact checklist
+
+Before changing a route, data flow, layout, integration, or marketing promise, verify:
 
 | Change area | Check before change | Check after change |
 | --- | --- | --- |
@@ -176,6 +222,9 @@ Before changing a route, data flow, layout, or integration, verify:
 | R2 | binding and object lifecycle | missing-binding behavior + live health |
 | PWA | service worker/cache behavior | update path, installability, active-session safety |
 | Responsive UI | desktop/tablet/mobile ownership | overflow, safe areas, touch targets, navigation |
-| SEO/AEO/GEO | visible helpful content first | crawlability, canonicals, structured data, sitemap |
+| SEO/SXO | intent, visible answer, CTA | crawlability, snippet match, conversion path |
+| AIO/AEO/GEO | entity truth, evidence, freshness | retrieval clarity, citations/grounding, no overclaim |
+| PR/CMA | source and capability proof | customer-support readiness, consistent public language |
+| Deployment | authoritative owner and bindings | one intended production path, no duplicate deploy confusion |
 
-The goal is not to eliminate every legacy file in one sweep. The goal is to make the production path unambiguous, testable, reversible, and difficult to break accidentally.
+The goal is not to eliminate every historical file in one sweep. The goal is to make the production path unambiguous, testable, reversible, measurable, and difficult to break accidentally.
