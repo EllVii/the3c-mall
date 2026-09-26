@@ -70,6 +70,17 @@ jobs:
           grep -q 'https://the3cmall.com/about' dist/sitemap.xml
           grep -q 'https://the3cmall.com/resources/budget-meal-planning' dist/sitemap.xml
           grep -q 'https://the3cmall.com/resources/meal-planning-app-with-grocery-list' dist/sitemap.xml
+          grep -q '<lastmod>2026-09-16</lastmod>' dist/sitemap.xml
+          test ! -f public/sitemap.xml
+          test -f dist/8045f89b8caa97e934100fd14e33fd48.txt
+          grep -qx '8045f89b8caa97e934100fd14e33fd48' dist/8045f89b8caa97e934100fd14e33fd48.txt
+          grep -q 'Meal Planning App With a Grocery List: What to Compare Before Switching' dist/resources/meal-planning-app-with-grocery-list/index.html
+          grep -q 'Compare meal-planning apps by grocery-list handoff' dist/resources/meal-planning-app-with-grocery-list/index.html
+          grep -q 'Grocery budget and meal-planning guides' dist/resources/index.html
+          if grep -q '"offers":' index.html; then
+            echo "Source index.html must not expose planned beta pricing as active offers"
+            exit 1
+          fi
           if grep -q '"offers":' dist/pricing/index.html; then
             echo "Planned beta pricing must not be emitted as an active structured-data Offer"
             exit 1
