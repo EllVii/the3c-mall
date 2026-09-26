@@ -19,6 +19,7 @@ export const SEO_ROUTES = {
     canonical: `${MARKETING_ORIGIN}/`,
     robots: INDEX_ROBOTS,
     schemaType: "home",
+    lastModified: "2026-08-21",
     breadcrumbs: [{ name: "Home", url: `${MARKETING_ORIGIN}/` }],
   },
   "/features": {
@@ -29,6 +30,7 @@ export const SEO_ROUTES = {
     canonical: `${MARKETING_ORIGIN}/features`,
     robots: INDEX_ROBOTS,
     schemaType: "webpage",
+    lastModified: "2026-08-21",
     breadcrumbs: [
       { name: "Home", url: `${MARKETING_ORIGIN}/` },
       { name: "Features", url: `${MARKETING_ORIGIN}/features` },
@@ -42,6 +44,7 @@ export const SEO_ROUTES = {
     canonical: `${MARKETING_ORIGIN}/pricing`,
     robots: INDEX_ROBOTS,
     schemaType: "pricing",
+    lastModified: "2026-09-03",
     breadcrumbs: [
       { name: "Home", url: `${MARKETING_ORIGIN}/` },
       { name: "Pricing", url: `${MARKETING_ORIGIN}/pricing` },
@@ -55,6 +58,7 @@ export const SEO_ROUTES = {
     canonical: `${MARKETING_ORIGIN}/about`,
     robots: INDEX_ROBOTS,
     schemaType: "about",
+    lastModified: "2026-09-16",
     breadcrumbs: [
       { name: "Home", url: `${MARKETING_ORIGIN}/` },
       { name: "About 3C Mall", url: `${MARKETING_ORIGIN}/about` },
@@ -68,6 +72,7 @@ export const SEO_ROUTES = {
     canonical: `${MARKETING_ORIGIN}/resources`,
     robots: INDEX_ROBOTS,
     schemaType: "collection",
+    lastModified: "2026-09-16",
     breadcrumbs: [
       { name: "Home", url: `${MARKETING_ORIGIN}/` },
       { name: "Guides", url: `${MARKETING_ORIGIN}/resources` },
@@ -192,6 +197,7 @@ export const SEO_ROUTES = {
     canonical: `${MARKETING_ORIGIN}/terms`,
     robots: INDEX_ROBOTS,
     schemaType: "webpage",
+    lastModified: "2026-07-22",
     breadcrumbs: [
       { name: "Home", url: `${MARKETING_ORIGIN}/` },
       { name: "Terms of Service", url: `${MARKETING_ORIGIN}/terms` },
@@ -205,6 +211,7 @@ export const SEO_ROUTES = {
     canonical: `${MARKETING_ORIGIN}/privacy`,
     robots: INDEX_ROBOTS,
     schemaType: "webpage",
+    lastModified: "2026-07-22",
     breadcrumbs: [
       { name: "Home", url: `${MARKETING_ORIGIN}/` },
       { name: "Privacy Policy", url: `${MARKETING_ORIGIN}/privacy` },

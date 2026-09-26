@@ -22,6 +22,63 @@ function escapeHtml(value) {
     .replaceAll(">", "&gt;");
 }
 
+
+function escapeXml(value) {
+  return escapeHtml(value).replaceAll("'", "&apos;");
+}
+
+function buildNoScriptFallback(page) {
+  const heading = escapeHtml(page.headline || page.title || "3C Mall");
+  const description = escapeHtml(page.description || "3C Mall");
+  const isPublicMarketingPage =
+    page.robots === INDEX_ROBOTS && page.canonical?.startsWith(MARKETING_ORIGIN);
+
+  const navigation = isPublicMarketingPage
+    ? '<p><a href="/">3C Mall home</a> · <a href="/features">Features</a> · <a href="/resources">Guides and calculators</a> · <a href="/pricing">Pricing</a></p>'
+    : '<p><a href="https://the3cmall.com/">Visit the public 3C Mall website</a></p>';
+
+  return [
+    "<noscript>",
+    "  <main>",
+    "    <h1>" + heading + "</h1>",
+    "    <p>" + description + "</p>",
+    "    " + navigation,
+    '    <p>3C Mall is designed and developed by <a href="https://ellviisautomations.com/">Ell Vii\'s Automations</a>.</p>',
+    "  </main>",
+    "</noscript>",
+  ].join("\n");
+}
+
+function buildSitemap() {
+  const entries = Object.values(SEO_ROUTES).filter(
+    (page) =>
+      page.robots === INDEX_ROBOTS &&
+      page.canonical?.startsWith(MARKETING_ORIGIN),
+  );
+
+  const urls = entries.map((page) => {
+    const lastModified =
+      page.lastModified || page.dateModified || page.datePublished || null;
+    const lastmod = lastModified
+      ? "\n    <lastmod>" + escapeXml(lastModified) + "</lastmod>"
+      : "";
+
+    return (
+      "  <url>\n" +
+      "    <loc>" + escapeXml(page.canonical) + "</loc>" +
+      lastmod +
+      "\n  </url>"
+    );
+  });
+
+  return (
+    '<?xml version="1.0" encoding="UTF-8"?>\n' +
+    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
+    urls.join("\n") +
+    "\n</urlset>\n"
+  );
+}
+
 function replaceOrInsert(html, pattern, replacement) {
   if (pattern.test(html)) return html.replace(pattern, replacement);
   return html.replace("</head>", `  ${replacement}\n  </head>`);
@@ -239,6 +296,14 @@ function applyMetadata(template, page) {
     html = html.replace(schemaPattern, "");
   }
 
+  const noScriptPattern = /<noscript>[\s\S]*?<\/noscript>/i;
+  const noScriptFallback = buildNoScriptFallback(page);
+  if (noScriptPattern.test(html)) {
+    html = html.replace(noScriptPattern, noScriptFallback);
+  } else {
+    html = html.replace("</body>", noScriptFallback + "\n  </body>");
+  }
+
   return html;
 }
 
@@ -250,6 +315,8 @@ for (const [, page] of SEO_ROUTE_ENTRIES) {
   await writeFile(outputPath, applyMetadata(template, page), "utf8");
 }
 
+await writeFile(path.join(DIST_DIR, "sitemap.xml"), buildSitemap(), "utf8");
+
 const notFound = applyMetadata(template, {
   output: "404.html",
   title: "Page Not Found | 3C Mall",
@@ -260,4 +327,4 @@ const notFound = applyMetadata(template, {
 });
 await writeFile(path.join(DIST_DIR, "404.html"), notFound, "utf8");
 
-console.log(`Generated SEO HTML for ${SEO_ROUTE_ENTRIES.length} routes plus 404.html.`);
+console.log(`Generated SEO HTML for ${SEO_ROUTE_ENTRIES.length} routes, sitemap.xml, and 404.html.`);

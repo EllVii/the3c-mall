@@ -1,0 +1,33 @@
+name: IndexNow URL Discovery
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  indexnow:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          package-manager-cache: false
+
+      - name: Notify IndexNow about changed public URLs
+        continue-on-error: true
+        env:
+          INDEXNOW_BEFORE_SHA: ${{ github.event.before }}
+          INDEXNOW_SHA: ${{ github.sha }}
+        run: node scripts/submit-indexnow.mjs
