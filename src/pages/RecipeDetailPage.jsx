@@ -5,6 +5,9 @@ import { readJSON, writeJSON, nowISO, safeId } from "../utils/Storage";
 import { applyRecipePreset } from "../utils/recipeTransform";
 import { recipeToGroceryItems, mergeGroceryItems } from "../utils/recipeToGrocery";
 import MakeItHealthierModal from "../assets/components/MakeItHealthierModal";
+import { findFeaturedRecipe } from "../utils/featuredRecipes";
+import { scaledAmount, displayAmount, validServings } from "../utils/recipeServings";
+import "../styles/RecipesCatalog.css";
 
 const RECIPE_PREFIX_KEY = (id) => `recipe.${id}.v1`;
 const RECIPES_KEY = "recipes.v1";
@@ -12,7 +15,7 @@ const GROCERY_KEY = "grocery.items.v1";
 const HANDOFF_KEY = "handoff.mealToGrocery.v1";
 
 function loadRecipe(id) {
-  return readJSON(RECIPE_PREFIX_KEY(id), null);
+  return readJSON(RECIPE_PREFIX_KEY(id), null) || findFeaturedRecipe(id);
 }
 function saveRecipe(recipe) {
   writeJSON(RECIPE_PREFIX_KEY(recipe.id), recipe);
@@ -42,10 +45,12 @@ export default function RecipeDetailPage() {
 
   const recipe = useMemo(() => loadRecipe(id), [id]);
   const [draft, setDraft] = useState(recipe);
+  const [servings, setServings] = useState(validServings(recipe?.servings?.defaultServings, 4));
+  const originalServings = validServings(draft?.servings?.defaultServings, 4);
 
   if (!draft) {
     return (
-      <section className="page">
+      <section className="recipes-catalog">
         <p className="kicker">Center · Recipes</p>
         <h1 className="h1">Recipe not found</h1>
         <div className="nav-row">
@@ -94,7 +99,7 @@ export default function RecipeDetailPage() {
 
   // ✅ UPDATED: add to grocery + navigate to grocery lab with handoff message
   function addToGrocery() {
-    const add = recipeToGroceryItems(draft, draft.servings?.defaultServings || 1);
+    const add = recipeToGroceryItems(draft, servings);
     const current = readJSON(GROCERY_KEY, []);
     const merged = mergeGroceryItems(current, add);
     writeJSON(GROCERY_KEY, merged);
@@ -102,7 +107,7 @@ export default function RecipeDetailPage() {
     // handoff message for GroceryLabPage to display once
     writeJSON(HANDOFF_KEY, {
       at: nowISO(),
-      message: "Recipe ingredients added → Grocery updated ✅",
+      message: `${draft.title}: ingredients for ${servings} servings added to Grocery Lab`,
       source: "recipes",
       recipeId: draft.id,
       recipeTitle: draft.title,
@@ -130,6 +135,15 @@ export default function RecipeDetailPage() {
     <section className="page">
       <p className="kicker">Center · Recipes</p>
       <h1 className="h1">{draft.title}</h1>
+      {draft.imageUrl && <img className="recipes-detail__image" src={draft.imageUrl} alt={`Prepared ${draft.title}`} loading="lazy" />}
+      <div className="recipes-detail__servings" aria-label="Adjust recipe servings">
+        <strong>Servings</strong>
+        <button type="button" className="btn btn-secondary" aria-label="Decrease servings" disabled={servings <= 1} onClick={() => setServings(v => Math.max(1, v - 1))}>−</button>
+        <output aria-live="polite">{servings}</output>
+        <button type="button" className="btn btn-secondary" aria-label="Increase servings" disabled={servings >= 24} onClick={() => setServings(v => Math.min(24, v + 1))}>+</button>
+        <span className="small">Ingredients adjust automatically. Original recipe: {originalServings} servings.</span>
+      </div>
+      <p className="small">Prep {draft.time?.prepMinutes || 0} min · Cook {draft.time?.cookMinutes || 0} min</p>
       <p className="sub">{draft.description}</p>
 
       <div className="nav-row">
@@ -199,12 +213,14 @@ export default function RecipeDetailPage() {
                 </button>
               </div>
 
+              <p className="small">Shown quantities are for {servings} servings. Edits to the amount field change the original recipe.</p>
               <div style={{ marginTop: ".75rem" }}>
                 {(draft.ingredients || []).map((it, idx) => (
                   <div
                     key={it.id}
                     style={{ borderTop: "1px solid rgba(126,224,255,.12)", paddingTop: ".75rem", marginTop: ".75rem" }}
                   >
+                    <div className="recipes-detail__ingredient"><strong>{displayAmount(scaledAmount(it.amount, originalServings, servings))} {it.unit}</strong> {it.name}</div>
                     <div className="grid" style={{ gridTemplateColumns: "1.5fr .8fr .8fr", gap: ".6rem" }}>
                       <div>
                         <label className="label">Name</label>
@@ -314,6 +330,7 @@ export default function RecipeDetailPage() {
         </div>
       </div>
 
+      <p className="small">Recipe and serving quantities are guidance only. Verify cooking temperatures, ingredients, and allergens before preparing food.</p>
       <MakeItHealthierModal open={modalOpen} onClose={() => setModalOpen(false)} onApply={applyPreset} />
     </section>
   );
