@@ -5,6 +5,9 @@ import "../styles/GroceryLabPage.css";
 import { readJSON, writeJSON, nowISO, safeId } from "../utils/Storage";
 import { formatDateISO, formatTimeValue } from "../utils/Settings/dateTime";
 import { betaMessaging } from "../utils/betaMessaging";
+import GroceryCatalogPicker from "../assets/components/grocery/GroceryCatalogPicker";
+import GroceryItemPhoto from "../assets/components/grocery/GroceryItemPhoto";
+import { matchCatalogItem } from "../utils/groceryCatalog";
 
 import { SAFE_LANGUAGE, createCompliantRoutingOption, formatCompliantPricingDisplay, generateStoreComparisonText } from "../utils/legalRoutingHelper";
 
@@ -200,9 +203,11 @@ function normalizeItem(raw, { locked = false } = {}) {
   return {
     id: raw?.id || safeId("itm"),
     name: String(raw?.name || "").trim(),
-    qty: Number.isFinite(Number(raw?.qty)) ? Number(raw.qty) : 1,
+    qty: Number.isFinite(Number(raw?.qty ?? raw?.amount)) ? Number(raw.qty ?? raw.amount) : 1,
     unit: String(raw?.unit || "each"),
     locked: !!(raw?.locked ?? locked),
+    imageUrl: String(raw?.imageUrl || ""),
+    category: String(raw?.category || ""),
     substitute: String(raw?.substitute || ""),
     substituteReason: String(raw?.substituteReason || ""),
   };
@@ -443,6 +448,11 @@ const [pricingSummary, setPricingSummary] = useState(() => normalizePricingSumma
   const prev = () => goStep(stepIndex - 1);
 
   // extras
+  const addCatalogItem = (name) => {
+    const match = matchCatalogItem(name);
+    setExtraItems(prev => [...prev, normalizeItem({ id: `custom-${Date.now()}-${Math.random().toString(36).slice(2)}`, name, qty: 1, unit: "each", category: match?.section || "Other" })]);
+  };
+
   const addExtraItem = () => {
     setExtraItems((prev) => [
       ...prev,
@@ -669,7 +679,7 @@ setPricingSummary(normalizePricingSummary(summary));
                         {grp.items.map((it) => (
                           <li key={it.id} className="gl-row">
                             <div className="gl-row-main">
-                              <div className="gl-row-name">{it.name}</div>
+                              <div className="gl-row-name" style={{display:"flex",alignItems:"center",gap:10}}><GroceryItemPhoto name={it.name} />{it.name}</div>
                               <div className="gl-row-meta">Qty: {it.qty} {it.unit}{it.locked ? " • Meal Plan" : " • Extra"}</div>
                             </div>
                             <div className="gl-row-actions">{it.locked ? <span className="gl-pill">Locked</span> : null}</div>
@@ -704,6 +714,8 @@ setPricingSummary(normalizePricingSummary(summary));
                     </ul>
                   )}
                 </div>
+
+                <GroceryCatalogPicker onAdd={addCatalogItem} />
 
                 <div className="gl-card">
                   <div className="gl-card-head">
