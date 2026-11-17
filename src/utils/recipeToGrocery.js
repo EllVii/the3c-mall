@@ -3,6 +3,7 @@
 // Exports: recipeToGroceryItems, mergeGroceryItems
 
 import { safeId, nowISO } from "./Storage";
+import { scaledAmount, validServings } from "./recipeServings";
 
 function norm(s) {
   return (s || "").toLowerCase().trim();
@@ -20,10 +21,12 @@ function keyForItem(item) {
 
 /**
  * Convert recipe ingredients to grocery items.
- * servingsUsed is just metadata right now (no complex scaling in beta).
+ * Ingredient quantities scale proportionally to the requested serving count.
  */
 export function recipeToGroceryItems(recipe, servingsUsed = 1) {
   const items = [];
+  const originalServings = validServings(recipe?.servings?.defaultServings);
+  const portions = validServings(servingsUsed, originalServings);
 
   for (const ing of recipe?.ingredients || []) {
     const canonicalName = canonicalizeIngredient(ing) || norm(ing.name);
@@ -35,7 +38,7 @@ export function recipeToGroceryItems(recipe, servingsUsed = 1) {
       canonicalName,
       displayName: ing.name || canonicalName,
       category: ing.category || "Other",
-      amount: Number(ing.amount || 1),
+      amount: scaledAmount(ing.amount ?? 1, originalServings, portions),
       unit: ing.unit || "each",
       optional: !!ing.optional,
 
@@ -44,7 +47,7 @@ export function recipeToGroceryItems(recipe, servingsUsed = 1) {
         type: "recipe",
         recipeId: recipe.id,
         recipeTitle: recipe.title,
-        servingsUsed,
+        servingsUsed: portions,
       },
 
       // pricing placeholders (Beta demo)
