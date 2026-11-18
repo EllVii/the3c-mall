@@ -1,3 +1,5 @@
+> **HISTORICAL COMPLIANCE SUMMARY, NOT A PRODUCTION ATTESTATION (2026-11-18).** This document describes legacy server/Supabase implementation. Its claims about fully enforced TOS, data deletion/export endpoints, email compliance, breach handling, retailer API controls and readiness must not be presented as verified Cloudflare production capabilities. Refer to [README](./README.md), [production blueprint](./docs/PRODUCTION_BLUEPRINT.md), and [documentation audit](./docs/DOCUMENTATION_AUDIT_2026-11-18.md).
+
 # 🎉 TOS Compliance - Complete Implementation Summary
 
 ## What You Asked For

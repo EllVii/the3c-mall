@@ -1,3 +1,5 @@
+> **HISTORICAL SNAPSHOT, NOT CURRENT STATUS (2026-11-18).** This document describes an older Express/SQLite/beta-code design. Its production-ready claims, server endpoints, beta codes and SMTP setup are not verified for the current Cloudflare Pages Functions + D1 app. Refer to [README](./README.md), [production blueprint](./docs/PRODUCTION_BLUEPRINT.md), and [documentation audit](./docs/DOCUMENTATION_AUDIT_2026-11-18.md).
+
 # The 3C Mall - Complete Project Status
 
 ## 🎯 Project Overview

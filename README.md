@@ -70,6 +70,16 @@ Participant and stakeholder materials are in:
 
 The working project period is 12 months and includes a five-family pilot. Eligible participant reimbursement is capped at $500 per family and $2,500 total, subject to receipt review and the approved grant budget.
 
+## November 2026 release status
+
+The authoritative runtime is GitHub + Cloudflare Pages + Pages Functions + D1. Two Cloudflare Pages projects, the3c-mall (the3cmall.app) and 3c-mall, currently share this repository and the same D1 database. **A preview is not an isolated database test environment.** Avoid destructive preview testing or migrations without safeguards.
+
+**Draft, not production:** [PR #22, recipes and serving sizes](https://github.com/EllVii/the3c-mall/pull/22) and [PR #23, grocery photo catalog](https://github.com/EllVii/the3c-mall/pull/23). PR #23 is stacked on PR #22. GitHub full-stack routing and SEO workflows passed for both PR heads on 2026-11-18, but mobile, authenticated shopping, camera, image licensing and real-user testing remain outstanding. Grocery photos stay in device-local IndexedDB; recipe images use external URLs. Neither feature is confirmed production-ready.
+
+**Before release:** verify [account approval PR #12](https://github.com/EllVii/the3c-mall/pull/12) separately; test recipe-to-grocery serving scaling and responsive UI; review photo rights, matching, privacy and deletion; confirm any required R2 receipt binding; consolidate duplicate deployment ownership or isolate preview D1; re-run CI and live smoke tests after merging stacked PRs.
+
+Read [the November documentation audit](./docs/DOCUMENTATION_AUDIT_2026-11-18.md). Historical Express, Supabase, beta-code and deployment-ready documents are not evidence of the current Cloudflare production configuration.
+
 ## Local development
 
 ```bash
