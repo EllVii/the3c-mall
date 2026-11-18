@@ -21,7 +21,12 @@ export default function GroceryCatalogPicker({ onAdd }) {
     if (name.length < 2 || name.length > 100) { setNotice("Enter an item name between 2 and 100 characters."); return; }
     add(name); setPhotoName(name); setCustomName("");
   };
-  async function removePhoto(name) {\n    if (!window.confirm(`Remove your saved photo for ${name} from this device?`)) return;\n    try { await deleteGroceryPhoto(name); setPhotoVersion(n => n + 1); setNotice(`Photo removed for ${name}.`); }\n    catch (error) { setNotice(error.message || "Could not remove photo."); }\n  }\n  async function capture(file, name) {
+  async function removePhoto(name) {
+    if (!window.confirm(`Remove your saved photo for ${name} from this device?`)) return;
+    try { await deleteGroceryPhoto(name); setPhotoVersion(n => n + 1); setNotice(`Photo removed for ${name}.`); }
+    catch (error) { setNotice(error.message || "Could not remove photo."); }
+  }
+  async function capture(file, name) {
     if (!file || !name) return;
     try {
       await saveGroceryPhoto(name, file);
@@ -62,7 +67,8 @@ export default function GroceryCatalogPicker({ onAdd }) {
         <input type="file" accept="image/jpeg,image/png,image/webp" capture="environment"
           onChange={e => { capture(e.target.files?.[0], photoName); e.target.value = ""; }} />
       </label>}
-      {photoName && <button type="button" className="gcp-remove" onClick={() => removePhoto(photoName)}>Remove saved photo for {photoName}</button>}\n      <p>Photos stay on this device. No product recognition, barcode lookup, or cloud synchronization yet.</p>
+      {photoName && <button type="button" className="gcp-remove" onClick={() => removePhoto(photoName)}>Remove saved photo for {photoName}</button>}
+      <p>Photos stay on this device. No product recognition, barcode lookup, or cloud synchronization yet.</p>
     </div>
   </section>;
 }
