@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { GROCERY_CATALOG, GROCERY_GROUPS } from "../../../utils/groceryCatalog";
-import { saveGroceryPhoto } from "../../../utils/groceryPhotos";
+import { saveGroceryPhoto, deleteGroceryPhoto } from "../../../utils/groceryPhotos";
 import GroceryItemPhoto from "./GroceryItemPhoto";
 import "./GroceryCatalogPicker.css";
 
@@ -21,7 +21,7 @@ export default function GroceryCatalogPicker({ onAdd }) {
     if (name.length < 2 || name.length > 100) { setNotice("Enter an item name between 2 and 100 characters."); return; }
     add(name); setPhotoName(name); setCustomName("");
   };
-  async function capture(file, name) {
+  async function removePhoto(name) {\n    if (!window.confirm(`Remove your saved photo for ${name} from this device?`)) return;\n    try { await deleteGroceryPhoto(name); setPhotoVersion(n => n + 1); setNotice(`Photo removed for ${name}.`); }\n    catch (error) { setNotice(error.message || "Could not remove photo."); }\n  }\n  async function capture(file, name) {
     if (!file || !name) return;
     try {
       await saveGroceryPhoto(name, file);
@@ -41,7 +41,7 @@ export default function GroceryCatalogPicker({ onAdd }) {
     <p role="status" className="gcp-status">{notice || `${items.length} items listed`}</p>
     <div className="gcp-grid">
       {items.slice(0, 72).map(item => <div key={item.id} className="gcp-item">
-        <GroceryItemPhoto key={item.id + photoVersion} name={item.name} />
+        <GroceryItemPhoto name={item.name} version={photoVersion} />
         <span className="gcp-name">{item.name}</span>
         <button type="button" onClick={() => add(item.name)} aria-label={`Add ${item.name}`}>+ Add</button>
         <label className="gcp-camera" title={`Add photo of ${item.name}`}>📷
@@ -62,7 +62,7 @@ export default function GroceryCatalogPicker({ onAdd }) {
         <input type="file" accept="image/jpeg,image/png,image/webp" capture="environment"
           onChange={e => { capture(e.target.files?.[0], photoName); e.target.value = ""; }} />
       </label>}
-      <p>Photos stay on this device. No product recognition, barcode lookup, or cloud synchronization yet.</p>
+      {photoName && <button type="button" className="gcp-remove" onClick={() => removePhoto(photoName)}>Remove saved photo for {photoName}</button>}\n      <p>Photos stay on this device. No product recognition, barcode lookup, or cloud synchronization yet.</p>
     </div>
   </section>;
 }
