@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { readGroceryPhoto } from "../../../utils/groceryPhotos";
 import { matchCatalogItem } from "../../../utils/groceryCatalog";
 
-export default function GroceryItemPhoto({ name, size = 56 }) {
+export default function GroceryItemPhoto({ name, size = 56, version = 0 }) {
   const [photo, setPhoto] = useState(null);
   const catalog = matchCatalogItem(name);
   useEffect(() => {
@@ -13,9 +13,9 @@ export default function GroceryItemPhoto({ name, size = 56 }) {
       else if (alive) setPhoto(null);
     }).catch(() => { if (alive) setPhoto(null); });
     return () => { alive = false; if (objectUrl) URL.revokeObjectURL(objectUrl); };
-  }, [name]);
+  }, [name, version]);
   const src = photo || catalog?.imageUrl;
-  return src ? <img src={src} alt={name} loading="lazy" width={size} height={size}
+  return src ? <img src={src} alt={name} loading="lazy" onError={e => { e.currentTarget.style.display = "none"; }} width={size} height={size}
     style={{width:size,height:size,objectFit:"cover",borderRadius:10,flexShrink:0}} /> :
     <span role="img" aria-label={`No photo yet for ${name}`}
       style={{width:size,height:size,display:"inline-grid",placeItems:"center",borderRadius:10,
