@@ -39,3 +39,8 @@ export async function saveGroceryPhoto(name, file) {
 export async function readGroceryPhoto(name) {
   return transact("readonly", store => store.get(photoKey(name)));
 }
+
+// Removes a user-provided image from this device only.
+export async function deleteGroceryPhoto(name) {
+  return transact("readwrite", store => store.delete(photoKey(name)));
+}
