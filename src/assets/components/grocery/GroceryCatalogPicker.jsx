@@ -53,6 +53,7 @@ export default function GroceryCatalogPicker({ onAdd }) {
           <input type="file" accept="image/jpeg,image/png,image/webp" capture="environment"
             aria-label={`Take or choose a photo of ${item.name}`} onChange={e => { capture(e.target.files?.[0], item.name); e.target.value = ""; }} />
         </label>
+        <button type="button" className="gcp-remove" onClick={() => removePhoto(item.name)} aria-label={`Remove saved photo for ${item.name}`} title="Remove saved photo">×</button>
       </div>)}
     </div>
     {items.length > 72 && <p>Showing the first 72 matches. Search or select a section to narrow results.</p>}
